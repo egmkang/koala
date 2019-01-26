@@ -1,7 +1,7 @@
 import time
 from datetime import datetime
 
-TimeSecondsBegin = (datetime(year=2018, month=1, day=1) - datetime(1970,1,1)).total_seconds()
+TimeSecondsBegin = (datetime(year=2019, month=1, day=1) - datetime(1970,1,1)).total_seconds()
 
 class IdGenerator:
     """

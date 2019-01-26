@@ -1,9 +1,7 @@
-from rpc.rpc_constant import *
-
 
 class Buffer:
     def __init__(self):
-        self._buffer = bytearray(RPC_DEFAULT_BUFFER_SIZE)
+        self._buffer = bytearray(2 * 1024)
         self._read = 0
         self._write = 0
 
