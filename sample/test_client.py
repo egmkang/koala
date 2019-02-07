@@ -1,4 +1,5 @@
 from sample.player import *
+import gevent
 
 s = "fdsljflkdsfjh;lsdahgds;ghfd;lgkj;fdlkgjs'gjf"
 
@@ -16,7 +17,7 @@ async def bench():
 
 async def print_counter():
     while True:
-        await asyncio.sleep(1)
+        gevent.sleep(1)
         global Counter
         c = Counter
         print("%sw/s" % (c / 10000))

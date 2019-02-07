@@ -15,7 +15,6 @@ class TcpConnection(object):
         self._queue = Queue()
         self.address = self._socket.getpeername()
 
-
     def _recv(self):
         while not self._stop:
             msg = self._codec.decode(self._buffer, self)
@@ -31,7 +30,7 @@ class TcpConnection(object):
                 self._buffer.append(data)
                 continue
             self._processor(self, msg)
-        gevent.spawn(lambda : self.close())
+        gevent.spawn(lambda: self.close())
         pass
 
     def _send(self):
@@ -48,17 +47,18 @@ class TcpConnection(object):
         pass
 
     def run(self):
-        self._send_spawn = gevent.spawn(lambda : self._send())
+        gevent.spawn(lambda : self._send())
         self._recv()
 
     def close(self):
+        if self._socket is None:
+            return
         self._stop = True
         self._queue.put(None)
-        gevent.joinall([self._send_spawn])
         self._socket.close()
+        self._socket = None
         logger.info("Connection:%s, close", self.address)
         pass
-
 
     def send_message(self, m):
         array = self._codec.encode(m, self)

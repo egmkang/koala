@@ -1,11 +1,13 @@
 import time
-import aio_etcd as etcd
+import etcd3
+import gevent
 from .membership import MemberShipManager, MachineInfo
 from utils.singleton import Singleton
 from utils.log import logger
 from entity.entity_type import *
 from utils.ujson_codec import *
-import asyncio
+
+# TODO: using etcd3
 
 
 ENTITY_PATH = '/entity/%s_%s'   #/entity/1_1010101, 这种
@@ -66,11 +68,11 @@ class EntityPositionCache:
 
 
     # 从Etcd里面获取玩家的位置信息
-    async def _fetch_entity_pos_from_etcd(self, entity_type: int, entity_id: int) -> EntityPosition:
+    def _fetch_entity_pos_from_etcd(self, entity_type: int, entity_id: int) -> EntityPosition:
         path = ENTITY_PATH % (entity_type, entity_id)
         try:
             with self._etcd.get() as client:
-                result:etcd.EtcdResult = await client.get(path)
+                result: etcd.EtcdResult = client.get(path)
                 info = CodeUjsonDecode(result.value, EntityPosition)
                 return info
         except Exception as e:
@@ -81,39 +83,41 @@ class EntityPositionCache:
     # 先从缓存种获取机器
     # 否则从etcd里面获取机器
     # 并判断Pos的机器有没有失效
-    async def _check_entity_pos(self, entity_type: int, entity_id: int) -> EntityPosition:
+    def _check_entity_pos(self, entity_type: int, entity_id: int) -> EntityPosition:
         pos:EntityPosition = self.get_entity_info(entity_type, entity_id)
         if pos is None:
-            pos = await self._fetch_entity_pos_from_etcd(entity_type, entity_id)
-        if pos is None: return None
+            pos = self._fetch_entity_pos_from_etcd(entity_type, entity_id)
+        if pos is None:
+            return None
         if self._membership.get_machine_by_unique_id(pos.server_unique_id) is None:
             self.remove_entity(entity_type, entity_id)
             return None
-        if pos is not None: self._add_entity_info(pos)
+        if pos is not None:
+            self._add_entity_info(pos)
         return pos
 
-    async def _write_entity_pos(self, pos: EntityPosition):
+    def _write_entity_pos(self, pos: EntityPosition):
         path = ENTITY_PATH % (pos.entity_type, pos.entity_id)
         self._add_entity_info(pos)
         try:
             with self._etcd.get() as client:
-                await client.write(path, CodecUjsonEncode(pos))
+                client.write(path, CodecUjsonEncode(pos))
         except Exception as e:
             logger.error("write_entity_pos, Entity:(%s,%s), exception:%s" % (pos.entity_type, pos.entity_id, e))
 
     # 从现在的机器列表里面
     # 按照权重随机一个机器出来
     # 把这个玩家安置到这个机器里面(写入etcd和本地缓存)
-    async def generate_entity_pos(self, entity_type:int, entity_id:int) -> EntityPosition:
+    def generate_entity_pos(self, entity_type:int, entity_id: int) -> EntityPosition:
         lock_name = ENTITY_LOCK_NAME % (entity_type, entity_id)
         try:
             with self._etcd.get() as client:
-                async with etcd.Lock(client, lock_name):
-                    pos = await self._check_entity_pos(entity_type, entity_id)
+                with etcd.Lock(client, lock_name):
+                    pos = self._check_entity_pos(entity_type, entity_id)
                     if pos != None: return pos
                 machine = self._membership.random_machine()
                 pos = EntityPosition.create(entity_type, entity_id, machine)
-                await self._write_entity_pos(pos)
+                self._write_entity_pos(pos)
                 return pos
         except Exception as e:
             logger.error("generate_entity_pos, Entity:(%s,%s), exception:%s" %
@@ -123,15 +127,16 @@ class EntityPositionCache:
     # 找到玩家的位置
     # 这边只负责找位置
     # 通讯需要借助其他的设施
-    async def find_player_pos(self, uid: int) -> EntityPosition:
-        position = await self._check_entity_pos(ENTITY_TYPE_PLAYER, uid)
-        if position != None: return position
+    def find_player_pos(self, uid: int) -> EntityPosition:
+        position = self._check_entity_pos(ENTITY_TYPE_PLAYER, uid)
+        if position is not None:
+            return position
         #最大尝试次数
         for x in range(2):
-            position = await self.generate_entity_pos(ENTITY_TYPE_PLAYER, uid)
-            if position == None:
-                await asyncio.sleep(3)
-        if position == None:
+            position = self.generate_entity_pos(ENTITY_TYPE_PLAYER, uid)
+            if position is None:
+                gevent.sleep(3.0)
+        if position is None:
             logger.error("find_player_pos, PlayerID:%s return None" % uid)
         return position
 

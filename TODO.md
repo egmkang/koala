@@ -36,3 +36,5 @@ v0.2
 * [ ] server config
 * [ ] game config
 * [ ] gateway
+
+

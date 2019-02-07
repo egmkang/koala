@@ -9,7 +9,7 @@ This is a simple distributed system just like `Virtual Actor` (orleans), but thi
 * using `pickle rpc` to communicate with each other server
    
   cannot replace rpc and message encoding right now, so cannot cross languages (just Python3.5+)
-* using `asyncio`
+* using `gevent`
 * lack of a lot things
 
 

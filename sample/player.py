@@ -2,7 +2,7 @@ from rpc.rpc_server import *
 from entity.player import *
 from entity.player_manager import *
 from rpc.rpc_proxy import RpcProxyObject
-import asyncio
+import gevent
 
 player_manager = PlayerManager()
 
@@ -11,8 +11,8 @@ class TestPlayer(Player):
         super().__init__(uid)
         pass
 
-    async def load_from_db(self):
-        await asyncio.sleep(0)
+    def load_from_db(self):
+        gevent.sleep(0)
         pass
 
     @player_rpc_method

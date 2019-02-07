@@ -1,8 +1,8 @@
 from datetime import datetime
 from abc import ABCMeta, abstractmethod
 from utils.log import logger
-import asyncio
 from rpc.rpc_proxy import RpcProxyObject
+from gevent.queue import Queue
 
 
 _empty_context = None
@@ -11,11 +11,11 @@ class RpcContext(object):
     def __init__(self):
         self.host = ""
         self.request_id = 0
-        self.queue = asyncio.Queue()
+        self.queue = Queue()
         self.running = False
 
-    async def SendMessage(self, obj):
-        await self.queue.put(obj)
+    def SendMessage(self, obj):
+        self.queue.put(obj)
 
 
     @staticmethod
@@ -62,5 +62,5 @@ class Entity(object):
         return self._rpc_proxy_object_cache[(_type, _uid)]
 
     @abstractmethod
-    async def load_from_db(self):
+    def load_from_db(self):
         pass

@@ -1,12 +1,11 @@
 import time
-import asyncio
 from .etcd_client import EtcdClient
 from utils.singleton import Singleton
 from entity.player_manager import PlayerManager
 from utils.log import logger
 from utils.ujson_codec import *
-import aio_etcd as etcd
 import random
+import gevent
 
 
 SYNC_MEMBER_TIME = 5    #同步membership的时间
@@ -91,33 +90,29 @@ async def _check_update_time():
     while True:
         if time.time() - _last_update_time >= SYNC_TIMEOUT:
             logger.error("_check_update_time, last_update_time:%s, current_time:%s" % (_last_update_time, time.time()))
-            loop = asyncio.get_event_loop()
-            loop.stop()
             logger.error("event loop stop")
             return
-        await asyncio.sleep(SYNC_MEMBER_TIME)
+        gevent.sleep(SYNC_MEMBER_TIME)
 
 
 async def UpdateMachineMemberInfo(info:MachineInfo, etcd: EtcdClient):
     global _last_update_time
     _last_update_time = time.time()
-    loop = asyncio.get_event_loop()
-    loop.create_task(_check_update_time())
+    gevent.spawn(lambda: _check_update_time())
     player_manager = PlayerManager()
 
     while True:
         path = "/machine/%s" % info.unique_id
         info.player_count = player_manager.count()
-        content = CodecUjsonEncode(info)
+        content = CodecUjsonEncode(info).encode()
         try:
-            with etcd.get() as client:
-                await client.write(path, content, ttl=MEMBER_TTL)
-                #await asyncio.wait_for(co, SYNC_MEMBER_TIME, asyncio.get_event_loop())
-                _last_update_time = time.time()
+            client = etcd.get_client()
+            client.put(path, content, client.lease(ttl=MEMBER_TTL))
+            _last_update_time = time.time()
         except Exception as e:
             logger.error("UpdateMachineMemberInfo, execption:%s" % e)
 
-        await asyncio.sleep(SYNC_MEMBER_TIME)
+        gevent.sleep(SYNC_MEMBER_TIME)
 
 
 def _update_member_ship(member_ship: MemberShipManager, result: [etcd.EtcdResult]):
@@ -128,15 +123,15 @@ def _update_member_ship(member_ship: MemberShipManager, result: [etcd.EtcdResult
 
 
 #这边没有删除超时的节点
-async def GetMembersInfo(etcd: EtcdClient):
+def GetMembersInfo(etcd: EtcdClient):
     member_ship = MemberShipManager()
     while True:
         try:
+            client = etcd.get_client()
             with etcd.get() as client:
-                result = await client.read("/machine", recursive=True)
-                #result = await asyncio.wait_for(co, SYNC_MEMBER_TIME, asyncio.get_event_loop())
+                result = client.read("/machine", recursive=True)
                 _update_member_ship(member_ship, result)
         except Exception as e:
             logger.error("GetMembersInfo, execption:%s" % e)
 
-        await asyncio.sleep(SYNC_MEMBER_TIME)
+        gevent.sleep(SYNC_MEMBER_TIME)

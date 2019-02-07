@@ -1,6 +1,8 @@
 import pickle
 from .rpc_constant import *
 from utils.id_gen import IdGenerator
+from net.codec import Codec
+from utils.buffer import Buffer
 
 _global_id_generator: IdGenerator = None
 
@@ -45,6 +47,27 @@ def CodecEncode(obj):
 def CodecDecode(data:bytes):
     obj = pickle.loads(data)
     return obj
+
+class RpcCodec(Codec):
+    def __init__(self):
+        super().__init__()
+        pass
+
+    # (buffer, conn) => object
+    def decode(self, buffer: Buffer, conn):
+        readable_length = buffer.readable_length()
+        if readable_length <= RPC_HEADER_LEN:
+            return None
+        need_length = int.from_bytes(buffer.slice(RPC_HEADER_LEN), 'little') + RPC_HEADER_LEN
+        if need_length > readable_length:
+            return None
+        data = buffer.slice(need_length)[RPC_HEADER_LEN:]
+        buffer.has_read(need_length)
+        return CodecDecode(data)
+
+    # (msg, conn) => bytes
+    def encode(self, msg, conn) -> bytes:
+        return CodecEncode(msg)
 
 
 def test_rpc_request_encode():

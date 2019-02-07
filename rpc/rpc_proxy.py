@@ -21,21 +21,21 @@ class RpcProxyMethod:
 
         self.server = RpcServer(-1)
         self.position_cache = EntityPositionCache()
-        self.client:RpcClient = None
+        self.client: RpcClient = None
         pass
 
-    async def _find_client(self):
-        pos = await self.position_cache.find_player_pos(self.entity_id)
-        if pos is None: raise RpcPostionNotFound()
+    def _find_client(self):
+        pos = self.position_cache.find_player_pos(self.entity_id)
+        if pos is None:
+            raise RpcPostionNotFound()
         self.client = self.server.rpc_connect(pos.address[0], pos.address[1])
 
-
-    async def __call__(self, *args, **kwargs):
+    def __call__(self, *args, **kwargs):
         if self.client is None:
-            await self._find_client()
+            self._find_client()
         if self.client is not None:
             logger.info("send request, %s" % (self.method_name))
-            return await self.client.send_request(self.context.host, self.context.request_id,
+            return self.client.send_request(self.context.host, self.context.request_id,
                                                   self.entity_type, self.entity_id, self.method_name, *args, **kwargs)
         else:
             raise RpcPostionNotFound()

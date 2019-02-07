@@ -1,45 +1,53 @@
-from utils.log import logger
-import asyncio
-from .rpc_connection import RpcConnection
+import socket
+import gevent
 from .rpc_codec import *
 from .rpc_future import *
 from .rpc_server import GetServerUniqueID
+from .rpc_server import _rpc_message_dispatcher
+from net.tcp_connection import TcpConnection
+from utils.log import logger
+
 
 class RpcClient:
-    def __init__(self, host, port, loop):
+    def __init__(self, host, port):
         self._conn = None
         self._host = host
         self._port = port
-        self._loop = loop
         self._connecting = False
 
-
-    async def connect(self):
+    def connect(self):
         if self._conn is not None:
             return
         if not self._connecting:
             self._connecting = True
             logger.info("connect:%s:%s" % (self._host, self._port))
-            reader, writer = await asyncio.open_connection(self._host, self._port, loop=self._loop, limit=RPC_WINDOW_SIZE)
+            sock = socket.socket()
+            sock.connect((self._host, self._port))
             logger.info("connect:%s:%s complete" % (self._host, self._port))
-            self._conn = RpcConnection(reader, writer)
-            self._loop.create_task(self._recv_message())
+            self._conn = TcpConnection(sock, RpcCodec(), _rpc_message_dispatcher)
+            self._conn.run()
             self._connecting = False
+
         while True:
-            await asyncio.sleep(0.1)
+            gevent.sleep(0.1)
             if self._conn is not None:
                 return
 
-    async def _recv_message(self):
+    def close(self):
+        if self._conn is None:
+            pass
+        self._conn.close()
+
+    def _recv_message(self):
         try:
-            await self._conn.recv_message()
+            self._conn.recv_message()
         except Exception as e:
             logger.error("RpcClient.recv_message, Exception:%s" % (e))
             self._conn.close()
             self._conn = None
 
-    async def send_request(self, host, request_id, entity_type, entity_id, method, *args, **kwargs):
-        await self.connect()
+    def send_request(self, host, request_id, entity_type, entity_id, method, *args, **kwargs):
+        self.connect()
 
         request = RpcRequest()
         if host is not None:
@@ -56,9 +64,12 @@ class RpcClient:
         request.args = args
         request.kwargs = kwargs
 
-        await self._conn.send_message(request)
-        future = asyncio.Future()
+        self._conn.send_message(request)
+
+        future = AsyncResult()
         AddFuture(request, future)
-        await asyncio.wait_for(future, 5)
-        resp: RpcResponse = future.result()
+
+        future.wait(5)
+
+        resp: RpcResponse = future.get()
         return resp.response
