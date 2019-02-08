@@ -1,18 +1,16 @@
 import time
-from .etcd_client import EtcdClient
-from utils.singleton import Singleton
-from entity.player_manager import PlayerManager
-from utils.log import logger
-from utils.ujson_codec import *
 import random
 import gevent
+from .etcd_helper import EtcdHelper
+from utils.singleton import Singleton
+from utils.log import logger
+from utils.ujson_codec import *
 
 
-SYNC_MEMBER_TIME = 5    #同步membership的时间
-SYNC_TIMEOUT = 15       #超时时间, 超过时间服务器会自动退出
-MEMBER_TTL = 15         #member存活的时间
-START_TIME = 15         #刚启动的机器不能加入到集群
-
+SYNC_MEMBER_TIME = 5    # 同步membership的时间
+SYNC_TIMEOUT = 15       # 超时时间, 超过时间服务器会自动退出
+MEMBER_TTL = 15         # member存活的时间
+START_TIME = 15          # 刚启动的机器不能加入到集群
 
 
 class MachineInfo:
@@ -79,13 +77,14 @@ class MemberShipManager:
                 return machines[index]
 
 
-#机器的信息保存在etcd上
-#路径是/machine/{unique_id}
-#例如服务器的Unique是1, 那么路径就是/machine/1, 内容是MachineInfo序列化好的json字符串
+# 机器的信息保存在etcd上
+# 路径是/machine/{unique_id}
+# 例如服务器的Unique是1, 那么路径就是/machine/1, 内容是MachineInfo序列化好的json字符串
 
 _last_update_time = time.time()
 
-async def _check_update_time():
+
+def _check_update_time():
     global _last_update_time
     while True:
         if time.time() - _last_update_time >= SYNC_TIMEOUT:
@@ -94,20 +93,24 @@ async def _check_update_time():
             return
         gevent.sleep(SYNC_MEMBER_TIME)
 
+player_count = 0
 
-async def UpdateMachineMemberInfo(info:MachineInfo, etcd: EtcdClient):
-    global _last_update_time
+def SetPlayerCount(new_count: int):
+    global player_count
+    player_count = new_count
+
+
+def UpdateMachineMemberInfo(info:MachineInfo, etcd: EtcdHelper):
+    global _last_update_time, player_count
     _last_update_time = time.time()
     gevent.spawn(lambda: _check_update_time())
-    player_manager = PlayerManager()
 
     while True:
         path = "/machine/%s" % info.unique_id
-        info.player_count = player_manager.count()
+        info.player_count = player_count
         content = CodecUjsonEncode(info).encode()
         try:
-            client = etcd.get_client()
-            client.put(path, content, client.lease(ttl=MEMBER_TTL))
+            etcd.put(path, content, MEMBER_TTL)
             _last_update_time = time.time()
         except Exception as e:
             logger.error("UpdateMachineMemberInfo, execption:%s" % e)
@@ -115,22 +118,20 @@ async def UpdateMachineMemberInfo(info:MachineInfo, etcd: EtcdClient):
         gevent.sleep(SYNC_MEMBER_TIME)
 
 
-def _update_member_ship(member_ship: MemberShipManager, result: [etcd.EtcdResult]):
-    infos = [CodeUjsonDecode(child.value, MachineInfo) for child in result.children]
+def _update_member_ship(member_ship: MemberShipManager, result):
+    infos = [CodeUjsonDecode(child[0].decode(), MachineInfo) for child in result]
     keys = [info.unique_id for info in infos]
     member_ship.try_remove_machines(keys)
     member_ship.add_machines(infos)
 
 
-#这边没有删除超时的节点
-def GetMembersInfo(etcd: EtcdClient):
+# 这边没有删除超时的节点
+def GetMembersInfo(etcd: EtcdHelper):
     member_ship = MemberShipManager()
     while True:
         try:
-            client = etcd.get_client()
-            with etcd.get() as client:
-                result = client.read("/machine", recursive=True)
-                _update_member_ship(member_ship, result)
+            result = etcd.get_prefix("/machine")
+            _update_member_ship(member_ship, result)
         except Exception as e:
             logger.error("GetMembersInfo, execption:%s" % e)
 

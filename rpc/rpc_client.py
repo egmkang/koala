@@ -2,8 +2,6 @@ import socket
 import gevent
 from .rpc_codec import *
 from .rpc_future import *
-from .rpc_server import GetServerUniqueID
-from .rpc_server import _rpc_message_dispatcher
 from net.tcp_connection import TcpConnection
 from utils.log import logger
 
@@ -16,6 +14,8 @@ class RpcClient:
         self._connecting = False
 
     def connect(self):
+        from .rpc_server import rpc_message_dispatcher
+
         if self._conn is not None:
             return
         if not self._connecting:
@@ -24,14 +24,14 @@ class RpcClient:
             sock = socket.socket()
             sock.connect((self._host, self._port))
             logger.info("connect:%s:%s complete" % (self._host, self._port))
-            self._conn = TcpConnection(sock, RpcCodec(), _rpc_message_dispatcher)
-            self._conn.run()
+            self._conn = TcpConnection(sock, RpcCodec(), rpc_message_dispatcher)
+            gevent.spawn(lambda: self._conn.run())
             self._connecting = False
 
         while True:
-            gevent.sleep(0.1)
             if self._conn is not None:
                 return
+            gevent.sleep(0.1)
 
     def close(self):
         if self._conn is None:
@@ -48,6 +48,8 @@ class RpcClient:
 
     def send_request(self, host, request_id, entity_type, entity_id, method, *args, **kwargs):
         self.connect()
+
+        from .rpc_server import GetServerUniqueID
 
         request = RpcRequest()
         if host is not None:

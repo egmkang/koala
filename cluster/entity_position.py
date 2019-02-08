@@ -1,13 +1,12 @@
 import time
 import etcd3
 import gevent
-from .membership import MemberShipManager, MachineInfo
+from .membership import *
+from .etcd_helper import EtcdHelper
 from utils.singleton import Singleton
 from utils.log import logger
 from entity.entity_type import *
 from utils.ujson_codec import *
-
-# TODO: using etcd3
 
 
 ENTITY_PATH = '/entity/%s_%s'   #/entity/1_1010101, 这种
@@ -36,7 +35,7 @@ class EntityPositionCache:
         self._cache = dict()
         self._membership = MemberShipManager()
 
-    def set_etcd(self, etcd):
+    def set_etcd(self, etcd: EtcdHelper):
         self._etcd = etcd
 
     def _add_entity_info(self, entity: EntityPosition):
@@ -51,13 +50,12 @@ class EntityPositionCache:
         logger.info("EntityPositionCache.add_entity, Entity:(%s,%s), NewServer:%s, Address:%s" %
                     (entity.entity_type, entity.entity_id, entity.server_unique_id, entity.address))
 
-    def get_entity_info(self, entity_type:int, entity_id:int) -> EntityPosition:
+    def get_entity_info(self, entity_type: int, entity_id: int) -> EntityPosition:
         key = (entity_type, entity_id)
-        if key not in self._cache:
-            return None
-        return self._cache[key]
+        if key in self._cache:
+            return self._cache[key]
 
-    def remove_entity(self, entity_type:int, entity_id:int):
+    def remove_entity(self, entity_type: int, entity_id: int):
         key = (entity_type, entity_id)
         if key not in self._cache:
             return
@@ -66,18 +64,17 @@ class EntityPositionCache:
                     (entity_type, entity_id, info.server_unique_id, info.address))
         del self._cache[key]
 
-
     # 从Etcd里面获取玩家的位置信息
     def _fetch_entity_pos_from_etcd(self, entity_type: int, entity_id: int) -> EntityPosition:
         path = ENTITY_PATH % (entity_type, entity_id)
         try:
-            with self._etcd.get() as client:
-                result: etcd.EtcdResult = client.get(path)
-                info = CodeUjsonDecode(result.value, EntityPosition)
-                return info
+            result = self._etcd.get(path)
+            if result is None:
+                return None
+            info = CodeUjsonDecode(result.decode(), EntityPosition)
+            return info
         except Exception as e:
             logger.error("fetch_entity_pos_from_etcd, exception:%s" % e)
-        return None
 
 
     # 先从缓存种获取机器
@@ -100,8 +97,7 @@ class EntityPositionCache:
         path = ENTITY_PATH % (pos.entity_type, pos.entity_id)
         self._add_entity_info(pos)
         try:
-            with self._etcd.get() as client:
-                client.write(path, CodecUjsonEncode(pos))
+            self._etcd.put(path, CodecUjsonEncode(pos))
         except Exception as e:
             logger.error("write_entity_pos, Entity:(%s,%s), exception:%s" % (pos.entity_type, pos.entity_id, e))
 
@@ -111,10 +107,10 @@ class EntityPositionCache:
     def generate_entity_pos(self, entity_type:int, entity_id: int) -> EntityPosition:
         lock_name = ENTITY_LOCK_NAME % (entity_type, entity_id)
         try:
-            with self._etcd.get() as client:
-                with etcd.Lock(client, lock_name):
-                    pos = self._check_entity_pos(entity_type, entity_id)
-                    if pos != None: return pos
+            with self._etcd.get_lock(lock_name, ttl=10):
+                pos = self._check_entity_pos(entity_type, entity_id)
+                if pos is not None:
+                    return pos
                 machine = self._membership.random_machine()
                 pos = EntityPosition.create(entity_type, entity_id, machine)
                 self._write_entity_pos(pos)
@@ -122,7 +118,6 @@ class EntityPositionCache:
         except Exception as e:
             logger.error("generate_entity_pos, Entity:(%s,%s), exception:%s" %
                          (entity_type, entity_id, e))
-        return None
 
     # 找到玩家的位置
     # 这边只负责找位置

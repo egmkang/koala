@@ -4,8 +4,6 @@ from .rpc_constant import *
 from .rpc_future import GetFuture
 from net.tcp_server import TcpServer
 from net.tcp_connection import TcpConnection
-from cluster.membership import *
-from cluster.etcd_client import *
 from cluster.entity_position import *
 from entity.player_manager import *
 from utils.singleton import Singleton
@@ -67,7 +65,7 @@ def _handle_global_method(request: RpcRequest, conn: TcpConnection):
 #返回True表示中断
 def _dispatch_entity_method_anyway(entity:Entity, conn: TcpConnection, request:RpcRequest, response:RpcResponse, method):
     try:
-        entity.load_from_db()
+        entity.on_active()
     except Exception as e:
         logger.error("dispatch_entity_method, Entity:%s-%s, load fail, exception:%s" %
                      (request.entity_type, request.entity_id, e))
@@ -118,6 +116,7 @@ def _dispatch_entity_method_loop(entity: Entity):
 
 def _handle_player_method(request: RpcRequest, conn: TcpConnection):
     response = RpcResponse()
+    response.request_id = request.request_id
     logger.info("handle player method, Player:%s, Method:%s" % (request.entity_id, request.method))
     if request.method not in _global_player_method:
         (response.error_code, response.response) = (ERROR_CODE_METHOD_NOT_FOUND, None)
@@ -140,7 +139,7 @@ def _handle_player_method(request: RpcRequest, conn: TcpConnection):
     player.context().SendMessage((conn, request, response, method))
 
 
-def _rpc_message_dispatcher(conn: TcpConnection, msg):
+def rpc_message_dispatcher(conn: TcpConnection, msg):
     if isinstance(msg, RpcRequest):
         _dispatch_request(conn, msg)
         pass
@@ -186,14 +185,14 @@ class RpcServer(TcpServer):
     def _init_machine_info(self):
         self.machine_info = MachineInfo(self.server_id)
         self.machine_info.unique_id = GetServerUniqueID()
-        self.etcd = EtcdClient(host="119.27.187.221", port=2379)
+        self.etcd = EtcdHelper(host="119.27.187.221", port=2379)
 
     def _init_logger(self):
         logging.config.dictConfig(LOGGING_CONFIG_DEFAULTS)
 
     def listen_port(self, port):
         logger.info("listen port:%s" % port)
-        self.listen(port, RpcCodec(), _rpc_message_dispatcher)
+        self.listen(port, RpcCodec(), rpc_message_dispatcher)
         if self.machine_info.address is None:
             self.machine_info.address = (GetHostIp(), port)
 
@@ -208,13 +207,10 @@ class RpcServer(TcpServer):
             return client
         return self.client_pool[key]
 
-    def create_task(self, co):
-        gevent.spawn(lambda: co)
-
     def run(self):
         _position_manager.set_etcd(self.etcd)
-        self.create_task(UpdateMachineMemberInfo(self.machine_info, self.etcd))
-        self.create_task(GetMembersInfo(self.etcd))
+        gevent.spawn(lambda: UpdateMachineMemberInfo(self.machine_info, self.etcd))
+        gevent.spawn(lambda: GetMembersInfo(self.etcd))
 
         while True:
             gevent.sleep(1.0)

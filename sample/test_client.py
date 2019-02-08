@@ -1,21 +1,22 @@
 from sample.player import *
 import gevent
+from rpc.rpc_proxy import RpcProxyObject
 
 s = "fdsljflkdsfjh;lsdahgds;ghfd;lgkj;fdlkgjs'gjf"
 
 Counter = 1
 
-async def bench():
-    proxy = RpcProxyObject(TestPlayer, ENTITY_TYPE_PLAYER, random.randint(1, 100), RpcContext.GetEmpty())
+def bench():
+    proxy = RpcProxyObject(TestPlayer, RPC_ENTITY_TYPE_PLAYER, random.randint(1, 100), RpcContext.GetEmpty())
     while True:
         try:
-            await proxy.say(s[0: random.randint(1, len(s))])
+            proxy.say(s[0: random.randint(1, len(s))])
         except Exception as e:
             print(e)
         global Counter
         Counter += 1
 
-async def print_counter():
+def print_counter():
     while True:
         gevent.sleep(1)
         global Counter
@@ -23,11 +24,12 @@ async def print_counter():
         print("%sw/s" % (c / 10000))
         Counter -= c
 
-server = RpcServer(1002)
 
-server.create_task(print_counter())
+gevent.spawn(lambda: print_counter())
 
-for x in  range(32):
-    server.create_task(bench())
+for x in range(32):
+    gevent.spawn(lambda: bench())
 
-server.run()
+if __name__ == "__main__":
+    server = RpcServer(1002)
+    server.run()

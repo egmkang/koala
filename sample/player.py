@@ -1,7 +1,6 @@
 from rpc.rpc_server import *
 from entity.player import *
 from entity.player_manager import *
-from rpc.rpc_proxy import RpcProxyObject
 import gevent
 
 player_manager = PlayerManager()
@@ -11,8 +10,11 @@ class TestPlayer(Player):
         super().__init__(uid)
         pass
 
-    def load_from_db(self):
+    def on_active(self):
         gevent.sleep(0)
+        pass
+
+    def on_deactive(self):
         pass
 
     @player_rpc_method

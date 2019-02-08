@@ -1,4 +1,5 @@
 import gevent
+import socket
 from gevent.queue import Queue
 from .codec import Codec
 from utils.buffer import Buffer
@@ -6,8 +7,8 @@ from utils.log import logger
 
 
 class TcpConnection(object):
-    def __init__(self, socket: gevent.socket.socket, codec: Codec, processor):
-        self._socket = socket
+    def __init__(self, sock: socket.socket, codec: Codec, processor):
+        self._socket = sock
         self._codec = codec
         self._processor = processor
         self._buffer = Buffer()

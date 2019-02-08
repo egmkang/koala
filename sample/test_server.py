@@ -1,6 +1,16 @@
-from sample.player import *
-import gevent
+import sys
+sys.path.append("..")
 
+import gevent
+from gevent.monkey import patch_all
+patch_all()
+
+from sample.player import TestPlayer, player_manager
+from rpc.rpc_proxy import RpcProxyObject
+from entity.entity import RpcContext
+from rpc.rpc_server import rpc_method, RpcServer
+from rpc.rpc_constant import RPC_ENTITY_TYPE_PLAYER
+from utils.log import logger
 
 @rpc_method
 def say_hello_to_player(uid: int, name: str):
@@ -11,14 +21,15 @@ def say_hello_to_player(uid: int, name: str):
 
 def test_task():
     gevent.sleep(18)
-    proxy = RpcProxyObject(TestPlayer, ENTITY_TYPE_PLAYER, 123, RpcContext.GetEmpty())
+    proxy = RpcProxyObject(TestPlayer, RPC_ENTITY_TYPE_PLAYER, 123, RpcContext.GetEmpty())
     response = proxy.say('lilith')
-    logger.info("await proxy.say('lilith') => %s" % (response))
+    logger.info("proxy.say('lilith') => %s" % (response))
 
 
-server = RpcServer(1001)
+if __name__ == "__main__":
+    server = RpcServer(1001)
 
-server.listen_port(18888)
+    server.listen_port(18888)
 
-server.create_task(test_task())
-server.run()
+    gevent.spawn(lambda: test_task())
+    server.run()
