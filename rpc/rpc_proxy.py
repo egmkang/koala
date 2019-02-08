@@ -4,7 +4,7 @@ from .rpc_server import RpcServer
 from utils.log import logger
 from utils.cls_method_cache import ClassMethodCache, MethodNotFoundException
 from entity.entity import RpcContext
-from entity.proxy_factory import register_proxy_object_type
+from entity.proxy_factory import proxy_object_type
 
 _cls_method_cache = ClassMethodCache()
 
@@ -55,6 +55,7 @@ class RpcProxyMethod:
             raise RpcPositionNotFound()
 
 
+@proxy_object_type
 class RpcProxyObject:
     def __init__(self, cls, _type, id, context: RpcContext):
         self.entity_type = _type
@@ -76,5 +77,3 @@ class RpcProxyObject:
         self.last_call_time = time.time()
         return self.method_cache[name]
 
-
-register_proxy_object_type(RpcProxyObject)

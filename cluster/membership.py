@@ -63,9 +63,8 @@ class MemberShipManager:
     def random_machine(self):
         # 这边要把刚加入到集群中时间太短的节点过滤掉
         current_time = int(time.time()) - START_TIME
-        machines:[MachineInfo] = list(self._members.values())
-        count = [machine.player_count for machine in machines
-                    if machine.create_time < current_time]
+        machines: [MachineInfo] = list(self._members.values())
+        count = [machine.player_count for machine in machines if machine.create_time < current_time]
         max_count = max(count) + 100
         count = [max_count - c for c in count]
         total_count = sum(count)
@@ -102,7 +101,7 @@ def set_player_count(new_count: int):
     player_count = new_count
 
 
-def update_machine_member_info(info:MachineInfo, etcd: EtcdHelper):
+def update_machine_member_info(info: MachineInfo, etcd: EtcdHelper):
     global _last_update_time, player_count
     _last_update_time = time.time()
     gevent.spawn(lambda: _check_update_time())

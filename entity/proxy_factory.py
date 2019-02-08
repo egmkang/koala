@@ -1,7 +1,7 @@
 _proxy_object_type = None
 
 
-def register_proxy_object_type(class_):
+def proxy_object_type(class_):
     global _proxy_object_type
     _proxy_object_type = class_
     return class_

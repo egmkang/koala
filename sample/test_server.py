@@ -8,9 +8,9 @@ sys.path.append("..")
 from sample.player import TestPlayer
 from sample.entity_type import ENTITY_TYPE_PLAYER
 from rpc.rpc_proxy import RpcProxyObject
-from entity.entity import RpcContext
 from rpc.rpc_server import RpcServer
 from rpc.rpc_method import rpc_method
+from entity.entity import RpcContext
 from entity.entity_manager import *
 from utils.log import logger
 
