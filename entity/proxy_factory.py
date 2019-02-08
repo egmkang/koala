@@ -1,12 +1,12 @@
-_fn = None
+_proxy_object_type = None
 
 
-def set_proxy_factory(f):
-    global _fn
-    if _fn is None:
-        _fn = f
+def register_proxy_object_type(class_):
+    global _proxy_object_type
+    _proxy_object_type = class_
+    return class_
 
 
 def new_proxy_object(*args):
-    global _fn
-    return _fn(*args)
+    global _proxy_object_type
+    return _proxy_object_type(*args)

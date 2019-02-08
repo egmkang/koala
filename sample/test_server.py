@@ -5,17 +5,22 @@ patch_all()
 import sys
 sys.path.append("..")
 
-from sample.player import TestPlayer, player_manager
+from sample.player import TestPlayer
+from sample.entity_type import ENTITY_TYPE_PLAYER
 from rpc.rpc_proxy import RpcProxyObject
 from entity.entity import RpcContext
-from rpc.rpc_server import rpc_method, RpcServer
-from rpc.rpc_constant import RPC_ENTITY_TYPE_PLAYER
+from rpc.rpc_server import RpcServer
+from rpc.rpc_method import rpc_method
+from entity.entity_manager import *
 from utils.log import logger
 
 
-@rpc_method
+manager: EntityManager = get_entity_manager(ENTITY_TYPE_PLAYER)
+
+
+@rpc_method()
 def say_hello_to_player(uid: int, name: str):
-    player = player_manager.get_player(uid)
+    player = manager.get_entity(uid)
     if player is not None:
          return player.say(name)
     return None
@@ -23,7 +28,7 @@ def say_hello_to_player(uid: int, name: str):
 
 def test_task():
     gevent.sleep(18)
-    proxy = RpcProxyObject(TestPlayer, RPC_ENTITY_TYPE_PLAYER, 123, RpcContext.empty())
+    proxy = RpcProxyObject(TestPlayer, ENTITY_TYPE_PLAYER, 123, RpcContext.empty())
     response = proxy.say('lilith')
     logger.info("proxy.say('lilith') => %s" % (response))
 

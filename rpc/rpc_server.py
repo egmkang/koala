@@ -1,10 +1,11 @@
 from .rpc_codec import RpcRequest, RpcResponse, InitIDGenerator, RpcCodec
 from .rpc_client import RpcClient
 from .rpc_constant import *
+from .rpc_method import get_rpc_method
 from net.tcp_server import TcpServer
 from net.tcp_connection import TcpConnection
 from cluster.entity_position import *
-from entity.player_manager import *
+from entity.entity_manager import *
 from utils.singleton import Singleton
 from utils.log import *
 from utils.future import get_future
@@ -16,30 +17,12 @@ import uuid
 import gevent
 
 
-_global_method = dict()
-_global_player_method = dict()
-_player_manager = PlayerManager()
 _position_manager = EntityPositionCache()
 
 
-def rpc_method(fn):
-    global _global_method
-    name = fn.__name__
-    _global_method[name] = fn
-    return fn
-
-
-def player_rpc_method(fn):
-    global _global_player_method
-    name = fn.__name__
-    _global_player_method[name] = fn
-    return fn
-
-
-def _call_global_method(conn: TcpConnection, request: RpcRequest, response: RpcResponse):
-    method = _global_method[request.method]
+def _call_global_method(conn: TcpConnection, fn, request: RpcRequest, response: RpcResponse):
     try:
-        result = method.__call__(*request.args, **request.kwargs)
+        result = fn.__call__(*request.args, **request.kwargs)
         # TODO: 看看这边是不是需要支持future
         (response.error_code, response.response) = (ERROR_CODE_SUCCESS, result)
     except Exception as e:
@@ -53,23 +36,24 @@ def _handle_global_method(request: RpcRequest, conn: TcpConnection):
     response = RpcResponse()
     response.request_id = request.request_id
 
-    if request.method not in _global_method:
+    fn = get_rpc_method(request.entity_type, request.method)
+    if fn is None:
         response.error_code = ERROR_CODE_METHOD_NOT_FOUND
         response.response = None
         conn.send_message(response)
         return
 
-    gevent.spawn(lambda: _call_global_method(conn, request, response))
+    gevent.spawn(lambda: _call_global_method(conn, fn, request, response))
 
 
-#返回True表示中断
+# 返回True表示中断
 def _dispatch_entity_method_anyway(entity:Entity, conn: TcpConnection, request:RpcRequest, response:RpcResponse, method):
     try:
         entity.on_active()
     except Exception as e:
         logger.error("dispatch_entity_method, Entity:%s-%s, load fail, exception:%s" %
                      (request.entity_type, request.entity_id, e))
-        (response.error_code, response.response) = (ERROR_CODE_PLAYER_LOAD, None)
+        (response.error_code, response.response) = (ERROR_CODE_ENTITY_LOAD, None)
         conn.send_message(response)
         return True
 
@@ -83,9 +67,10 @@ def _dispatch_entity_method_anyway(entity:Entity, conn: TcpConnection, request:R
                      (request.entity_type, request.request_id, request.method, e))
     return False
 
+
 def _dispatch_entity_method_loop(entity: Entity):
     context: RpcContext = entity.context()
-    if context.running != False:
+    if context.running is not False:
         return
     context.running = True
 
@@ -114,29 +99,31 @@ def _dispatch_entity_method_loop(entity: Entity):
     pass
 
 
-def _handle_player_method(request: RpcRequest, conn: TcpConnection):
+def _handle_entity_method(request: RpcRequest, conn: TcpConnection):
     response = RpcResponse()
     response.request_id = request.request_id
-    logger.info("handle player method, Player:%s, Method:%s" % (request.entity_id, request.method))
-    if request.method not in _global_player_method:
+    logger.info("handle entity method, entity:%s-%s, Method:%s" % (request.entity_type, request.entity_id, request.method))
+
+    method = get_rpc_method(request.entity_type, request.method)
+    if method is None:
         (response.error_code, response.response) = (ERROR_CODE_METHOD_NOT_FOUND, None)
         conn.send_message(response)
         return
 
-    method = _global_player_method[request.method]
-    player: Player = _player_manager.get_or_new_player(request.entity_id)
-    if player is None:
-        (response.error_code, response.response) = (ERROR_CODE_PLAYER_NOT_FOUND, None)
+    manager: EntityManager = get_entity_manager(request.entity_type)
+    entity: Entity = manager.get_or_new_entity(request.entity_id)
+    if entity is None:
+        (response.error_code, response.response) = (ERROR_CODE_ENTITY_NOT_FOUND, None)
         conn.send_message(response)
         return
 
-    if player.context().running is False:
-        gevent.spawn(lambda: _dispatch_entity_method_loop(player))
+    if entity.context().running is False:
+        gevent.spawn(lambda: _dispatch_entity_method_loop(entity))
 
-    if player.context().host == request.host and player.context().request_id <= request.request_id:
-        gevent.spawn(lambda: _dispatch_entity_method_anyway(player, conn, request, response, method))
+    if entity.context().host == request.host and entity.context().request_id <= request.request_id:
+        gevent.spawn(lambda: _dispatch_entity_method_anyway(entity, conn, request, response, method))
         return
-    player.context().send_message((conn, request, response, method))
+    entity.context().send_message((conn, request, response, method))
 
 
 def rpc_message_dispatcher(conn: TcpConnection, msg):
@@ -155,8 +142,10 @@ def rpc_message_dispatcher(conn: TcpConnection, msg):
 def _dispatch_request(conn: TcpConnection, request: RpcRequest):
     if request.entity_type == RPC_ENTITY_TYPE_GLOBAL:
         _handle_global_method(request, conn)
-    if request.entity_type == RPC_ENTITY_TYPE_PLAYER:
-        _handle_player_method(request, conn)
+    else:
+        # TODO:
+        # 这边要支持多种Actor
+        _handle_entity_method(request, conn)
 
 
 _server_unique_id = ""

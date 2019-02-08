@@ -6,7 +6,6 @@ from .etcd_helper import EtcdHelper
 from utils.singleton import Singleton
 from utils.log import logger
 from utils.ujson_codec import *
-from entity.player import ENTITY_TYPE_PLAYER
 
 
 ENTITY_PATH = '/entity/%s_%s'   # /entity/1_1010101, 这种
@@ -122,16 +121,16 @@ class EntityPositionCache:
     # 找到玩家的位置
     # 这边只负责找位置
     # 通讯需要借助其他的设施
-    def find_player_pos(self, uid: int) -> EntityPosition:
-        position = self._check_entity_pos(ENTITY_TYPE_PLAYER, uid)
+    def find_entity_pos(self, entity_type: int, uid: int) -> EntityPosition:
+        position = self._check_entity_pos(entity_type, uid)
         if position is not None:
             return position
         # 最大尝试次数
         for x in range(2):
-            position = self.generate_entity_pos(ENTITY_TYPE_PLAYER, uid)
+            position = self.generate_entity_pos(entity_type, uid)
             if position is None:
                 gevent.sleep(3.0)
         if position is None:
-            logger.error("find_player_pos, PlayerID:%s return None" % uid)
+            logger.error("find_entity_pos, Entity:%s-%s return None" % (entity_type, uid))
         return position
 

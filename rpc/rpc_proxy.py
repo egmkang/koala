@@ -4,7 +4,7 @@ from .rpc_server import RpcServer
 from utils.log import logger
 from utils.cls_method_cache import ClassMethodCache, MethodNotFoundException
 from entity.entity import RpcContext
-from entity.proxy_factory import set_proxy_factory
+from entity.proxy_factory import register_proxy_object_type
 
 _cls_method_cache = ClassMethodCache()
 
@@ -39,7 +39,7 @@ class RpcProxyMethod:
         pass
 
     def _find_client(self):
-        pos = self.position_cache.find_player_pos(self.entity_id)
+        pos = self.position_cache.find_entity_pos(self.entity_type, self.entity_id)
         if pos is None:
             raise RpcPositionNotFound()
         self.client = self.server.rpc_connect(pos.address[0], pos.address[1])
@@ -77,4 +77,4 @@ class RpcProxyObject:
         return self.method_cache[name]
 
 
-set_proxy_factory(lambda *args: RpcProxyObject(*args))
+register_proxy_object_type(RpcProxyObject)

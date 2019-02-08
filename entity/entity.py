@@ -1,37 +1,14 @@
 from datetime import datetime
 from abc import ABCMeta, abstractmethod
 from utils.log import logger
-from gevent.queue import Queue
 from .proxy_factory import new_proxy_object
-
-
-_empty_context = None
-
-
-class RpcContext(object):
-    def __init__(self):
-        self.host = ""
-        self.request_id = 0
-        self.queue = Queue()
-        self.running = False
-
-    def send_message(self, obj):
-        self.queue.put(obj)
-
-    @staticmethod
-    def empty():
-        global _empty_context
-        if _empty_context is None:
-            _empty_context = RpcContext()
-            _empty_context.host = None
-            _empty_context.request_id = None
-        return _empty_context
+from .rpc_context import RpcContext
 
 
 class Entity(object):
     __metaclass__ = ABCMeta
 
-    def __init__(self, entity_type, uid:int):
+    def __init__(self, entity_type: int, uid: int):
         self._uid = uid
         self._entity_type = entity_type
         self._create_time = datetime.now()
@@ -56,6 +33,7 @@ class Entity(object):
         return self._context
 
     # 获取远程对象的代理
+    # 用户需要在这个函数上面封装一层
     def get_object_proxy(self, cls, _type, _uid):
         if (_type, _uid) not in self._rpc_proxy_object_cache:
             self._rpc_proxy_object_cache[(_type, _uid)] = new_proxy_object(cls, _type, _uid, self.context())

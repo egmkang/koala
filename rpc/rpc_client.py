@@ -1,5 +1,6 @@
 import socket
 import gevent
+from gevent.event import AsyncResult
 from .rpc_codec import *
 from net.tcp_connection import TcpConnection
 from utils.log import logger

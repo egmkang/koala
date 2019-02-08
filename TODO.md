@@ -3,7 +3,7 @@ TODO:
 v0.2
 
 * [x] gevent
-* [ ] entity type manager
+* [x] entity type manager
 * [ ] package dependency
 * [ ] a complete sample
 * [ ] actor lifetime
