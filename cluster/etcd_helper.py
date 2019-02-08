@@ -1,7 +1,5 @@
 import etcd3
 from utils.singleton import Singleton
-from contextlib import contextmanager
-
 
 @Singleton
 class EtcdHelper:

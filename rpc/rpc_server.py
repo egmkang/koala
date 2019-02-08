@@ -1,13 +1,13 @@
 from .rpc_codec import RpcRequest, RpcResponse, InitIDGenerator, RpcCodec
 from .rpc_client import RpcClient
 from .rpc_constant import *
-from .rpc_future import GetFuture
 from net.tcp_server import TcpServer
 from net.tcp_connection import TcpConnection
 from cluster.entity_position import *
 from entity.player_manager import *
 from utils.singleton import Singleton
 from utils.log import *
+from utils.future import get_future
 from utils.local_ip import GetHostIp
 from entity.entity import *
 import logging
@@ -136,7 +136,7 @@ def _handle_player_method(request: RpcRequest, conn: TcpConnection):
     if player.context().host == request.host and player.context().request_id <= request.request_id:
         gevent.spawn(lambda: _dispatch_entity_method_anyway(player, conn, request, response, method))
         return
-    player.context().SendMessage((conn, request, response, method))
+    player.context().send_message((conn, request, response, method))
 
 
 def rpc_message_dispatcher(conn: TcpConnection, msg):
@@ -144,8 +144,7 @@ def rpc_message_dispatcher(conn: TcpConnection, msg):
         _dispatch_request(conn, msg)
         pass
     else:
-        # TODO: using gevent future
-        future = GetFuture(msg.request_id)
+        future = get_future(msg.request_id)
         if future is None:
             logger.error("dispatch rpc response: %s, future not found" % (msg.request_id))
             return
@@ -209,8 +208,8 @@ class RpcServer(TcpServer):
 
     def run(self):
         _position_manager.set_etcd(self.etcd)
-        gevent.spawn(lambda: UpdateMachineMemberInfo(self.machine_info, self.etcd))
-        gevent.spawn(lambda: GetMembersInfo(self.etcd))
+        gevent.spawn(lambda: update_machine_member_info(self.machine_info, self.etcd))
+        gevent.spawn(lambda: get_members_info(self.etcd))
 
         while True:
             gevent.sleep(1.0)

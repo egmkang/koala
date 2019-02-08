@@ -2,10 +2,11 @@ from datetime import datetime
 from abc import ABCMeta, abstractmethod
 from utils.log import logger
 from gevent.queue import Queue
-from .proxy_factory import NewProxyObject
+from .proxy_factory import new_proxy_object
 
 
 _empty_context = None
+
 
 class RpcContext(object):
     def __init__(self):
@@ -14,12 +15,11 @@ class RpcContext(object):
         self.queue = Queue()
         self.running = False
 
-    def SendMessage(self, obj):
+    def send_message(self, obj):
         self.queue.put(obj)
 
-
     @staticmethod
-    def GetEmpty():
+    def empty():
         global _empty_context
         if _empty_context is None:
             _empty_context = RpcContext()
@@ -55,10 +55,10 @@ class Entity(object):
     def context(self) -> RpcContext:
         return self._context
 
-    #获取远程对象的代理
+    # 获取远程对象的代理
     def get_object_proxy(self, cls, _type, _uid):
         if (_type, _uid) not in self._rpc_proxy_object_cache:
-            self._rpc_proxy_object_cache[(_type, _uid)] = NewProxyObject(cls, _type, _uid, self.context())
+            self._rpc_proxy_object_cache[(_type, _uid)] = new_proxy_object(cls, _type, _uid, self.context())
         return self._rpc_proxy_object_cache[(_type, _uid)]
 
     @abstractmethod

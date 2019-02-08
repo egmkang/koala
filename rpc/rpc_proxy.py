@@ -4,7 +4,7 @@ from .rpc_server import RpcServer
 from utils.log import logger
 from utils.cls_method_cache import ClassMethodCache, MethodNotFoundException
 from entity.entity import RpcContext
-from entity.proxy_factory import SetProxyFactory
+from entity.proxy_factory import set_proxy_factory
 
 _cls_method_cache = ClassMethodCache()
 
@@ -29,7 +29,7 @@ class RpcProxyMethod:
         self.context = context
 
         if self.context is None:
-            self.context = RpcContext.GetEmpty()
+            self.context = RpcContext.empty()
 
         from cluster.entity_position import EntityPositionCache
 
@@ -77,4 +77,4 @@ class RpcProxyObject:
         return self.method_cache[name]
 
 
-SetProxyFactory(lambda *args: RpcProxyObject(*args))
+set_proxy_factory(lambda *args: RpcProxyObject(*args))

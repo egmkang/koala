@@ -19,7 +19,7 @@ class PlayerManager:
 
     def get_or_new_player(self, uid):
         player = self.get_player(uid)
-        if player == None:
+        if player is None:
             player = self.player_factory(uid)
             self._add_player(player)
         return player
@@ -37,5 +37,5 @@ class PlayerManager:
         return len(self._players)
 
     def map(self, fn):
-        for k,v in self._players:
+        for k, v in self._players:
             fn(k, v)

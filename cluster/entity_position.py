@@ -5,11 +5,11 @@ from .membership import *
 from .etcd_helper import EtcdHelper
 from utils.singleton import Singleton
 from utils.log import logger
-from entity.entity_type import *
 from utils.ujson_codec import *
+from entity.player import ENTITY_TYPE_PLAYER
 
 
-ENTITY_PATH = '/entity/%s_%s'   #/entity/1_1010101, 这种
+ENTITY_PATH = '/entity/%s_%s'   # /entity/1_1010101, 这种
 ENTITY_LOCK_NAME = '%s_%s'
 
 
@@ -34,6 +34,7 @@ class EntityPositionCache:
     def __init__(self):
         self._cache = dict()
         self._membership = MemberShipManager()
+        self._etcd = None
 
     def set_etcd(self, etcd: EtcdHelper):
         self._etcd = etcd
@@ -76,7 +77,6 @@ class EntityPositionCache:
         except Exception as e:
             logger.error("fetch_entity_pos_from_etcd, exception:%s" % e)
 
-
     # 先从缓存种获取机器
     # 否则从etcd里面获取机器
     # 并判断Pos的机器有没有失效
@@ -104,7 +104,7 @@ class EntityPositionCache:
     # 从现在的机器列表里面
     # 按照权重随机一个机器出来
     # 把这个玩家安置到这个机器里面(写入etcd和本地缓存)
-    def generate_entity_pos(self, entity_type:int, entity_id: int) -> EntityPosition:
+    def generate_entity_pos(self, entity_type: int, entity_id: int) -> EntityPosition:
         lock_name = ENTITY_LOCK_NAME % (entity_type, entity_id)
         try:
             with self._etcd.get_lock(lock_name, ttl=10):
@@ -126,7 +126,7 @@ class EntityPositionCache:
         position = self._check_entity_pos(ENTITY_TYPE_PLAYER, uid)
         if position is not None:
             return position
-        #最大尝试次数
+        # 最大尝试次数
         for x in range(2):
             position = self.generate_entity_pos(ENTITY_TYPE_PLAYER, uid)
             if position is None:

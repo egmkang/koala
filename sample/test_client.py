@@ -6,8 +6,9 @@ s = "fdsljflkdsfjh;lsdahgds;ghfd;lgkj;fdlkgjs'gjf"
 
 Counter = 1
 
+
 def bench():
-    proxy = RpcProxyObject(TestPlayer, RPC_ENTITY_TYPE_PLAYER, random.randint(1, 100), RpcContext.GetEmpty())
+    proxy = RpcProxyObject(TestPlayer, RPC_ENTITY_TYPE_PLAYER, random.randint(1, 100), RpcContext.empty())
     while True:
         try:
             proxy.say(s[0: random.randint(1, len(s))])
@@ -15,6 +16,7 @@ def bench():
             print(e)
         global Counter
         Counter += 1
+
 
 def print_counter():
     while True:

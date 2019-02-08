@@ -6,6 +6,7 @@ from net.tcp_connection import TcpConnection
 from net.tcp_server import TcpServer
 from utils.buffer import Buffer
 
+
 class EchoCodec(Codec):
     def __init__(self):
         super().__init__()
@@ -16,11 +17,13 @@ class EchoCodec(Codec):
         pass
 
     def decode(self, buffer: Buffer, conn):
-        if buffer.readable_length() == 0: return None
+        if buffer.readable_length() == 0:
+            return None
         msg = buffer.slice(0).decode()
         buffer.has_read(buffer.readable_length())
         return msg
         pass
+
 
 def echo_message_handler(conn : TcpConnection, msg):
     print(msg)
@@ -28,7 +31,9 @@ def echo_message_handler(conn : TcpConnection, msg):
     pass
 
 
-server = TcpServer()
-server.listen(18888, EchoCodec(), echo_message_handler)
+if __name__ == "__main__":
+    server = TcpServer()
+    server.listen(18888, EchoCodec(), echo_message_handler)
 
-server.run()
+    server.run()
+

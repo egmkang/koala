@@ -10,7 +10,7 @@ from utils.ujson_codec import *
 SYNC_MEMBER_TIME = 5    # 同步membership的时间
 SYNC_TIMEOUT = 15       # 超时时间, 超过时间服务器会自动退出
 MEMBER_TTL = 15         # member存活的时间
-START_TIME = 15          # 刚启动的机器不能加入到集群
+START_TIME = 15         # 刚启动的机器不能加入到集群
 
 
 class MachineInfo:
@@ -21,7 +21,7 @@ class MachineInfo:
         self.player_count = 0               #玩家数量
         self.update_time = int(time.time()) #更新的时间
         self.address = None                 #本机Server的IP+Port
-        if server_id != None:
+        if server_id is not None:
             self.server_id = server_id
 
 @Singleton
@@ -93,14 +93,16 @@ def _check_update_time():
             return
         gevent.sleep(SYNC_MEMBER_TIME)
 
+
 player_count = 0
 
-def SetPlayerCount(new_count: int):
+
+def set_player_count(new_count: int):
     global player_count
     player_count = new_count
 
 
-def UpdateMachineMemberInfo(info:MachineInfo, etcd: EtcdHelper):
+def update_machine_member_info(info:MachineInfo, etcd: EtcdHelper):
     global _last_update_time, player_count
     _last_update_time = time.time()
     gevent.spawn(lambda: _check_update_time())
@@ -126,7 +128,7 @@ def _update_member_ship(member_ship: MemberShipManager, result):
 
 
 # 这边没有删除超时的节点
-def GetMembersInfo(etcd: EtcdHelper):
+def get_members_info(etcd: EtcdHelper):
     member_ship = MemberShipManager()
     while True:
         try:

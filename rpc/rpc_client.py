@@ -1,9 +1,9 @@
 import socket
 import gevent
 from .rpc_codec import *
-from .rpc_future import *
 from net.tcp_connection import TcpConnection
 from utils.log import logger
+from utils.future import add_future
 
 
 class RpcClient:
@@ -69,7 +69,8 @@ class RpcClient:
         self._conn.send_message(request)
 
         future = AsyncResult()
-        AddFuture(request, future)
+
+        add_future(request.request_id, future)
 
         future.wait(5)
 

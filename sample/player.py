@@ -1,9 +1,9 @@
 from rpc.rpc_server import *
-from entity.player import *
 from entity.player_manager import *
 import gevent
 
 player_manager = PlayerManager()
+
 
 class TestPlayer(Player):
     def __init__(self, uid:int):
@@ -23,8 +23,9 @@ class TestPlayer(Player):
         return "my name is %s, your is %s" % (self.get_uid(), name)
 
 
-def PlayerFactory(uid: int):
+def player_factory(uid: int):
     player = TestPlayer(uid)
     return player
 
-player_manager.player_factory = PlayerFactory
+
+player_manager.player_factory = player_factory

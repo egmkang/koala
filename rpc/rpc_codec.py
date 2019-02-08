@@ -6,9 +6,11 @@ from utils.buffer import Buffer
 
 _global_id_generator: IdGenerator = None
 
+
 def InitIDGenerator(server_id):
     global _global_id_generator
     _global_id_generator = IdGenerator(server_id)
+
 
 class RpcRequest:
     def __init__(self):
@@ -16,7 +18,7 @@ class RpcRequest:
 
     def clear(self):
         self.host = ""
-        if _global_id_generator != None:
+        if _global_id_generator is not None:
             self.request_id = _global_id_generator.NextId()
         else:
             self.request_id = 0
@@ -39,14 +41,16 @@ class RpcResponse:
         self.response = []
 
 
-def CodecEncode(obj):
+def codec_encode(obj):
     data = pickle.dumps(obj, pickle.HIGHEST_PROTOCOL)
     length = int(len(data)).to_bytes(RPC_HEADER_LEN, 'little')
     return length + data
 
-def CodecDecode(data:bytes):
+
+def codec_decode(data: bytes):
     obj = pickle.loads(data)
     return obj
+
 
 class RpcCodec(Codec):
     def __init__(self):
@@ -63,11 +67,11 @@ class RpcCodec(Codec):
             return None
         data = buffer.slice(need_length)[RPC_HEADER_LEN:]
         buffer.has_read(need_length)
-        return CodecDecode(data)
+        return codec_decode(data)
 
     # (msg, conn) => bytes
     def encode(self, msg, conn) -> bytes:
-        return CodecEncode(msg)
+        return codec_encode(msg)
 
 
 def test_rpc_request_encode():
@@ -79,8 +83,9 @@ def test_rpc_request_encode():
     obj.request_id = 232323
     obj.args = (1, "1212")
 
-    data = CodecEncode(obj)
+    data = codec_encode(obj)
     print(data)
 
 
-#test_rpc_request_encode()
+if __name__ == "__main__":
+    test_rpc_request_encode()
