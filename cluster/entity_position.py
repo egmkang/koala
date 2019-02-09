@@ -71,7 +71,7 @@ class EntityPositionCache:
             result = self._etcd.get(path)
             if result is None:
                 return None
-            info = CodeUjsonDecode(result.decode(), EntityPosition)
+            info = codec_ujson_decode(result.decode(), EntityPosition)
             return info
         except Exception as e:
             logger.error("fetch_entity_pos_from_etcd, exception:%s" % e)
@@ -96,7 +96,7 @@ class EntityPositionCache:
         path = ENTITY_PATH % (pos.entity_type, pos.entity_id)
         self._add_entity_info(pos)
         try:
-            self._etcd.put(path, CodecUjsonEncode(pos))
+            self._etcd.put(path, codec_ujson_encode(pos))
         except Exception as e:
             logger.error("write_entity_pos, Entity:(%s,%s), exception:%s" % (pos.entity_type, pos.entity_id, e))
 

@@ -1,7 +1,7 @@
 
 class Buffer:
     def __init__(self):
-        self._buffer = bytearray(2 * 1024)
+        self._buffer = bytearray(4 * 1024)
         self._read = 0
         self._write = 0
 

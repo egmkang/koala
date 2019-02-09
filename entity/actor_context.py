@@ -3,7 +3,7 @@ from gevent.queue import Queue
 _empty_context = None
 
 
-class RpcContext(object):
+class ActorContext(object):
     def __init__(self):
         self.host = ""
         self.request_id = 0
@@ -17,7 +17,7 @@ class RpcContext(object):
     def empty():
         global _empty_context
         if _empty_context is None:
-            _empty_context = RpcContext()
+            _empty_context = ActorContext()
             _empty_context.host = None
             _empty_context.request_id = None
         return _empty_context

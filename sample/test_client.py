@@ -9,7 +9,7 @@ Counter = 1
 
 
 def bench():
-    proxy = RpcProxyObject(TestPlayer, ENTITY_TYPE_PLAYER, random.randint(1, 100), RpcContext.empty())
+    proxy = RpcProxyObject(TestPlayer, ENTITY_TYPE_PLAYER, random.randint(1, 100), ActorContext.empty())
     while True:
         try:
             proxy.say(s[0: random.randint(1, len(s))])

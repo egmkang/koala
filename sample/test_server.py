@@ -10,7 +10,7 @@ from sample.entity_type import ENTITY_TYPE_PLAYER
 from rpc.rpc_proxy import RpcProxyObject
 from rpc.rpc_server import RpcServer
 from rpc.rpc_method import rpc_method
-from entity.entity import RpcContext
+from entity.entity import ActorContext
 from entity.entity_manager import *
 from utils.log import logger
 
@@ -28,7 +28,7 @@ def say_hello_to_player(uid: int, name: str):
 
 def test_task():
     gevent.sleep(18)
-    proxy = RpcProxyObject(TestPlayer, ENTITY_TYPE_PLAYER, 123, RpcContext.empty())
+    proxy = RpcProxyObject(TestPlayer, ENTITY_TYPE_PLAYER, 123, ActorContext.empty())
     response = proxy.say('lilith')
     logger.info("proxy.say('lilith') => %s" % (response))
 

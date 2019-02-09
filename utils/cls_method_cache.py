@@ -1,5 +1,6 @@
 from .singleton import Singleton
 
+
 @Singleton
 class ClassMethodCache:
     def __init__(self):

@@ -40,4 +40,3 @@ LOGGING_CONFIG_DEFAULTS = dict(
 )
 
 logger = logging.getLogger("root")
-access_log = logging.getLogger("access")

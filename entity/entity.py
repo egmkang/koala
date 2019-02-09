@@ -2,7 +2,7 @@ from datetime import datetime
 from abc import ABCMeta, abstractmethod
 from utils.log import logger
 from .proxy_factory import new_proxy_object
-from .rpc_context import RpcContext
+from .actor_context import ActorContext
 
 
 class Entity(object):
@@ -12,7 +12,7 @@ class Entity(object):
         self._uid = uid
         self._entity_type = entity_type
         self._create_time = datetime.now()
-        self._context = RpcContext()
+        self._context = ActorContext()
 
         self._rpc_proxy_object_cache = dict()
         logger.info("create entity:(%d,%d)" % (entity_type, uid))
@@ -29,7 +29,7 @@ class Entity(object):
     def get_create_time(self):
         return self._create_time
 
-    def context(self) -> RpcContext:
+    def context(self) -> ActorContext:
         return self._context
 
     # 获取远程对象的代理

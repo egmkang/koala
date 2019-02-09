@@ -9,11 +9,11 @@ from entity.entity_manager import *
 from utils.singleton import Singleton
 from utils.log import *
 from utils.future import get_future
-from utils.local_ip import GetHostIp
+from utils.local_ip import get_host_ip
+from utils.server_unique_id import get_server_unique_id
 from entity.entity import *
 import logging
 import logging.config
-import uuid
 import gevent
 
 
@@ -69,7 +69,7 @@ def _dispatch_entity_method_anyway(entity:Entity, conn: TcpConnection, request:R
 
 
 def _dispatch_entity_method_loop(entity: Entity):
-    context: RpcContext = entity.context()
+    context: ActorContext = entity.context()
     if context.running is not False:
         return
     context.running = True
@@ -148,16 +148,6 @@ def _dispatch_request(conn: TcpConnection, request: RpcRequest):
         _handle_entity_method(request, conn)
 
 
-_server_unique_id = ""
-
-
-def GetServerUniqueID():
-    global _server_unique_id
-    if len(_server_unique_id) <= 0:
-        _server_unique_id = str(uuid.uuid4())
-    return _server_unique_id
-
-
 @Singleton
 class RpcServer(TcpServer):
     def __init__(self, server_id):
@@ -168,11 +158,11 @@ class RpcServer(TcpServer):
         self._init_logger()
         self._init_machine_info()
         logger.info("ServerID:%d init" % server_id)
-        logger.info("ServerUniqueID:%s init" % GetServerUniqueID())
+        logger.info("ServerUniqueID:%s init" % get_server_unique_id())
 
     def _init_machine_info(self):
         self.machine_info = MachineInfo(self.server_id)
-        self.machine_info.unique_id = GetServerUniqueID()
+        self.machine_info.unique_id = get_server_unique_id()
         self.etcd = EtcdHelper(host="119.27.187.221", port=2379)
 
     def _init_logger(self):
@@ -182,11 +172,8 @@ class RpcServer(TcpServer):
         logger.info("listen port:%s" % port)
         self.listen(port, RpcCodec(), rpc_message_dispatcher)
         if self.machine_info.address is None:
-            self.machine_info.address = (GetHostIp(), port)
+            self.machine_info.address = (get_host_ip(), port)
 
-    # TODO:
-    # 需要有机制删除RpcConnection
-    # 用Gevent重写
     def rpc_connect(self, host, port):
         key = (host, port)
         if key not in self.client_pool:
@@ -195,10 +182,34 @@ class RpcServer(TcpServer):
             return client
         return self.client_pool[key]
 
+    def _rpc_connection_gc_once(self):
+        current_time = time.time() - 60
+        try:
+            gc_list = list()
+            for (key, client) in self.client_pool.items():
+                if client.last_active_time < current_time:
+                    gc_list.append((key, client))
+
+            for (key, client) in gc_list:
+                logger.info("rpc_connection_gc_once, Client:%s", key)
+                del self.client_pool[key]
+                client.close()
+        except Exception as e:
+            logger.error("rpc_connection_gc_once, exception:%s" % e)
+        pass
+
+    def rpc_connection_gc(self):
+        while True:
+            # 需要把不存活的链接干掉
+            gevent.sleep(60.0)
+            self._rpc_connection_gc_once()
+        pass
+
     def run(self):
         _position_manager.set_etcd(self.etcd)
         gevent.spawn(lambda: update_machine_member_info(self.machine_info, self.etcd))
         gevent.spawn(lambda: get_members_info(self.etcd))
+        gevent.spawn(lambda: self.rpc_connection_gc())
 
         while True:
             gevent.sleep(1.0)

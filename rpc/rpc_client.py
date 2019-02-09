@@ -1,10 +1,19 @@
 import socket
 import gevent
 from gevent.event import AsyncResult
+import time
 from .rpc_codec import *
+from .rpc_method import rpc_method
+from .rpc_proxy import RpcProxyMethod
 from net.tcp_connection import TcpConnection
 from utils.log import logger
 from utils.future import add_future
+from utils.server_unique_id import get_server_unique_id
+
+
+@rpc_method()
+def rpc_heart_beat():
+    return 1
 
 
 class RpcClient:
@@ -12,7 +21,23 @@ class RpcClient:
         self._conn = None
         self._host = host
         self._port = port
+        self._create_time = time.time()
         self._connecting = False
+        gevent.spawn(lambda: self.send_heart_beat())
+
+    def send_heart_beat(self):
+        method = RpcProxyMethod(RPC_ENTITY_TYPE_GLOBAL, 0, "rpc_heart_beat", None)
+        method.client = self
+        while True:
+            gevent.sleep(5.0)
+            method()
+        pass
+
+    @property
+    def last_active_time(self):
+        if self._conn is not None:
+            return self._conn.last_active_time
+        return self._create_time
 
     def connect(self):
         from .rpc_server import rpc_message_dispatcher
@@ -50,13 +75,11 @@ class RpcClient:
     def send_request(self, host, request_id, entity_type, entity_id, method, *args, **kwargs):
         self.connect()
 
-        from .rpc_server import GetServerUniqueID
-
         request = RpcRequest()
         if host is not None:
             request.host = host
         else:
-            request.host = GetServerUniqueID()
+            request.host = get_server_unique_id()
 
         if request_id is not None:
             request.request_id = request_id

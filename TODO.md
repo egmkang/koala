@@ -4,6 +4,7 @@ v0.2
 
 * [x] gevent
 * [x] entity type manager
+* [x] rpc connection gc
 * [ ] package dependency
 * [ ] a complete sample
 * [ ] actor lifetime

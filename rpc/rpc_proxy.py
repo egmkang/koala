@@ -1,9 +1,8 @@
 import time
 from .rpc_client import *
-from .rpc_server import RpcServer
 from utils.log import logger
 from utils.cls_method_cache import ClassMethodCache, MethodNotFoundException
-from entity.entity import RpcContext
+from entity.entity import ActorContext
 from entity.proxy_factory import proxy_object_type
 
 _cls_method_cache = ClassMethodCache()
@@ -22,16 +21,17 @@ class RpcSocketError(Exception):
 
 
 class RpcProxyMethod:
-    def __init__(self, entity_type, entity_id, method_name, context: RpcContext):
+    def __init__(self, entity_type, entity_id, method_name, context: ActorContext):
         self.entity_type = entity_type
         self.entity_id = entity_id
         self.method_name = method_name
         self.context = context
 
         if self.context is None:
-            self.context = RpcContext.empty()
+            self.context = ActorContext.empty()
 
         from cluster.entity_position import EntityPositionCache
+        from .rpc_server import RpcServer
 
         self.server = RpcServer(-1)
         self.position_cache = EntityPositionCache()
@@ -48,7 +48,7 @@ class RpcProxyMethod:
         if self.client is None:
             self._find_client()
         if self.client is not None:
-            logger.info("send request, %s" % (self.method_name))
+            logger.debug("send request, %s" % (self.method_name))
             return self.client.send_request(self.context.host, self.context.request_id,
                                                   self.entity_type, self.entity_id, self.method_name, *args, **kwargs)
         else:
@@ -57,9 +57,9 @@ class RpcProxyMethod:
 
 @proxy_object_type
 class RpcProxyObject:
-    def __init__(self, cls, _type, id, context: RpcContext):
+    def __init__(self, cls, _type, uid, context: ActorContext):
         self.entity_type = _type
-        self.entity_id = id
+        self.entity_id = uid
         self.cls = cls
         self.last_call_time = time.time()
         self.method_set = _cls_method_cache.get_cls_method_set(cls)

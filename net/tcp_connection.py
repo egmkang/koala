@@ -1,5 +1,6 @@
 import gevent
 import socket
+import time
 from gevent.queue import Queue
 from .codec import Codec
 from utils.buffer import Buffer
@@ -14,7 +15,12 @@ class TcpConnection(object):
         self._buffer = Buffer()
         self._stop = False
         self._queue = Queue()
+        self._last_active_time = time.time()
         self.address = self._socket.getpeername()
+
+    @property
+    def last_active_time(self):
+        return self._last_active_time
 
     def _recv(self):
         while not self._stop:
@@ -31,6 +37,7 @@ class TcpConnection(object):
                 self._buffer.append(data)
                 continue
             self._processor(self, msg)
+            self._last_active_time = time.time()
         gevent.spawn(lambda: self.close())
         pass
 

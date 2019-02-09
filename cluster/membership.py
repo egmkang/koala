@@ -109,7 +109,7 @@ def update_machine_member_info(info: MachineInfo, etcd: EtcdHelper):
     while True:
         path = "/machine/%s" % info.unique_id
         info.player_count = player_count
-        content = CodecUjsonEncode(info).encode()
+        content = codec_ujson_encode(info).encode()
         try:
             etcd.put(path, content, MEMBER_TTL)
             _last_update_time = time.time()
@@ -120,7 +120,7 @@ def update_machine_member_info(info: MachineInfo, etcd: EtcdHelper):
 
 
 def _update_member_ship(member_ship: MemberShipManager, result):
-    infos = [CodeUjsonDecode(child[0].decode(), MachineInfo) for child in result]
+    infos = [codec_ujson_decode(child[0].decode(), MachineInfo) for child in result]
     keys = [info.unique_id for info in infos]
     member_ship.try_remove_machines(keys)
     member_ship.add_machines(infos)
