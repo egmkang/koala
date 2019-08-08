@@ -1,7 +1,15 @@
-from sample.player import *
 import gevent
+from gevent.monkey import patch_all
+patch_all()
+
+import traceback
+
+import sys
+sys.path.append("..")
+
+from sample.player import *
 from rpc.rpc_proxy import RpcProxyObject
-from .entity_type import ENTITY_TYPE_PLAYER
+from sample.entity_type import ENTITY_TYPE_PLAYER
 
 s = "fdsljflkdsfjh;lsdahgds;ghfd;lgkj;fdlkgjs'gjf"
 
@@ -15,6 +23,9 @@ def bench():
             proxy.say(s[0: random.randint(1, len(s))])
         except Exception as e:
             print(e)
+            traceback.print_exc()
+            break
+
         global Counter
         Counter += 1
 

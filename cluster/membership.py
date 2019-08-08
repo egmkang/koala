@@ -64,6 +64,7 @@ class MemberShipManager:
         # 这边要把刚加入到集群中时间太短的节点过滤掉
         current_time = int(time.time()) - START_TIME
         machines: [MachineInfo] = list(self._members.values())
+        machines = [item for item in machines if item.address is not None]
         count = [machine.player_count for machine in machines if machine.create_time < current_time]
         max_count = max(count) + 100
         count = [max_count - c for c in count]

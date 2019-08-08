@@ -30,7 +30,7 @@ def test_task():
     gevent.sleep(18)
     proxy = RpcProxyObject(TestPlayer, ENTITY_TYPE_PLAYER, 123, ActorContext.empty())
     response = proxy.say('lilith')
-    logger.info("proxy.say('lilith') => %s" % (response))
+    #logger.info("proxy.say('lilith') => %s" % (response))
 
 
 if __name__ == "__main__":

@@ -102,7 +102,7 @@ def _dispatch_entity_method_loop(entity: Entity):
 def _handle_entity_method(request: RpcRequest, conn: TcpConnection):
     response = RpcResponse()
     response.request_id = request.request_id
-    logger.info("handle entity method, entity:%s-%s, Method:%s" % (request.entity_type, request.entity_id, request.method))
+    #logger.info("handle entity method, entity:%s-%s, Method:%s" % (request.entity_type, request.entity_id, request.method))
 
     method = get_rpc_method(request.entity_type, request.method)
     if method is None:

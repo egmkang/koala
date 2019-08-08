@@ -19,7 +19,7 @@ class TestPlayer(Entity):
 
     @rpc_method(ENTITY_TYPE_PLAYER)
     def say(self, name):
-        logger.info("TestPlayer:%d, call say(%s)" % (self.get_uid(), name))
+        #logger.info("TestPlayer:%d, call say(%s)" % (self.get_uid(), name))
         return "my name is %s, your is %s" % (self.get_uid(), name)
 
 
