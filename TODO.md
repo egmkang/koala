@@ -1,17 +1,15 @@
 TODO:
 
-v0.2
+v0.2 Koala
 
-* [x] gevent
-* [x] entity type manager
-* [x] rpc connection gc
-* [ ] package dependency
-* [ ] a complete sample
-* [ ] actor lifetime
-* [ ] reload code
+* [ ] using PD
+* [ ] asyncio rewrite
+* [ ] Koala Framework
+* [ ] Sample
 
 
-v0.1 
+
+v0.1 Flash prototype
 
 * [x] RPC
     * [x] rpc codec

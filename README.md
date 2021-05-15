@@ -1,16 +1,5 @@
-This is a simple distributed system just like `Virtual Actor` (orleans), but this one is very simple and something differences between orleans:
+第一个版本是原型, 名字叫`Flash`, 实际上实现了俩版本, 一个asyncio的, 一个gevent的.
 
-* using `Distributed locks` to location one Object(`actor` or something)
-  
-  i don't know how orleans location one object.....
-* using `MySQL`/`RocksDb` to cache the object location (not finished yet)
-   
-  orleans using a DHT to cache the objects location, its hard to impl  
-* using `pickle rpc` to communicate with each other server
-   
-  cannot replace rpc and message encoding right now, so cannot cross languages (just Python3.5+)
-* using `gevent`
-* lack of a lot things
+第二个版本正在写, 打算用asyncio, 因为目前asyncio的生态感觉还可以, 没必要继续在gevent上面怼了, 而且从Python 3.10开始, Python要大力度的提升性能, 计划在4个版本提升5倍性能, 所以也不需要那native plugin来做一些费力的活, 所以还是打算原生python来做.
 
-
-This project is a Sample.
+顺便对网关和存档等做一下抽象, 看看这次能不能做的好一点.
