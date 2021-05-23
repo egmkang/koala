@@ -1,0 +1,89 @@
+from koala.meta.rpc_meta import *
+from koala.message.rpc import RpcRequest
+from koala.server.rpc_exception import *
+from koala.server.rpc_future import *
+from koala.server.actor_context import ActorContext
+from koala.server.rpc_request_id import new_request_id, new_reentrant_id
+from koala.placement.placement import PlacementInjection
+
+
+DEFAULT_RPC_TIMEOUT = 5.0
+_placement = PlacementInjection()
+
+
+def _rpc_call(unique_id: int) -> object:
+    future = AsyncResult()
+    add_future(unique_id, future)
+    result = future.get(DEFAULT_RPC_TIMEOUT)
+    return result
+
+
+class _RpcMethodObject(object):
+    def __init__(self, service_type: str, actor_id: object, method_name: str, reentrant_id: int):
+        self.service_name = service_type
+        self.actor_id = actor_id
+        self.method_name = method_name
+        self.reentrant_id = reentrant_id
+        pass
+
+    def __send_request(self, *arg, **kwargs):
+        # position
+        position = _placement.impl.find_position(self.service_name, self.actor_id)
+        if position is None:
+            raise Exception("Placement Service Not Valid")
+
+        proxy = position.proxy
+        if proxy is None:
+            raise Exception("Dest Server Not Valid, ServerUID: %d" % position.server_uid)
+
+        req = RpcRequest()
+        req.request_id = new_request_id()
+        req.service_name = self.service_name
+        req.method_name = self.method_name
+        req.actor_id = self.actor_id
+        req.reentrant_id = self.reentrant_id
+        req.args = arg
+        req.kwargs = kwargs
+        req.server_id = position.server_uid
+        proxy.send_message(req)
+        return req.request_id
+
+    def __call__(self, *args, **kwargs):
+        # 这边要检测一下位置是否发生变化
+        # 如果位置发生变化, 可以补偿一次
+        for x in range(2):
+            try:
+                request_id = self.__send_request(*args, **kwargs)
+                return _rpc_call(request_id)
+            except RpcException as e:
+                if e.code == RPC_ERROR_POSITION_CHANGED:
+                    _placement.impl.remove_position_cache(self.service_name, self.actor_id)
+                    continue
+                raise e
+
+
+class _RpcProxyObject(object):
+    def __init__(self, i_type: Type[InstanceType], uid: object, context: ActorContext):
+        self.service_name = i_type.__qualname__
+        self.uid = uid
+        self.context = None
+        if context is not None:
+            self.context = weakref.ref(context)
+        pass
+
+    def __getattr__(self, name: str):
+        reentrant_id = 0
+        ctx: Optional[ActorContext] = None
+        if self.context is not None:
+            ctx = self.context()
+        if ctx is not None:
+            reentrant_id = ctx.reentrant_id
+        else:
+            reentrant_id = new_reentrant_id()
+        method = _RpcMethodObject(self.service_name, self.uid, name, reentrant_id)
+        return method
+
+
+def get_rpc_proxy(i_type: Type[InstanceType], uid: object, context: ActorContext = None) -> InstanceType:
+    o: InstanceType = _RpcProxyObject(i_type, uid, context)
+    return o
