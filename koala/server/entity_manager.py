@@ -1,15 +1,15 @@
 from koala.typing import *
 from koala.singleton import Singleton
-from koala.meta.rpc_meta import InstanceType, get_impl_type, get_interface_type
+from koala.meta.rpc_meta import get_impl_type, get_interface_type
 from koala.server.rpc_exception import RpcException
 from koala.server.actor_base import ActorBase
 from koala.server.actor_context import ActorContext
 
 
-EntityDictType = Dict[InstanceType, Dict[object, ActorBase]]
+EntityDictType = Dict[T, Dict[object, ActorBase]]
 
 
-def _new_actor(impl_type: InstanceType, uid: object) -> ActorBase:
+def _new_actor(impl_type: T, uid: object) -> ActorBase:
     if impl_type is None:
         raise Exception("ImplType is None")
     actor: ActorBase = impl_type()
@@ -22,14 +22,14 @@ class EntityManager(object):
     def __init__(self):
         self.__dict: EntityDictType = dict()
 
-    def get_entity(self, i_type: Type[InstanceType], uid: object) -> ActorBase:
+    def get_entity(self, i_type: Type[T], uid: object) -> ActorBase:
         impl_type = get_impl_type(i_type)
         if impl_type in self.__dict:
             d = self.__dict[impl_type]
             if uid in d:
                 return d[uid]
 
-    def get_or_new(self, i_type: Type[InstanceType], uid: object) -> ActorBase:
+    def get_or_new(self, i_type: Type[T], uid: object) -> ActorBase:
         impl_type = get_impl_type(i_type)
         if impl_type not in self.__dict:
             self.__dict[impl_type] = dict()
@@ -50,7 +50,7 @@ class EntityManager(object):
     # (ActorBase) -> Bool
     # true继续遍历
     # false中断
-    def map(self, i_type: Type[InstanceType], fn: Callable[[ActorBase], bool]):
+    def map(self, i_type: Type[T], fn: Callable[[ActorBase], bool]):
         if i_type not in self.__dict:
             return
         d: Dict[object, ActorBase] = self.__dict[i_type]

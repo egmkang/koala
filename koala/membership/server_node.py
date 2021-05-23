@@ -1,6 +1,6 @@
 import time
+from koala.typing import *
 import weakref
-from typing import List, Dict
 from koala.network.socket_session import SocketSession
 
 
@@ -22,13 +22,14 @@ class ServerNodeMetaData(object):
 
 
 class ServerNode(ServerNodeMetaData):
+    # 下面两个成员不是元数据
+    # _proxy是一个弱引用, 减少一次查询
+    _session_id: int
+    _session: weakref.ReferenceType[SocketSession]
+
     def __init__(self, info: ServerNodeMetaData):
         super(ServerNode, self).__init__()
         super()._update(info)
-        # 下面两个成员不是元数据
-        # _proxy是一个弱引用, 减少一次查询
-        self._session_id = 0
-        self._proxy = None
         pass
 
     @property
@@ -36,13 +37,10 @@ class ServerNode(ServerNodeMetaData):
         return self._session_id
 
     @property
-    def proxy(self) -> SocketSession:
-        if self._proxy is not None:
-            return self._proxy()
+    def session(self) -> Optional[SocketSession]:
+        if self._session is not None:
+            return self._session()
 
-    def set_proxy(self, proxy: SocketSession):
-        self._session_id = proxy.session_id
-        self._proxy = weakref.ref(proxy)
-
-
-
+    def set_session(self, session: SocketSession):
+        self._session_id = session.session_id
+        self._session = weakref.ref(session)

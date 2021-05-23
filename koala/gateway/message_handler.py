@@ -27,7 +27,7 @@ async def _process_gateway_incoming_message_slow(proxy: SocketSession, msg: byte
             logger.warning("IncomingMessageSlow, Actor:%s/%s cannot find position" % (service_type, actor_id))
             return
 
-        if node.proxy is None:
+        if node.session is None:
             logger.warning("IncomingMessageSlow, Actor:%s/%s drop data" % (service_type, actor_id))
             return
         if first:
@@ -46,7 +46,7 @@ async def _process_gateway_incoming_message_slow(proxy: SocketSession, msg: byte
             new_message.message = msg
             message = new_message
             pass
-        await node.proxy.send_message(message)
+        await node.session.send_message(message)
     except Exception as e:
         logger.error("run placement fail, Exception:%s" % traceback.format_exc())
         pass
@@ -65,7 +65,7 @@ async def process_gateway_incoming_message(proxy: SocketSession, message: object
         asyncio.create_task(_process_gateway_incoming_message_slow(proxy, msg.data, False))
         return
 
-    if not node.proxy:
+    if not node.session:
         logger.warn("IncomingMessage, Actor:%s/%s, proxy is none, drop data" % (service_type, actor_id))
         return
     new_message = NotifyNewMessage()
@@ -73,7 +73,7 @@ async def process_gateway_incoming_message(proxy: SocketSession, message: object
     new_message.actor_id = actor_id
     new_message.session_id = proxy.session_id
     new_message.message = msg.data
-    await node.proxy.send_message(new_message)
+    await node.session.send_message(new_message)
 
 
 async def process_gateway_send_message(proxy: SocketSession, msg: object):

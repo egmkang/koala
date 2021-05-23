@@ -58,7 +58,7 @@ class RpcSelfPlacement(Placement):
     def _on_add_server(self, node: ServerNode):
         proxy = _session_manager.connect(node.host, node.port, CODEC_RPC)
         self.proxy = weakref.ref(proxy)
-        node.set_proxy(proxy)
+        node.set_session(proxy)
         pass
 
     def find_position_in_cache(self, i_type: str, uid: object) -> ServerNode:

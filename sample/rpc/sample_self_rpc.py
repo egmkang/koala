@@ -14,7 +14,7 @@ from sample.rpc.placement_impl import RpcSelfPlacement
 _session_manager = SocketSessionManager()
 
 
-@register_interface
+@rpc_interface
 class IService1(ABC):
     @abstractmethod
     async def say_hello(self, hello: str) -> str:
@@ -29,14 +29,14 @@ class IService1(ABC):
         pass
 
 
-@register_interface
+@rpc_interface
 class IService2(ABC):
     @abstractmethod
     async def hello(self, my_id: object, times: int) -> str:
         pass
 
 
-@register_impl(IService1)
+@rpc_impl(IService1)
 class Service1Impl(IService1, ActorBase):
     def __init__(self):
         super(Service1Impl, self).__init__()
@@ -53,7 +53,7 @@ class Service1Impl(IService1, ActorBase):
         return self.uid
 
 
-@register_impl(IService2)
+@rpc_impl(IService2)
 class Service2Impl(IService2, ActorBase):
     def __init__(self):
         super(Service2Impl, self).__init__()
@@ -70,7 +70,7 @@ async def service_1():
     pass
 
 
-@register_interface
+@rpc_interface
 class IBench(ABC):
     def __init__(self):
         pass
@@ -80,7 +80,7 @@ class IBench(ABC):
         pass
 
 
-@register_impl(IBench)
+@rpc_impl(IBench)
 class BenchImpl(IBench, ActorBase):
     def __init__(self):
         pass

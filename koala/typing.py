@@ -1,5 +1,5 @@
 from typing import *
 from collections.abc import Coroutine
 
-InstanceType = TypeVar("InstanceType")
-ImplType = TypeVar("ImplType")
+T = TypeVar("T")
+ActorID = Union[int, str]

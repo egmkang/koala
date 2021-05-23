@@ -93,5 +93,6 @@ class ActorBase(ABC):
     async def dispatch_user_message(self, msg: object):
         logger.debug("Actor.DispatchUserMessage, Actor:%s/%s" % (self.type_name, self.uid))
 
-    def get_proxy(self, i_type: Type[InstanceType], uid: object) -> InstanceType:
-        return get_rpc_proxy(i_type, uid, self.context)
+    def get_proxy(self, i_type: Type[T], uid: object) -> T:
+        o: T = get_rpc_proxy(i_type, uid, self.context)
+        return o

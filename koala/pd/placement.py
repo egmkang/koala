@@ -138,7 +138,7 @@ class PDPlacementImpl(Placement):
 
     def find_position(self, i_type: str, uid: object) -> ServerNode:
         node = self.find_position_in_cache(i_type, uid)
-        if node is not None and node.proxy is not None:
+        if node is not None and node.session is not None:
             return node
         resp = api.find_actor_position(i_type, "%s" % uid, 0)
         if resp.error_code != 0:
@@ -174,14 +174,14 @@ class PDPlacementImpl(Placement):
             host = _membership.get_member(server_id)
             if host is None:
                 continue
-            if host.proxy is None:
+            if host.session is None:
                 PDPlacementImpl._try_connect(host)
                 continue
-            proxy = host.proxy
+            proxy = host.session
             proxy.send_message(heart_beat)
         pass
 
     @staticmethod
     def _try_connect(node: ServerNode):
         proxy = _proxy_manager.connect(node.host, node.port, CODEC_RPC)
-        node.set_proxy(proxy)
+        node.set_session(proxy)
