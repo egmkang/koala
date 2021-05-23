@@ -21,7 +21,6 @@ class Config(object):
         self._desc = ""
         self._start_time = int(time.time() * 1000)
         self._ttl = 15
-        self._thread_count = 3
         self._log_file_name = ""
         self._log_level = "DEBUG"
         self._pd_address = ""
@@ -31,14 +30,14 @@ class Config(object):
         self._gateway_port = port
 
     @property
-    def gateway_port(self):
+    def gateway_port(self) -> int:
         return self._gateway_port
 
     def set_port(self, port: int):
         self._port = port
 
     @property
-    def port(self):
+    def port(self) -> int:
         return self._port
 
     def set_services(self, services: List[str]):
@@ -60,18 +59,18 @@ class Config(object):
         self._desc = desc
 
     @property
-    def desc(self):
+    def desc(self) -> str:
         return self._desc
 
     @property
-    def start_time(self):
+    def start_time(self) -> int:
         return self._start_time
 
     def set_ttl(self, ttl: int):
         self._ttl = ttl
 
     @property
-    def ttl(self):
+    def ttl(self) -> int:
         if self._ttl == 0:
             self._ttl = 15
         return self._ttl
@@ -85,43 +84,36 @@ class Config(object):
             self._gateway_ip = ip
 
     @property
-    def address(self):
+    def address(self) -> str:
         if len(self._ip) > 0:
             return "%s:%d" % (self._ip, self._port)
         return "%s:%d" % (get_host_ip(), self._port)
 
     @property
-    def gateway_address(self):
+    def gateway_address(self) -> str:
         if len(self._gateway_ip) > 0:
             return "%s:%d" % (self._gateway_ip, self._gateway_port)
         return "%s:%d" % (get_host_ip(), self._gateway_port)
 
     @property
-    def thread_count(self):
-        return self._thread_count
-
-    def set_thread_count(self, count: int):
-        self._thread_count = count
-
-    @property
     def log_level(self):
         return self._log_level
 
-    def set_log_level(self, level: int):
+    def set_log_level(self, level: str):
         self._log_level = level
 
     @property
-    def log_name(self):
+    def log_name(self) -> str:
         return self._log_file_name
 
     def set_log_name(self, name: str):
         self._log_file_name = name
 
     @property
-    def pd_address(self):
+    def pd_address(self) -> str:
         return self._pd_address
 
-    def set_pd_address(self, address):
+    def set_pd_address(self, address: str):
         self._pd_address = address
 
 

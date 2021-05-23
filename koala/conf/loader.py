@@ -29,16 +29,13 @@ def load_config():
         _config.set_ttl(int(server_config["ttl"]))
     if "services" in server_config:
         _config.set_services(server_config["services"])
-
-    if "thread_count" in server_config:
-        _config.set_thread_count(int(server_config["thread_count"]))
     if "log_name" in server_config:
         _config.set_log_name(server_config["log_name"])
     else:
         print("需要配置log_name, 日志名")
         return
     if "log_level" in server_config:
-        _config.set_log_level(int(server_config["log_level"]))
+        _config.set_log_level(server_config["log_level"])
     if "pd_address" in server_config:
         _config.set_pd_address(server_config["pd_address"])
     print(server_config)
