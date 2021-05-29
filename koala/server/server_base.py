@@ -5,7 +5,7 @@ from koala.typing import *
 from koala.network.socket_session import SocketSession, SocketSessionManager
 from koala.network.tcp_server import TcpServer
 from koala.network import event_handler
-from koala.logger import logger
+from koala.logger import logger, init_logger
 from koala.placement.placement import PlacementInjection
 from koala.message.rpc import RpcRequest, RpcResponse
 from koala.message.message import HeartBeatRequest, HeartBeatResponse
@@ -102,7 +102,7 @@ def init_server():
     _init_internal_message_handler()
     _time_offset_of = 1612333986    # 随便找了一个世间戳, 可以减小request id序列化的大小
     set_request_id_seed(int(time.time() - _time_offset_of))
-
+    init_logger(None, "DEBUG")
 
 def listen(port: int, codec_id: int):
     _tcp_server.listen(port, codec_id)
