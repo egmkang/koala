@@ -11,9 +11,9 @@ from koala.network.session_id_gen import *
 _codec_manager = CodecManager()
 
 
-@Singleton
-class TcpServer:
+class TcpServer(Singleton):
     def __init__(self):
+        super(TcpServer, self).__init__()
         self._loop = asyncio.get_event_loop()
         pass
 
@@ -28,10 +28,9 @@ class TcpServer:
         if codec is None:
             logger.error("listen port:%d failed, CodecID:%d not found" % (port, codec_id))
             return
-
         async def callback(reader: asyncio.StreamReader, writer: asyncio.StreamWriter):
+            assert codec
             await self._handle_new_session(codec, reader, writer)
-
         co = asyncio.start_server(callback, port=port, limit=WINDOW_SIZE, loop=self._loop)
         self.create_task(co)
 

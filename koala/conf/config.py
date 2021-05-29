@@ -10,9 +10,9 @@ def _get_registered_services() -> Dict[str, str]:
     return {i[0]: i[1].__qualname__ for i in all_types}
 
 
-@Singleton
-class Config(object):
+class Config(Singleton):
     def __init__(self):
+        super(Config, self).__init__()
         self._gateway_ip = ""
         self._gateway_port = 0
         self._ip = ""

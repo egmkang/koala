@@ -59,9 +59,9 @@ class SocketSession:
         pass
 
 
-@Singleton
-class SocketSessionManager:
+class SocketSessionManager(Singleton):
     def __init__(self):
+        super(SocketSessionManager, self).__init__()
         self._session_dict = dict()
         logger.info("SocketSessionManager Init")
         pass
@@ -70,7 +70,7 @@ class SocketSessionManager:
         await self._gc_loop()
 
     async def _gc_loop(self):
-        dead_list: [SocketSession] = list()
+        dead_list: List[SocketSession] = list()
         while True:
             logger.trace("gc_loop")
             current_time = time.time()

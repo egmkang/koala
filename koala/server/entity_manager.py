@@ -6,10 +6,11 @@ from koala.server.actor_base import ActorBase
 from koala.server.actor_context import ActorContext
 
 
-EntityDictType = Dict[T, Dict[object, ActorBase]]
+ActorType = Type[ActorBase]
+EntityDictType = Dict[ActorType, Dict[object, ActorBase]]
 
 
-def _new_actor(impl_type: T, uid: object) -> ActorBase:
+def _new_actor(impl_type: ActorType, uid: object) -> ActorBase:
     if impl_type is None:
         raise Exception("ImplType is None")
     actor: ActorBase = impl_type()
@@ -17,19 +18,20 @@ def _new_actor(impl_type: T, uid: object) -> ActorBase:
     return actor
 
 
-@Singleton
-class EntityManager(object):
+class EntityManager(Singleton):
     def __init__(self):
+        super(EntityManager, self).__init__()
         self.__dict: EntityDictType = dict()
 
-    def get_entity(self, i_type: Type[T], uid: object) -> ActorBase:
+    def get_entity(self, i_type: ActorType, uid: object) -> Optional[ActorBase]:
         impl_type = get_impl_type(i_type)
         if impl_type in self.__dict:
             d = self.__dict[impl_type]
             if uid in d:
                 return d[uid]
+        return None
 
-    def get_or_new(self, i_type: Type[T], uid: object) -> ActorBase:
+    def get_or_new(self, i_type: ActorType, uid: object) -> ActorBase:
         impl_type = get_impl_type(i_type)
         if impl_type not in self.__dict:
             self.__dict[impl_type] = dict()

@@ -21,21 +21,21 @@ from koala.gateway.message_handler import process_gateway_send_message, process_
 from koala.gateway.codec_gateway import GatewayRawMessage
 
 
-T = TypeVar("T")
+MessageType = Type[object]
 _socket_session_manager: SocketSessionManager = SocketSessionManager()
-_user_message_handler_map: {T: Callable[[SocketSession, object], Coroutine]} = {}
-_user_socket_close_handler_map: {T: Callable[[SocketSession], None]} = {}
+_user_message_handler_map: Dict[MessageType, Callable[[SocketSession, object], Coroutine]] = {}
+_user_socket_close_handler_map: Dict[MessageType, Callable[[SocketSession], None]] = {}
 _tcp_server: TcpServer = TcpServer()
 
 
-def register_user_handler(cls: T, handler: Callable[[SocketSession, object], Coroutine]):
+def register_user_handler(cls: MessageType, handler: Callable[[SocketSession, object], Coroutine]):
     if cls in _user_message_handler_map:
         logger.warning("register_user_handler, Type:%s exists" % str(cls))
     _user_message_handler_map[cls] = handler
     pass
 
 
-def register_user_socket_closed_handler(cls: T, handler: Callable[[SocketSession], None]):
+def register_user_socket_closed_handler(cls: MessageType, handler: Callable[[SocketSession], None]):
     if cls in _user_socket_close_handler_map:
         logger.warning("register_user_socket_close_handler, Type:%s exists" % str(cls))
     _user_socket_close_handler_map[cls] = handler

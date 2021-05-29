@@ -1,6 +1,5 @@
 import traceback
 from abc import ABC, abstractmethod
-from koala.typing import *
 from koala.membership.server_node import ServerNode, ServerNodeMetaData
 from koala.membership.membership_manager import MembershipManager
 from koala.singleton import Singleton
@@ -11,9 +10,6 @@ _membership_manager = MembershipManager()
 
 
 class Placement(ABC):
-    def __init__(self):
-        pass
-
     @abstractmethod
     def server_id(self) -> int:
         pass
@@ -78,11 +74,11 @@ class Placement(ABC):
         pass
 
 
-@Singleton
-class PlacementInjection(object):
-    def __init__(self):
-        self.__impl: Optional[Placement, None] = None
-        pass
+class PlacementInjection(Singleton):
+    __impl: Placement
+
+    def __init__(self) -> None:
+        super(PlacementInjection, self).__init__()
 
     def set_impl(self, impl: Placement):
         self.__impl = impl

@@ -1,10 +1,10 @@
+from koala.logger import logger
 from koala.message.gateway import *
 from koala.placement.placement import PlacementInjection
 from koala.server.actor_base import *
 from koala.server.entity_manager import EntityManager
 from koala.server.rpc_exception import RpcException
 from koala.server.actor_message_loop import run_actor_message_loop, dispatch_actor_message
-from koala.logger import logger
 
 
 _entity_manager = EntityManager()
@@ -12,7 +12,7 @@ _placement = PlacementInjection()
 
 
 async def _dispatch_user_message_slow(proxy: SocketSession, service_type: str, actor_id: str, msg: object):
-    node = _placement.impl.find_position(service_type, actor_id)
+    node = await _placement.impl.find_position(service_type, actor_id)
     if node is not None and node.server_uid == _placement.impl.server_id():
         actor = _entity_manager.get_or_new_by_name(service_type, actor_id)
         if actor is None:
@@ -22,9 +22,11 @@ async def _dispatch_user_message_slow(proxy: SocketSession, service_type: str, a
         pass
     else:
         if node:
-            await node.proxy.send_message(msg)
+            session = node.session
+            if session:
+                await session.send_message(msg)
         else:
-            logger.warn("Actor:%s/%s, cannot find position" % (service_type, actor_id))
+            logger.warning("Actor:%s/%s, cannot find position" % (service_type, actor_id))
     pass
 
 

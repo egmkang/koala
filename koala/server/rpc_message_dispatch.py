@@ -1,7 +1,6 @@
 import asyncio
 import time
 from koala.typing import *
-from koala.network.socket_session import SocketSession
 from koala.message.rpc import RpcRequest, RpcResponse
 from koala.message.message import HeartBeatRequest, HeartBeatResponse
 from koala.meta.rpc_meta import *
@@ -20,11 +19,12 @@ _placement = PlacementInjection()
 
 
 async def process_rpc_request_slow(proxy: SocketSession, request: object):
+    placement = _placement.impl
     req: RpcRequest = cast(RpcRequest, request)
-    _placement.impl.remove_position_cache(req.service_name, req.actor_id)
+    placement.remove_position_cache(req.service_name, req.actor_id)
     try:
-        node = await _placement.impl.find_position(req.service_name, req.actor_id)
-        if node is not None and node.server_uid == _placement.impl.server_id():
+        node = await placement.find_position(req.service_name, req.actor_id)
+        if node is not None and node.server_uid == placement.server_id():
             actor = _entity_manager.get_or_new_by_name(req.service_name, req.actor_id)
             if actor is None:
                 raise RpcException.entity_not_found()

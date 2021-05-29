@@ -5,9 +5,9 @@ from koala.network.codec_echo import CodecEcho
 from koala.network.codec_rpc import CodecRpc
 
 
-@Singleton
-class CodecManager:
+class CodecManager(Singleton):
     def __init__(self):
+        super(CodecManager, self).__init__()
         self._dict = dict()
         self._register()
         pass
@@ -22,3 +22,4 @@ class CodecManager:
     def get_codec(self, codec_id: int) -> Optional[Codec]:
         if codec_id in self._dict:
             return self._dict[codec_id]
+        return None

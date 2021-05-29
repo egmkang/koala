@@ -52,23 +52,25 @@ class ActorBase(ABC):
         return self.__session_id
 
     @property
-    def _socket(self) -> SocketSession:
+    def _socket(self) -> Optional[SocketSession]:
         if self.__socket_session is not None:
             return self.__socket_session()
-        pass
+        return None
 
     async def _activate_async(self):
         try:
             await self.on_activate_async()
         except Exception as e:
-            logger.error("Actor.OnActivateAsync, Actor:%s/%s, Exception:%s" % (self.type_name, self.uid, traceback.format_exc()))
+            logger.error("Actor.OnActivateAsync, Actor:%s/%s, Exception:%s" %
+                         (self.type_name, self.uid, traceback.format_exc()))
         pass
 
     async def _deactivate_async(self):
         try:
             await self.on_deactivate_async()
         except Exception as e:
-            logger.error("Actor.OnDeactivateAsync, Actor:%s/%s, Exception:%s" % (self.type_name, self.uid, traceback.format_exc()))
+            logger.error("Actor.OnDeactivateAsync, Actor:%s/%s, Exception:%s" %
+                         (self.type_name, self.uid, traceback.format_exc()))
         pass
 
     async def on_activate_async(self):
@@ -86,7 +88,7 @@ class ActorBase(ABC):
         if socket_proxy:
             await socket_proxy.send_message(msg)
         else:
-            logger.warn("Actor.SendMessage, Actor:%s/%s , SocketSession not found" % (self.type_name, self.uid))
+            logger.warning("Actor.SendMessage, Actor:%s/%s , SocketSession not found" % (self.type_name, self.uid))
 
     # 用户需要自己处理的消息
     # 不要抛出异常

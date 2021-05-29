@@ -53,15 +53,16 @@ class DefaultGatewayClientSession(IGatewayClientSession):
         self._actor_id = actor_id
 
 
-@Singleton
-class GatewayClientSessionFactory:
-    def __init__(self):
-        self._fn:  Optional[Callable[[bytes], IGatewayClientSession]] = None
-        pass
+class GatewayClientSessionFactory(Singleton):
+    _fn:  Optional[Callable[[bytes], IGatewayClientSession]]
 
-    def new_session(self, data: bytes) -> IGatewayClientSession:
-        return self._fn(data)
+    def __init__(self):
+        super(GatewayClientSessionFactory, self).__init__()
+
+    def new_session(self, data: bytes) -> Optional[IGatewayClientSession]:
+        if self._fn:
+            return self._fn(data)
+        return None
 
     def set_factory_method(self, fn: Callable[[bytes], IGatewayClientSession]):
         self._fn = fn
-

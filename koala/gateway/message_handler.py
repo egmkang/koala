@@ -17,7 +17,10 @@ async def _process_gateway_incoming_message_slow(proxy: SocketSession, msg: byte
     try:
         user_data = cast(IGatewayClientSession, proxy.user_data())
         if first:
-            user_data = _session_factory.new_session(msg)
+            data = _session_factory.new_session(msg)
+            assert data
+            user_data = data
+            proxy.set_user_data(user_data)
         service_type, actor_id = user_data.destination()
         node = _placement.impl.find_position_in_cache(service_type, actor_id)
         if node is None:
@@ -36,7 +39,7 @@ async def _process_gateway_incoming_message_slow(proxy: SocketSession, msg: byte
             new_connection.service_type = service_type
             new_connection.actor_id = actor_id
             new_connection.token = msg
-            message = new_connection
+            message: object = new_connection
             pass
         else:
             new_message = NotifyNewMessage()
@@ -66,7 +69,7 @@ async def process_gateway_incoming_message(proxy: SocketSession, message: object
         return
 
     if not node.session:
-        logger.warn("IncomingMessage, Actor:%s/%s, proxy is none, drop data" % (service_type, actor_id))
+        logger.warning("IncomingMessage, Actor:%s/%s, proxy is none, drop data" % (service_type, actor_id))
         return
     new_message = NotifyNewMessage()
     new_message.service_type = service_type
@@ -101,7 +104,7 @@ async def process_gateway_change_destination(proxy: SocketSession, msg: object):
         else:
             logger.info("ChangeDestination, SessionID:%d use_data is none" % req.session_id)
     else:
-        logger.warn("ChangeDestination, SessionID:%d not found" % req.session_id)
+        logger.warning("ChangeDestination, SessionID:%d not found" % req.session_id)
     pass
 
 

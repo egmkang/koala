@@ -1,17 +1,18 @@
-from typing import Dict
+from koala.typing import *
 from koala.singleton import Singleton
-from .server_node import ServerNode
+from koala.membership.server_node import ServerNode
 
 
-@Singleton
-class MembershipManager(object):
+class MembershipManager(Singleton):
     def __init__(self):
+        super(MembershipManager, self).__init__()
         self.__dict: Dict[int, ServerNode] = dict()
         pass
 
-    def get_member(self, server_uid: int) -> ServerNode:
+    def get_member(self, server_uid: int) -> Optional[ServerNode]:
         if server_uid in self.__dict:
             return self.__dict[server_uid]
+        return None
 
     def add_member(self, member: ServerNode):
         self.__dict[member.server_uid] = member

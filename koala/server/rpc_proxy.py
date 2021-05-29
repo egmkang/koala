@@ -34,7 +34,7 @@ class _RpcMethodObject(object):
 
         proxy = position.session
         if proxy is None:
-            raise Exception("Dest Server Not Valid, ServerUID: %d" % position.server_uid)
+            raise Exception("Target Server Not Valid, ServerUID: %d" % position.server_uid)
 
         req = RpcRequest()
         req.request_id = new_request_id()

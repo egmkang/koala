@@ -1,10 +1,9 @@
 
 
-def Singleton(class_):
-    _instances = {}
+class Singleton(object):
+    _instance = None
 
-    def instance(*args, **kwargs) -> class_:
-        if class_ not in _instances:
-            _instances[class_] = class_(*args, **kwargs)
-        return _instances[class_]
-    return instance
+    def __new__(clz, *args, **kwargs):
+        if not isinstance(clz._instance, clz):
+            clz._instance = object.__new__(clz, *args, **kwargs)
+        return clz._instance
