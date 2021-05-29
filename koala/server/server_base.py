@@ -94,8 +94,7 @@ async def _run_placement():
             await impl.placement_loop()
         except Exception as e:
             await asyncio.sleep(1.0)
-            logger.error("run placement fail, Exception:%s" % traceback.format_exc())
-            pass
+            logger.error("run placement fail, Exception:%s, StackTrace:%s" % (e, traceback.format_exc()))
     pass
 
 

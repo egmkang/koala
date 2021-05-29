@@ -40,8 +40,9 @@ class Placement(ABC):
         try:
             self._on_add_server(server)
             logger.info("PD AddServer, ServerID:%d, Address:%s:%s" % (server.server_uid, server.host, server.port))
-        except:
-            logger.error("Placement.AddServer, ServerUID:%d, Exception:%s" % (node.server_uid, traceback.format_exc()))
+        except Exception as e:
+            logger.error("Placement.AddServer, ServerUID:%d, Exception:%s, StackTrace:%s" %
+                         (node.server_uid, e, traceback.format_exc()))
             pass
 
     def remove_server(self, node: ServerNode):
@@ -49,9 +50,9 @@ class Placement(ABC):
         try:
             self._on_remove_server(node)
             logger.info("PD RemoveServer, ServerID:%d, Address:%s:%s" % (node.server_uid, node.host, node.port))
-        except:
-            logger.error("Placement.RemoveServer, ServerUID:%d, Exception:%s" %
-                         (node.server_uid, traceback.format_exc()))
+        except Exception as e:
+            logger.error("Placement.RemoveServer, ServerUID:%d, Exception:%s, StackTrace:%s" %
+                         (node.server_uid, e, traceback.format_exc()))
             pass
 
     """该函数需要去主动连接服务器, 然后将proxy和服务器关联上, 连接断开的话, 也需要去重试

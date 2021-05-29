@@ -51,8 +51,7 @@ async def _process_gateway_incoming_message_slow(proxy: SocketSession, msg: byte
             pass
         await node.session.send_message(message)
     except Exception as e:
-        logger.error("run placement fail, Exception:%s" % traceback.format_exc())
-        pass
+        logger.error("run placement fail, Exception:%s, StackTrace:%s" % (e, traceback.format_exc()))
     pass
 
 

@@ -70,7 +70,7 @@ class TcpSocketSession(SocketSession):
         self._user_data = data
 
     def close(self):
-        logger.info("close rpc connection %s" % self._address)
+        logger.info("TcpSession.close, SessionID:%d Address:%s" % (self.session_id, self._address))
         self._writer.close()
         self._stop = True
 

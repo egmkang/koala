@@ -62,7 +62,7 @@ class SocketSession:
 class SocketSessionManager(Singleton):
     def __init__(self):
         super(SocketSessionManager, self).__init__()
-        self._session_dict = dict()
+        self._session_dict: Dict[int, SocketSession] = dict()
         pass
 
     async def run(self):
@@ -71,7 +71,7 @@ class SocketSessionManager(Singleton):
     async def _gc_loop(self):
         dead_list: List[SocketSession] = list()
         while True:
-            logger.trace("gc_loop")
+            logger.debug("gc_loop")
             current_time = time.time()
             for item in self._session_dict.values():
                 if item.is_dead(current_time):
@@ -92,6 +92,9 @@ class SocketSessionManager(Singleton):
 
     def remove_session(self, session_id: int):
         if session_id in self._session_dict:
+            session = self._session_dict[session_id]
+            if session:
+                session.close()
             del self._session_dict[session_id]
             logger.info("SocketSessionManager.remove_session, SessionID:%d" % session_id)
 

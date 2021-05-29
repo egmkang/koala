@@ -25,7 +25,7 @@ def _process_close_socket(session_id: int):
         if session and _socket_close_handler:
             _socket_close_handler(session)
     except Exception as e:
-        logger.error("SocketSessionManager, Before Remove SessionID:%d" % session_id)
+        logger.error("SocketSessionManager, Before Remove SessionID:%d, Exception:%s" % (session_id, e))
         pass
     if session:
         _session_manager.remove_session(session_id)
@@ -40,8 +40,8 @@ async def _process_socket_message(session: SocketSession, msg: object):
         else:
             logger.error("process_socket_message, user message handler is None")
     except Exception as e:
-        logger.error("process_socket_message, SessionID:%d Exception:%s" %
-                     (session.session_id, traceback.format_exc()))
+        logger.error("process_socket_message, SessionID:%d Exception:%s, StackTrace:%s" %
+                     (session.session_id, e, traceback.format_exc()))
 
 
 def _process_connect_success(session: SocketSession):
@@ -50,8 +50,6 @@ def _process_connect_success(session: SocketSession):
         logger.info("SocketSessionManager, SessionID:%d, ConnectSuccess" % session.session_id)
     else:
         logger.error("SocketSessionManager, SessionID:%d not found" % session.session_id)
-        pass
-    return
 
 
 def register_message_handler(handler: Callable[[SocketSession, object], Coroutine]):

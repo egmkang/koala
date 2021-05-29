@@ -45,9 +45,9 @@ async def _dispatch_actor_rpc_request(actor: ActorBase, proxy: SocketSession, re
         if proxy:
             await proxy.send_message(resp)
     except Exception as e:
-        logger.error("_dispatch_actor_rpc_request, Actor:%s/%s, Exception:%s" % (actor.type_name, actor.uid, traceback.format_exc()))
+        logger.error("_dispatch_actor_rpc_request, Actor:%s/%s, Exception:%s, StackTrace:%s" %
+                     (actor.type_name, actor.uid, e, traceback.format_exc()))
         await _send_error_resp(proxy, req.request_id, e)
-    pass
 
 
 async def _dispatch_actor_message_in_loop(actor: ActorBase):
@@ -62,8 +62,9 @@ async def _dispatch_actor_message_in_loop(actor: ActorBase):
         try:
             await actor._activate_async()
             loaded = True
-        except:
-            logger.error("Actor:%s/%s ActivateAsync Fail, Exception:%s" % (actor.type_name, actor.uid, traceback.format_exc()))
+        except Exception as e:
+            logger.error("Actor:%s/%s ActivateAsync Fail, Exception:%s, StackTrace:%s" %
+                         (actor.type_name, actor.uid, e, traceback.format_exc()))
             context.loop_id = 0
             return
         while True:
@@ -79,15 +80,17 @@ async def _dispatch_actor_message_in_loop(actor: ActorBase):
                 await _dispatch_actor_rpc_request(actor, proxy, msg)
             else:
                 await actor.dispatch_user_message(msg)
-    except:
-        logger.error("_dispatch_actor_message_loop, Exception:%s" % traceback.format_exc())
+    except Exception as e:
+        logger.error("_dispatch_actor_message_loop, Exception:%s, StackTrace:%s" %
+                     (e, traceback.format_exc()))
         pass
 
     try:
         if loaded:
             await actor._deactivate_async()
-    except:
-        logger.error("Actor:%s/%s DeactivateAsync Fail, Exception:%s" % (actor.type_name, actor.uid, traceback.format_exc()))
+    except Exception as e:
+        logger.error("Actor:%s/%s DeactivateAsync Fail, Exception:%s, StaceTrace:%s" %
+                     (actor.type_name, actor.uid, e, traceback.format_exc()))
 
     if context.loop_id == loop_id:
         context.reentrant_id = None

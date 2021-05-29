@@ -33,7 +33,7 @@ async def process_rpc_request_slow(proxy: SocketSession, request: object):
         else:
             await _send_error_resp(proxy, req.request_id, RpcException.position_changed())
     except Exception as e:
-        logger.error("process_rpc_request, Exception:%s" % traceback.format_exc())
+        logger.error("process_rpc_request, Exception:%s, StackTrace:%s" % (e, traceback.format_exc()))
         await _send_error_resp(proxy, req.request_id, e)
     pass
 
@@ -54,7 +54,7 @@ async def process_rpc_request(proxy: SocketSession, request: object):
         else:
             asyncio.create_task(process_rpc_request_slow(proxy, request))
     except Exception as e:
-        logger.error("process_rpc_request, Exception:%s" % traceback.format_exc())
+        logger.error("process_rpc_request, Exception:%s, StackTrace:%s" % (e, traceback.format_exc()))
         await _send_error_resp(proxy, req.request_id, e)
     pass
 

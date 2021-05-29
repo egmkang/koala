@@ -61,17 +61,15 @@ class ActorBase(ABC):
         try:
             await self.on_activate_async()
         except Exception as e:
-            logger.error("Actor.OnActivateAsync, Actor:%s/%s, Exception:%s" %
-                         (self.type_name, self.uid, traceback.format_exc()))
-        pass
+            logger.error("Actor.OnActivateAsync, Actor:%s/%s, Exception:%s, StackTrace:%s" %
+                         (self.type_name, self.uid, e, traceback.format_exc()))
 
     async def _deactivate_async(self):
         try:
             await self.on_deactivate_async()
         except Exception as e:
-            logger.error("Actor.OnDeactivateAsync, Actor:%s/%s, Exception:%s" %
-                         (self.type_name, self.uid, traceback.format_exc()))
-        pass
+            logger.error("Actor.OnDeactivateAsync, Actor:%s/%s, Exception:%s, StackTrace:%s" %
+                         (self.type_name, self.uid, e, traceback.format_exc()))
 
     async def on_activate_async(self):
         pass
@@ -90,11 +88,14 @@ class ActorBase(ABC):
         else:
             logger.warning("Actor.SendMessage, Actor:%s/%s , SocketSession not found" % (self.type_name, self.uid))
 
-    # 用户需要自己处理的消息
-    # 不要抛出异常
-    async def dispatch_user_message(self, msg: object):
+    async def dispatch_user_message(self, msg: object) -> None:
+        """
+        用户需要自己处理的消息
+        不要抛出异常
+        :param msg: 用户自定义消息
+        """
         logger.debug("Actor.DispatchUserMessage, Actor:%s/%s" % (self.type_name, self.uid))
 
     def get_proxy(self, i_type: Type[T], uid: object) -> T:
-        o: T = get_rpc_proxy(i_type, uid, self.context)
-        return o
+        o = get_rpc_proxy(i_type, uid, self.context)
+        return cast(T, o)
