@@ -15,23 +15,19 @@ _session_manager = SocketSessionManager()
 
 
 @rpc_interface
-class IService1(ABC):
-    @abstractmethod
+class IService1:
     async def say_hello(self, hello: str) -> str:
         pass
 
-    @abstractmethod
     async def say(self):
         pass
 
-    @abstractmethod
     async def reentrancy(self) -> object:
         pass
 
 
 @rpc_interface
-class IService2(ABC):
-    @abstractmethod
+class IService2:
     async def hello(self, my_id: object, times: int) -> str:
         pass
 
@@ -71,11 +67,7 @@ async def service_1():
 
 
 @rpc_interface
-class IBench(ABC):
-    def __init__(self):
-        pass
-
-    @abstractmethod
+class IBench:
     def echo(self, e: str) -> str:
         pass
 
@@ -83,7 +75,7 @@ class IBench(ABC):
 @rpc_impl(IBench)
 class BenchImpl(IBench, ActorBase):
     def __init__(self):
-        pass
+        super(BenchImpl, self).__init__()
 
     def echo(self, e: str) -> str:
         return e
@@ -92,19 +84,19 @@ class BenchImpl(IBench, ActorBase):
 finished = 0
 
 
-def bench(index: object):
+async def bench(index: object):
     global finished
-    gevent.sleep(3)
+    await asyncio.sleep(3)
     proxy = get_rpc_proxy(IBench, index)
     while True:
         r = proxy.echo("12121212")
         finished += 1
 
 
-def qps():
+async def qps():
     last = 0
     while True:
-        gevent.sleep(1.0)
+        await asyncio.sleep(1.0)
         v = finished
         if v - last > 0:
             logger.info("QPS:%d" % (v - last))
@@ -116,13 +108,16 @@ PlacementInjection().set_impl(placement)
 
 
 server_base.init_server()
-server_base.listen_rpc(5555)
+# TODO
+# RPC还未测试
+# server_base.listen_rpc(5555)
 
-gevent.spawn(lambda: service_1())
+asyncio.create_task(service_1())
 
 for item in range(1):
     i = item
-    gevent.spawn(lambda: bench(i))
-gevent.spawn(lambda: qps())
+    asyncio.create_task(bench(i))
+
+asyncio.create_task(qps())
 
 server_base.run_server()

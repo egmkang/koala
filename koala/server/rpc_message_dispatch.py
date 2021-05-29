@@ -61,7 +61,7 @@ async def process_rpc_request(proxy: SocketSession, request: object):
 
 async def process_rpc_response(session: SocketSession, response: object):
     resp: RpcResponse = cast(RpcResponse, response)
-    future: AsyncResult = get_future(resp.request_id)
+    future: Future = get_future(resp.request_id)
     if resp.error_code != 0:
         future.set_exception(Exception(resp.error_str))
     else:

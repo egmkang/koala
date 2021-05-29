@@ -1,3 +1,5 @@
+import asyncio
+from asyncio.futures import Future
 from koala.meta.rpc_meta import *
 from koala.message.rpc import RpcRequest
 from koala.server.rpc_exception import *
@@ -12,9 +14,10 @@ _placement = PlacementInjection()
 
 
 async def _rpc_call(unique_id: int) -> object:
-    future = AsyncResult()
+    future = asyncio.get_event_loop().create_future()
     add_future(unique_id, future)
-    result = future.get(DEFAULT_RPC_TIMEOUT)
+    await asyncio.wait_for(future, timeout=DEFAULT_RPC_TIMEOUT)
+    result = future.result()
     return result
 
 

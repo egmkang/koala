@@ -63,7 +63,6 @@ class SocketSessionManager(Singleton):
     def __init__(self):
         super(SocketSessionManager, self).__init__()
         self._session_dict = dict()
-        logger.info("SocketSessionManager Init")
         pass
 
     async def run(self):

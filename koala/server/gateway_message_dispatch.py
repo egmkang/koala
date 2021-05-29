@@ -1,3 +1,5 @@
+import asyncio
+
 from koala.logger import logger
 from koala.message.gateway import *
 from koala.placement.placement import PlacementInjection
@@ -30,7 +32,7 @@ async def _dispatch_user_message_slow(proxy: SocketSession, service_type: str, a
     pass
 
 
-def _dispatch_user_message(proxy: SocketSession, service_type: str, actor_id: str, msg: object):
+async def _dispatch_user_message(proxy: SocketSession, service_type: str, actor_id: str, msg: object):
     # 这边获取到对象的位置, 然后直接把消息Push到对象Actor的MailBox里面
     # 如果没找到位置, 那么先去定位, 如果不在当前服务器内, 那么帮忙转发到一下
     node = _placement.impl.find_position_in_cache(service_type, actor_id)
@@ -39,11 +41,9 @@ def _dispatch_user_message(proxy: SocketSession, service_type: str, actor_id: st
         if actor is None:
             raise RpcException.entity_not_found()
         run_actor_message_loop(actor)
-        dispatch_actor_message(actor, proxy, msg)
-        pass
+        await dispatch_actor_message(actor, proxy, msg)
     else:
-        gevent.spawn(lambda: _dispatch_user_message_slow(proxy, service_type, actor_id, msg))
-    pass
+        asyncio.create_task(_dispatch_user_message_slow(proxy, service_type, actor_id, msg))
 
 
 def process_gateway_connection_coming(proxy: SocketSession, msg: object):

@@ -80,13 +80,13 @@ class PDPlacementImpl(Placement):
         self._load = load
         pass
 
-    def placement_loop(self):
+    async def placement_loop(self):
         resp = self._pd_keep_alive()
         hosts = resp.hosts
         events = resp.events
         self._rebuild_recent_removed(events)
         self._compare_membership(hosts)
-        gevent.sleep(_config.ttl / 3)
+        await asyncio.sleep(_config.ttl / 3)
         pass
 
     def _compare_membership(self, hosts: Dict[int, api.HostNodeInfo]):
@@ -159,15 +159,15 @@ class PDPlacementImpl(Placement):
             del self._lru_cache[(i_type, uid)]
         pass
 
-    def _heart_beat_loop(self):
+    async def _heart_beat_loop(self):
         while True:
             try:
-                gevent.sleep(_config.ttl / 3)
-                self._try_send_heart_beat()
+                await asyncio.sleep(_config.ttl / 3)
+                await self._try_send_heart_beat()
             except:
                 pass
 
-    def _try_send_heart_beat(self):
+    async def _try_send_heart_beat(self):
         heart_beat = HeartBeatRequest()
         heart_beat.milli_seconds = int(time.time() * 1000)
         for server_id in self._recent_added:
@@ -175,13 +175,15 @@ class PDPlacementImpl(Placement):
             if host is None:
                 continue
             if host.session is None:
-                PDPlacementImpl._try_connect(host)
+                await self._try_connect(host)
                 continue
             proxy = host.session
-            proxy.send_message(heart_beat)
+            await proxy.send_message(heart_beat)
         pass
 
-    @staticmethod
-    def _try_connect(node: ServerNode):
-        proxy = _proxy_manager.connect(node.host, node.port, CODEC_RPC)
-        node.set_session(proxy)
+    # TODO
+    # proxy = _proxy_manager.connect(node.host, node.port, CODEC_RPC)
+    # node.set_session(proxy)
+    @classmethod
+    async def _try_connect(cls, node: ServerNode):
+        pass

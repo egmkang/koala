@@ -110,4 +110,3 @@ async def dispatch_actor_message(actor: ActorBase, proxy: SocketSession, msg: ob
             return
     weak_proxy = weakref.ref(proxy)
     await actor.context.push_message((weak_proxy, msg))
-    pass
