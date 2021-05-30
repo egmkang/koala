@@ -7,3 +7,4 @@
 依赖:
 * loguru
 * httpx
+* pydantic
