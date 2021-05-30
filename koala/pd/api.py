@@ -4,20 +4,18 @@ import httpx
 from pydantic import BaseModel
 from koala.typing import *
 
-
-ResultType = TypeVar("ResultType")
-
+ResultType = TypeVar("ResultType", bound='PDResponse')
 
 __PD_ADDRESS = "http://127.0.0.1:2379"
-__PD_INTERNAL_ADDRESS = __PD_ADDRESS + "/pd/api/v1"
+__PD_API_ADDRESS = f"{__PD_ADDRESS}/pd/api/v"
 
-PD_VERSION_URL = __PD_INTERNAL_ADDRESS + "/version"
-PD_ID_NEW_SERVER_URL = __PD_INTERNAL_ADDRESS + "/id/new_server_id"
-PD_ID_NEW_SEQUENCE_URL = __PD_INTERNAL_ADDRESS + "/id/new_sequence"
-PD_MEMBERSHIP_REGISTER_URL = __PD_INTERNAL_ADDRESS + "/membership/register"
-PD_MEMBERSHIP_KEEP_ALIVE_URL = __PD_INTERNAL_ADDRESS + "/membership/keep_alive"
-PD_PLACEMENT_FIND_POSITION_URL = __PD_INTERNAL_ADDRESS + "/placement/find_position"
-PD_PLACEMENT_NEW_TOKEN_URL = __PD_INTERNAL_ADDRESS + "/placement/new_token"
+PD_VERSION_URL = f"{__PD_API_ADDRESS}/version"
+PD_ID_NEW_SERVER_URL = f"{__PD_API_ADDRESS}/id/new_server_id"
+PD_ID_NEW_SEQUENCE_URL = f"{__PD_API_ADDRESS}/id/new_sequence"
+PD_MEMBERSHIP_REGISTER_URL = f"{__PD_API_ADDRESS}/membership/register"
+PD_MEMBERSHIP_KEEP_ALIVE_URL = f"{__PD_API_ADDRESS}/membership/keep_alive"
+PD_PLACEMENT_FIND_POSITION_URL = f"{__PD_API_ADDRESS}/placement/find_position"
+PD_PLACEMENT_NEW_TOKEN_URL = f"{__PD_API_ADDRESS}/placement/new_token"
 
 
 #
@@ -90,21 +88,20 @@ class FindActorPositionResponse(PDResponse):
     server_address: str = ""
 
 
-def __format_result(code: int, body: bytes, T: Type[ResultType]) -> ResultType:
+def __format_result(code: int, body: bytes, result_type: Type[ResultType]) -> ResultType:
     if len(body) == 0:
         body = b'{}'
-    obj: Optional[PDResponse] = None
     if code == 200:
-        obj = T.parse_raw(body.decode("utf-8"))
+        return result_type.parse_raw(body.decode("utf-8"))
     else:
-        obj = T()
+        obj = result_type()
         obj.error_code = code
         obj.error_msg = body.decode("utf-8")
-    return cast(ResultType, obj)
+        return obj
 
 
-async def __request(url: str, args: Optional[dict]) -> (int, bytes):
-    if not args:
+async def __request(url: str, args: Optional[dict]) -> Tuple[int, bytes]:
+    if args is None:
         args = {}
     async with httpx.AsyncClient() as client:
         response = await client.post(url, json=args)
@@ -129,7 +126,7 @@ async def new_server_id() -> NewServerIdResponse:
     return __format_result(code, body, NewServerIdResponse)
 
 
-async def new_sequence_id(key: str, step: int = 100) -> NewSequenceIdResponse:
+async def new_sequence_id(key: str, step: int = 512) -> NewSequenceIdResponse:
     url = "%s/%s/%d" % (PD_ID_NEW_SEQUENCE_URL, key, step)
     code, body = await __request(url, None)
     return __format_result(code, body, NewSequenceIdResponse)
