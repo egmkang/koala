@@ -17,7 +17,8 @@ class TcpServer(Singleton):
         self._loop = asyncio.get_event_loop()
         pass
 
-    async def _handle_new_session(self, codec: Codec,
+    @classmethod
+    async def _handle_new_session(cls, codec: Codec,
                                   reader: asyncio.StreamReader,
                                   writer: asyncio.StreamWriter):
         conn = TcpSocketSession(new_session_id(), codec, reader, writer)
@@ -28,6 +29,7 @@ class TcpServer(Singleton):
         if codec is None:
             logger.error("listen port:%d failed, CodecID:%d not found" % (port, codec_id))
             return
+
         async def callback(reader: asyncio.StreamReader, writer: asyncio.StreamWriter):
             assert codec
             await self._handle_new_session(codec, reader, writer)

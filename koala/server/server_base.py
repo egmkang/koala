@@ -10,18 +10,16 @@ from koala.placement.placement import PlacementInjection
 from koala.message.rpc import RpcRequest, RpcResponse
 from koala.message.message import HeartBeatRequest, HeartBeatResponse
 from koala.message.gateway import NotifyNewMessage, NotifyConnectionAborted, NotifyConnectionComing, \
-                                    RequestCloseConnection, RequestChangeMessageDestination, RequestSendMessageToPlayer
+    RequestCloseConnection, RequestChangeMessageDestination, RequestSendMessageToPlayer
 from koala.server.rpc_message_dispatch import process_rpc_request, process_rpc_response, \
-                                                process_heartbeat_request, process_heartbeat_response
+    process_heartbeat_request, process_heartbeat_response
 from koala.server.gateway_message_dispatch import process_gateway_connection_aborted, process_gateway_new_message, \
-                                                    process_gateway_connection_coming
+    process_gateway_connection_coming
 from koala.server.rpc_request_id import set_request_id_seed
 from koala.gateway.message_handler import process_gateway_send_message, process_gateway_change_destination, \
-                                            process_gateway_close_connection, process_gateway_incoming_message
+    process_gateway_close_connection, process_gateway_incoming_message
 from koala.gateway.codec_gateway import GatewayRawMessage
 
-
-MessageType = Type[object]
 _socket_session_manager: SocketSessionManager = SocketSessionManager()
 _user_message_handler_map: Dict[MessageType, Callable[[SocketSession, object], Coroutine]] = {}
 _user_socket_close_handler_map: Dict[MessageType, Callable[[SocketSession], None]] = {}
@@ -88,7 +86,7 @@ async def _run_placement():
         logger.error("Placement module not initialized")
         return
 
-    impl.register_server()
+    await impl.register_server()
     while True:
         try:
             await impl.placement_loop()
@@ -100,13 +98,18 @@ async def _run_placement():
 
 def init_server():
     _init_internal_message_handler()
-    _time_offset_of = 1612333986    # 随便找了一个世间戳, 可以减小request id序列化的大小
+    _time_offset_of = 1612333986  # 随便找了一个世间戳, 可以减小request id序列化的大小
     set_request_id_seed(int(time.time() - _time_offset_of))
     init_logger(None, "DEBUG")
+
 
 def listen(port: int, codec_id: int):
     _tcp_server.listen(port, codec_id)
     pass
+
+
+def create_task(co):
+    _tcp_server.create_task(co)
 
 
 def run_server():

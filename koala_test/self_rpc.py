@@ -1,14 +1,14 @@
 import asyncio
 import random
-from abc import ABC, abstractmethod
 from koala.server import server_base
 from koala.server.actor_base import ActorBase
 from koala.meta.rpc_meta import *
+from koala.network.constant import CODEC_RPC
 from koala.network.socket_session import SocketSessionManager
 from koala.placement.placement import PlacementInjection
+from koala.pd.simple import SelfHostedPlacement
 from koala.server.rpc_proxy import get_rpc_proxy
 from koala.logger import logger
-from sample.rpc.placement_impl import RpcSelfPlacement
 
 
 _session_manager = SocketSessionManager()
@@ -103,14 +103,12 @@ async def qps():
             last = v
 
 
-placement = RpcSelfPlacement(5555, [IService1.__qualname__, IService2.__qualname__])
+placement = SelfHostedPlacement(5555, {IService1.__qualname__: IService2.__qualname__})
 PlacementInjection().set_impl(placement)
 
 
 server_base.init_server()
-# TODO
-# RPC还未测试
-# server_base.listen_rpc(5555)
+server_base.listen(5555, CODEC_RPC)
 
 asyncio.create_task(service_1())
 
