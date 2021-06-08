@@ -115,7 +115,6 @@ class TcpSocketSession(SocketSession):
         reader, writer = await asyncio.open_connection(host=host, port=port, limit=WINDOW_SIZE)
         session = TcpSocketSession(new_session_id(), codec, reader, writer)
         session._is_client = True
-        _process_income_socket(session)
         asyncio.create_task(session.recv_message())
         return session
 

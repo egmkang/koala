@@ -104,8 +104,7 @@ def init_server():
 
 
 def listen(port: int, codec_id: int):
-    _tcp_server.listen(port, codec_id)
-    pass
+    _tcp_server.create_task(_tcp_server.listen(port, codec_id))
 
 
 def create_task(co):

@@ -24,7 +24,7 @@ class TcpServer(Singleton):
         conn = TcpSocketSession(new_session_id(), codec, reader, writer)
         await conn.recv_message()
 
-    def listen(self, port: int, codec_id: int):
+    async def listen(self, port: int, codec_id: int):
         codec = _codec_manager.get_codec(codec_id)
         if codec is None:
             logger.error("listen port:%d failed, CodecID:%d not found" % (port, codec_id))
@@ -33,8 +33,12 @@ class TcpServer(Singleton):
         async def callback(reader: asyncio.StreamReader, writer: asyncio.StreamWriter):
             assert codec
             await self._handle_new_session(codec, reader, writer)
-        co = asyncio.start_server(callback, port=port, limit=WINDOW_SIZE, loop=self._loop)
-        self.create_task(co)
+
+        try:
+            await asyncio.start_server(callback, port=port, limit=WINDOW_SIZE, loop=self._loop)
+            logger.info("listen port:%d CodecID:%d success" % (port, codec_id))
+        except Exception as e:
+            logger.error("listen port:%d Exception:%s" % (port, e))
 
     def create_task(self, co):
         self._loop.create_task(co)
