@@ -32,3 +32,5 @@ class TestCodec:
         assert s == msg
 
 
+t = TestCodec()
+t.test_rpc_codec()
