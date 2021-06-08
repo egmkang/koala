@@ -1,21 +1,21 @@
 from koala.typing import *
+from pydantic import BaseModel
+from koala.message.util import json_message
 
 
-class RpcRequest:
+@json_message
+class RpcRequest(BaseModel):
     service_name: str
     method_name: str
     actor_id: ActorID
     reentrant_id: int
     request_id: int
-    args: List[Any]
-    kwargs: Dict[Any, Any]
     server_id: int
 
 
-class RpcResponse:
+@json_message
+class RpcResponse(BaseModel):
     request_id: int
     error_code: int
     error_str: str
-    response: Any
-
 

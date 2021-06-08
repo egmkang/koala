@@ -8,7 +8,7 @@ from koala.logger import logger
 
 
 _proxy_manager = SocketSessionManager()
-codec_id = CODEC_RPC
+codec_id = CODEC_ECHO
 
 
 async def echo_handler(proxy: SocketSession, msg: object):

@@ -7,7 +7,7 @@ from koala.network.socket_session import SocketSessionManager, SocketSession
 from koala.network.tcp_session import TcpSocketSession
 from koala.network.constant import CODEC_RPC
 from koala.membership.membership_manager import MembershipManager
-from koala.message.message import HeartBeatRequest
+from koala.message import HeartBeatRequest
 from koala.logger import logger
 
 

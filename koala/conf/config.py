@@ -115,7 +115,3 @@ class Config(Singleton):
 
     def set_pd_address(self, address: str):
         self._pd_address = address
-
-
-
-
