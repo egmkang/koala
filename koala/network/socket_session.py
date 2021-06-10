@@ -5,7 +5,7 @@ from koala.singleton import Singleton
 from koala.logger import logger
 from koala.typing import *
 from koala.network.codec import Codec
-from koala.network.constant import SOCKET_PROXY_GC_INTERVAL
+from koala.network.constant import SOCKET_GC_INTERVAL
 
 
 class SocketSession:
@@ -80,7 +80,7 @@ class SocketSessionManager(Singleton):
                 self.remove_session(item.session_id)
                 logger.warning("SocketSessionManager.gc_loop, SessionID:%d" % item.session_id)
             dead_list.clear()
-            await asyncio.sleep(SOCKET_PROXY_GC_INTERVAL)
+            await asyncio.sleep(SOCKET_GC_INTERVAL)
         pass
 
     def add_session(self, session: SocketSession):

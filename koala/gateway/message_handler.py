@@ -8,19 +8,19 @@ from koala.placement.placement import PlacementInjection
 from koala.logger import logger
 
 
-_proxy_manager = SocketSessionManager()
+_session_manager = SocketSessionManager()
 _session_factory = GatewayClientSessionFactory()
 _placement = PlacementInjection()
 
 
-async def _process_gateway_incoming_message_slow(proxy: SocketSession, msg: bytes, first: bool):
+async def _process_gateway_incoming_message_slow(session: SocketSession, msg: bytes, first: bool):
     try:
-        user_data = cast(IGatewayClientSession, proxy.user_data())
+        user_data = cast(IGatewayClientSession, session.user_data())
         if first:
             data = _session_factory.new_session(msg)
             assert data
             user_data = data
-            proxy.set_user_data(user_data)
+            session.set_user_data(user_data)
         service_type, actor_id = user_data.destination()
         node = _placement.impl.find_position_in_cache(service_type, actor_id)
         if node is None:
@@ -35,7 +35,7 @@ async def _process_gateway_incoming_message_slow(proxy: SocketSession, msg: byte
             return
         if first:
             new_connection = NotifyConnectionComing()
-            new_connection.session_id = proxy.session_id
+            new_connection.session_id = session.session_id
             new_connection.service_type = service_type
             new_connection.actor_id = actor_id
             new_connection.token = msg
@@ -45,7 +45,7 @@ async def _process_gateway_incoming_message_slow(proxy: SocketSession, msg: byte
             new_message = NotifyNewMessage()
             new_message.service_type = service_type
             new_message.actor_id = actor_id
-            new_message.session_id = proxy.session_id
+            new_message.session_id = session.session_id
             new_message.message = msg
             message = new_message
             pass
@@ -55,16 +55,16 @@ async def _process_gateway_incoming_message_slow(proxy: SocketSession, msg: byte
     pass
 
 
-async def process_gateway_incoming_message(proxy: SocketSession, message: object):
+async def process_gateway_incoming_message(session: SocketSession, message: object):
     msg = cast(GatewayRawMessage, message)
-    user_data = cast(IGatewayClientSession, proxy.user_data())
+    user_data = cast(IGatewayClientSession, session.user_data())
     if user_data is None:
-        asyncio.create_task(_process_gateway_incoming_message_slow(proxy, msg.data, True))
+        asyncio.create_task(_process_gateway_incoming_message_slow(session, msg.data, True))
         return
     service_type, actor_id = user_data.destination()
     node = _placement.impl.find_position_in_cache(service_type, actor_id)
     if node is None:
-        asyncio.create_task(_process_gateway_incoming_message_slow(proxy, msg.data, False))
+        asyncio.create_task(_process_gateway_incoming_message_slow(session, msg.data, False))
         return
 
     if not node.session:
@@ -73,28 +73,28 @@ async def process_gateway_incoming_message(proxy: SocketSession, message: object
     new_message = NotifyNewMessage()
     new_message.service_type = service_type
     new_message.actor_id = actor_id
-    new_message.session_id = proxy.session_id
+    new_message.session_id = session.session_id
     new_message.message = msg.data
     await node.session.send_message(new_message)
 
 
-async def process_gateway_send_message(proxy: SocketSession, msg: object):
+async def process_gateway_send_message(session: SocketSession, msg: object):
     req = cast(RequestSendMessageToPlayer, msg)
     if req.session_ids is not None:
         for session_id in req.session_ids:
-            client = _proxy_manager.get_session(session_id)
+            client = _session_manager.get_session(session_id)
             if client is not None:
                 await client.send_message(req.message)
     if req.session_id != 0:
-        client = _proxy_manager.get_session(req.session_id)
+        client = _session_manager.get_session(req.session_id)
         if client is not None:
             await client.send_message(req.message)
     pass
 
 
-async def process_gateway_change_destination(proxy: SocketSession, msg: object):
+async def process_gateway_change_destination(session: SocketSession, msg: object):
     req = cast(RequestChangeMessageDestination, msg)
-    client = _proxy_manager.get_session(req.session_id)
+    client = _session_manager.get_session(req.session_id)
     if client is not None:
         if client.user_data() is not None:
             user_data = cast(IGatewayClientSession, client.user_data())
@@ -107,9 +107,9 @@ async def process_gateway_change_destination(proxy: SocketSession, msg: object):
     pass
 
 
-async def process_gateway_close_connection(proxy: SocketSession, msg: object):
+async def process_gateway_close_connection(session: SocketSession, msg: object):
     req = cast(RequestCloseConnection, msg)
-    client = _proxy_manager.get_session(req.session_id)
+    client = _session_manager.get_session(req.session_id)
     # TODO
     # 这个service type用来做路由, 如果不是主Actor, 是不需要关闭的
     logger.info("CloseConnection, SessionID:%d" % req.session_id)

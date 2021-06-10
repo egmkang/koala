@@ -12,9 +12,9 @@ _session_manager = SocketSessionManager()
 
 
 async def _send_message(session_id: int, msg: object):
-    proxy = _session_manager.get_session(session_id)
-    if proxy:
-        await proxy.send_message(msg)
+    session = _session_manager.get_session(session_id)
+    if session:
+        await session.send_message(msg)
 
 
 class ActorBase(ABC):

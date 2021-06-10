@@ -11,9 +11,9 @@ _proxy_manager = SocketSessionManager()
 codec_id = CODEC_ECHO
 
 
-async def echo_handler(proxy: SocketSession, msg: object):
-    if not proxy.is_client:
-        await proxy.send_message(msg)
+async def echo_handler(session: SocketSession, msg: object):
+    if not session.is_client:
+        await session.send_message(msg)
         logger.info("recv msg: %s" % msg)
     else:
         logger.info("client recv msg: %s" % msg)

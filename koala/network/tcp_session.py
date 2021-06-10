@@ -7,7 +7,7 @@ from koala.network.codec import Codec
 from koala.network.codec_manager import CodecManager
 from koala.network.socket_session import SocketSession
 from koala.network.session_id_gen import new_session_id
-from koala.network.constant import SOCKET_PROXY_HEART_BEAT, WINDOW_SIZE
+from koala.network.constant import SOCKET_HEART_BEAT, WINDOW_SIZE
 from koala.network.event_handler import _process_socket_message, _process_income_socket, _process_close_socket
 
 
@@ -49,7 +49,7 @@ class TcpSocketSession(SocketSession):
         self._last_update_time = time_now
 
     def is_dead(self, current_time: float) -> bool:
-        return current_time - self._last_update_time >= SOCKET_PROXY_HEART_BEAT
+        return current_time - self._last_update_time >= SOCKET_HEART_BEAT
 
     @property
     def is_client(self) -> bool:

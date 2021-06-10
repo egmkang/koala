@@ -7,5 +7,5 @@ CODEC_MAX = 128
 
 WINDOW_SIZE = 128 * 1024    # 滑动窗口大小
 
-SOCKET_PROXY_HEART_BEAT = 45    # Socket必须要45s内有消息上来, 否则会关掉链接
-SOCKET_PROXY_GC_INTERVAL = 5    # Socket检查链接超时的周期
+SOCKET_HEART_BEAT = 45    # Socket必须要45s内有消息上来, 否则会关掉链接
+SOCKET_GC_INTERVAL = 5    # Socket检查链接超时的周期
