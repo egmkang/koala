@@ -22,6 +22,7 @@ class RpcRequest(BaseModel):
     def kwargs(self):
         return self._kwargs
 
+
 @json_message
 class RpcResponse(BaseModel):
     request_id: int = 0
@@ -32,3 +33,4 @@ class RpcResponse(BaseModel):
     @property
     def response(self):
         return self._response
+

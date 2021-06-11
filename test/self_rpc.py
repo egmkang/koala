@@ -103,16 +103,16 @@ async def qps():
             last = v
 
 
-placement = SelfHostedPlacement(5555, {IService1.__qualname__: IService2.__qualname__})
+placement = SelfHostedPlacement(15555, {IService1.__qualname__: IService2.__qualname__})
 set_placement_impl(placement)
 logger.info(get_placement_impl())
 
 
 server_base.init_server()
-server_base.listen(5555, CODEC_RPC)
+server_base.listen(15555, CODEC_RPC)
 server_base.create_task(service_1())
 
-for item in range(1):
+for item in range(8):
     i = item
     server_base.create_task(bench(i))
 

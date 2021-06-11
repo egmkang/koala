@@ -23,6 +23,7 @@ def init_logger(file_name_prefix: Optional[str], level: Optional[str]):
         file_config["handlers"].append(dict(sink=file_name_pattern, format=FILE_FORMAT, rotation="1000 MB"))
         pass
     else:
-        logger.configure(**console_config)
+        # logger.configure(**console_config)
+        pass
     if level is not None:
         logger.level(level)

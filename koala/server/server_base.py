@@ -12,7 +12,7 @@ from koala.message.message import HeartBeatRequest, HeartBeatResponse
 from koala.message.gateway import NotifyNewMessage, NotifyConnectionAborted, NotifyConnectionComing, \
     RequestCloseConnection, RequestChangeMessageDestination, RequestSendMessageToPlayer
 from koala.server.rpc_message_dispatch import process_rpc_request, process_rpc_response, \
-    process_heartbeat_request, process_heartbeat_response
+    process_heartbeat_request, process_heartbeat_response, update_process_time
 from koala.server.gateway_message_dispatch import process_gateway_connection_aborted, process_gateway_new_message, \
     process_gateway_connection_coming
 from koala.server.rpc_request_id import set_request_id_seed
@@ -112,6 +112,7 @@ def create_task(co):
 
 
 def run_server():
+    _tcp_server.create_task(update_process_time())
     _tcp_server.create_task(_socket_session_manager.run())
     _tcp_server.create_task(_run_placement())
     _tcp_server.run()

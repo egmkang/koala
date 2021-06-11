@@ -16,6 +16,14 @@ from koala.placement.placement import get_placement_impl
 
 
 _entity_manager = EntityManager()
+_last_process_time = time.time()
+
+
+async def update_process_time():
+    global _last_process_time
+    while True:
+        await asyncio.sleep(1.0)
+        _last_process_time = time.time()
 
 
 async def process_rpc_request_slow(proxy: SocketSession, request: object):
@@ -71,17 +79,19 @@ async def process_rpc_response(session: SocketSession, response: object):
         future.set_result(resp.response)
 
 
-async def process_heartbeat_request(proxy: SocketSession, request: object):
+async def process_heartbeat_request(session: SocketSession, request: object):
     req, _ = cast(Tuple[HeartBeatRequest, bytes], request)
     resp = HeartBeatResponse()
     resp.milli_seconds = req.milli_seconds
-    await proxy.send_message((resp, None))
-    logger.trace("process_rpc_heartbeat_request, SessionID:%d" % proxy.session_id)
+    session.heart_beat(_last_process_time)
+    await session.send_message((resp, None))
+    logger.trace("process_rpc_heartbeat_request, SessionID:%d" % session.session_id)
 
 
 async def process_heartbeat_response(session: SocketSession, response: object):
     now = int(time.time() * 1000)
     resp, _ = cast(Tuple[HeartBeatResponse, bytes], response)
+    session.heart_beat(_last_process_time)
     if now - resp.milli_seconds > 10:
         logger.warning("rpc_heartbeat delay:%dms" % (now - resp.milli_seconds))
     pass

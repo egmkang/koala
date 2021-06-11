@@ -1,5 +1,6 @@
 import asyncio
 import time
+import traceback
 from koala.typing import *
 from koala.network.buffer import Buffer
 from koala.logger import logger
@@ -82,7 +83,7 @@ class TcpSocketSession(SocketSession):
                     break
                 await _process_socket_message(self, clz, msg)
         except Exception as e:
-            logger.error("TcpSocketSession.recv_message, SessionID:%d Exception:%s" % (self.session_id, e))
+            logger.error("TcpSocketSession.recv_message, SessionID:%d Exception:%s, StackTrace:%s" % (self.session_id, e, traceback.format_exc()))
             pass
         finally:
             _process_close_socket(session_id=self.session_id)
@@ -101,9 +102,12 @@ class TcpSocketSession(SocketSession):
             self._buffer.append(data)
 
     async def send_message(self, msg: object):
-        data = self._codec.encode(msg)
-        self._writer.write(data)
-        await self._writer.drain()
+        try:
+            data = self._codec.encode(msg)
+            self._writer.write(data)
+        except Exception as e:
+            logger.error("send_message, Exception:%s" % (e))
+        # await self._writer.drain()
 
     @classmethod
     async def connect(cls, host: str, port: int, codec_id: int) -> Optional[SocketSession]:

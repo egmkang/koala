@@ -13,7 +13,7 @@ class ServerNode(BaseModel):
     service_type: Dict[str, str] = {}
     # 下面两个成员不是元数据
     # _proxy是一个弱引用, 减少一次查询
-    _session: Optional[weakref.ReferenceType[SocketSession]] = PrivateAttr(default=None)
+    _session: Optional[Any] = PrivateAttr(default=None)
     _session_id: int = PrivateAttr(default=0)
 
     @property

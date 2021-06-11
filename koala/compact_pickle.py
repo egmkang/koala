@@ -10,7 +10,7 @@ UNCOMPRESSED = b'0'
 
 def pickle_dumps(o: object) -> bytes:
     array = pickle.dumps(o, protocol=pickle.HIGHEST_PROTOCOL)
-    array = pickletools.optimize(array)
+    # array = pickletools.optimize(array)
     compressed = UNCOMPRESSED + array
     if len(array) > THRESHOLD:
         compressed = lz4.frame.compress(array)

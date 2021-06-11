@@ -1,9 +1,10 @@
-import pickle
+import orjson
 from koala.network.buffer import Buffer
 from koala.network.codec import Codec
 from koala.network.constant import *
 from koala.message import *
 from koala.message.util import find_model
+from koala.logger import logger
 
 
 KOLA_MAGIC = "KOLA".encode()
@@ -29,7 +30,8 @@ class CodecRpc(Codec):
         # N字节MessageName
         # M字节json
         name: str = o.__class__.__qualname__
-        return b"".join((int.to_bytes(len(name), 1, 'little'), name.encode(), o.json().encode()))
+        json_data: bytes = cast(bytes, orjson.dumps(o.__dict__))
+        return b"".join((int.to_bytes(len(name), 1, 'little'), name.encode(), json_data))
 
     @classmethod
     def _decode_meta(cls, array: bytes) -> Optional[BaseModel]:
@@ -37,7 +39,8 @@ class CodecRpc(Codec):
         name = array[1: name_length + 1].decode()
         model = find_model(name)
         if model is not None:
-            return model.parse_raw(array[name_length + 1:])
+            json = orjson.loads(array[name_length+1:])
+            return model.parse_obj(json)
         return None
 
     def decode(self, buffer: Buffer) -> Tuple[Type, Optional[Message]]:
