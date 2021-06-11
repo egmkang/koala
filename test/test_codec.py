@@ -1,4 +1,5 @@
 from koala.network.buffer import Buffer
+from koala.message.message import HeartBeatRequest
 from koala.network.codec_rpc import CodecRpc, Message
 from koala.network.codec_echo import CodecEcho
 from koala.network.codec_manager import CodecManager
@@ -25,17 +26,14 @@ class TestCodec:
 
     def test_codec_manager(self):
         manager = CodecManager()
-        s = "11223344556677889900"
+        rpc_input = (HeartBeatRequest(), b"11223344556677889900")
         codec = manager.get_codec(CODEC_RPC)
-        data = codec.encode(s)
+        data = codec.encode(rpc_input)
         msg = codec.decode(Buffer.from_bytes(data))
-        assert s == msg
+        assert rpc_input == msg
 
+        s = "11223344556677889900"
         codec = manager.get_codec(CODEC_ECHO)
         data = codec.encode(s)
         msg = codec.decode(Buffer.from_bytes(data))
         assert s == msg
-
-
-t = TestCodec()
-t.test_rpc_codec()
