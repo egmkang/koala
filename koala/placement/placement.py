@@ -76,16 +76,15 @@ class Placement(ABC):
         pass
 
 
-class PlacementInjection(Singleton):
-    __impl: Optional[Placement]
+__placement_impl: Optional[Placement] = None
 
-    def __init__(self) -> None:
-        super(PlacementInjection, self).__init__()
-        self.__impl = None
 
-    def set_impl(self, impl: Placement):
-        self.__impl = impl
+def get_placement_impl() -> Optional[Placement]:
+    return __placement_impl
 
-    @property
-    def impl(self) -> Optional[Placement]:
-        return self.__impl
+
+def set_placement_impl(impl: Placement):
+    global __placement_impl
+    __placement_impl = impl
+    logger.info("init placement impl %s" % __placement_impl)
+

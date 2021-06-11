@@ -1,16 +1,16 @@
 import asyncio
 from asyncio.futures import Future
+from koala.compact_pickle import pickle_dumps
 from koala.meta.rpc_meta import *
 from koala.message.rpc import RpcRequest
 from koala.server.rpc_exception import *
 from koala.server.rpc_future import *
 from koala.server.actor_context import ActorContext
 from koala.server.rpc_request_id import new_request_id, new_reentrant_id
-from koala.placement.placement import PlacementInjection
+from koala.placement.placement import get_placement_impl
 
 
 DEFAULT_RPC_TIMEOUT = 5.0
-_placement = PlacementInjection()
 
 
 async def _rpc_call(unique_id: int) -> object:
@@ -31,7 +31,7 @@ class _RpcMethodObject(object):
 
     async def __send_request(self, *arg, **kwargs):
         # position
-        position = await _placement.impl.find_position(self.service_name, self.actor_id)
+        position = await get_placement_impl().find_position(self.service_name, self.actor_id)
         if position is None:
             raise Exception("Placement Service Not Valid")
 
@@ -45,10 +45,10 @@ class _RpcMethodObject(object):
         req.method_name = self.method_name
         req.actor_id = self.actor_id
         req.reentrant_id = self.reentrant_id
-        req.args = arg
-        req.kwargs = kwargs
         req.server_id = position.server_uid
-        await proxy.send_message(req)
+
+        raw_args = pickle_dumps((arg, kwargs))
+        await proxy.send_message((req, raw_args))
         return req.request_id
 
     async def __call__(self, *args, **kwargs):
@@ -60,7 +60,7 @@ class _RpcMethodObject(object):
                 return await _rpc_call(request_id)
             except RpcException as e:
                 if e.code == RPC_ERROR_POSITION_CHANGED:
-                    _placement.impl.remove_position_cache(self.service_name, self.actor_id)
+                    get_placement_impl().remove_position_cache(self.service_name, self.actor_id)
                     continue
                 raise e
 

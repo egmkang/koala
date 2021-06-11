@@ -1,6 +1,7 @@
 import asyncio
 import time
 from koala.typing import *
+from koala.compact_pickle import pickle_loads
 from koala.message.rpc import RpcRequest, RpcResponse
 from koala.message.message import HeartBeatRequest, HeartBeatResponse
 from koala.meta.rpc_meta import *
@@ -11,16 +12,15 @@ from koala.server.actor_message_loop import _send_error_resp, \
 from koala.server.actor_base import *
 from koala.server.entity_manager import EntityManager
 from koala.server.rpc_exception import RpcException
-from koala.placement.placement import PlacementInjection
+from koala.placement.placement import get_placement_impl
 
 
 _entity_manager = EntityManager()
-_placement = PlacementInjection()
 
 
 async def process_rpc_request_slow(proxy: SocketSession, request: object):
-    placement = _placement.impl
-    req: RpcRequest = cast(RpcRequest, request)
+    placement = get_placement_impl()
+    req, _ = cast(Tuple[RpcRequest, bytes], request)
     placement.remove_position_cache(req.service_name, req.actor_id)
     try:
         node = await placement.find_position(req.service_name, req.actor_id)
@@ -39,13 +39,14 @@ async def process_rpc_request_slow(proxy: SocketSession, request: object):
 
 
 async def process_rpc_request(proxy: SocketSession, request: object):
-    req: RpcRequest = cast(RpcRequest, request)
+    req, raw_args = cast(Tuple[RpcRequest, bytes], request)
+    req._args, req._kwargs = pickle_loads(raw_args)
     try:
-        node = _placement.impl.find_position_in_cache(req.service_name, req.actor_id)
+        node = get_placement_impl().find_position_in_cache(req.service_name, req.actor_id)
         # rpc请求方, 和自己的pd缓存一定要是一致的
         # 否则就清掉自己的缓存, 然后重新查找一下定位
-        if node is not None and node.server_uid == _placement.impl.server_id() \
-                and req.server_id == _placement.impl.server_id():
+        if node is not None and node.server_uid == get_placement_impl().server_id() \
+                and req.server_id == get_placement_impl().server_id():
             actor = _entity_manager.get_or_new_by_name(req.service_name, req.actor_id)
             if actor is None:
                 raise RpcException.entity_not_found()
@@ -60,7 +61,9 @@ async def process_rpc_request(proxy: SocketSession, request: object):
 
 
 async def process_rpc_response(session: SocketSession, response: object):
-    resp: RpcResponse = cast(RpcResponse, response)
+    resp, raw_response = cast(Tuple[RpcResponse, bytes], response)
+    resp._response = pickle_loads(raw_response)
+
     future: Future = get_future(resp.request_id)
     if resp.error_code != 0:
         future.set_exception(Exception(resp.error_str))
@@ -69,16 +72,16 @@ async def process_rpc_response(session: SocketSession, response: object):
 
 
 async def process_heartbeat_request(proxy: SocketSession, request: object):
-    req: HeartBeatRequest = cast(HeartBeatRequest, request)
+    req, _ = cast(Tuple[HeartBeatRequest, bytes], request)
     resp = HeartBeatResponse()
     resp.milli_seconds = req.milli_seconds
-    await proxy.send_message(resp)
+    await proxy.send_message((resp, None))
     logger.trace("process_rpc_heartbeat_request, SessionID:%d" % proxy.session_id)
 
 
 async def process_heartbeat_response(session: SocketSession, response: object):
     now = int(time.time() * 1000)
-    resp: HeartBeatResponse = cast(HeartBeatResponse, response)
+    resp, _ = cast(Tuple[HeartBeatResponse, bytes], response)
     if now - resp.milli_seconds > 10:
         logger.warning("rpc_heartbeat delay:%dms" % (now - resp.milli_seconds))
     pass

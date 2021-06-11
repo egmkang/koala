@@ -4,13 +4,12 @@ from koala.message.gateway import *
 from koala.network.socket_session import SocketSession, SocketSessionManager
 from koala.gateway.codec_gateway import *
 from koala.gateway.client_session import *
-from koala.placement.placement import PlacementInjection
+from koala.placement.placement import get_placement_impl
 from koala.logger import logger
 
 
 _session_manager = SocketSessionManager()
 _session_factory = GatewayClientSessionFactory()
-_placement = PlacementInjection()
 
 
 async def _process_gateway_incoming_message_slow(session: SocketSession, msg: bytes, first: bool):
@@ -22,10 +21,10 @@ async def _process_gateway_incoming_message_slow(session: SocketSession, msg: by
             user_data = data
             session.set_user_data(user_data)
         service_type, actor_id = user_data.destination()
-        node = _placement.impl.find_position_in_cache(service_type, actor_id)
+        node = get_placement_impl().find_position_in_cache(service_type, actor_id)
         if node is None:
-            _placement.impl.remove_position_cache(service_type, actor_id)
-            node = await _placement.impl.find_position(service_type, actor_id)
+            get_placement_impl().remove_position_cache(service_type, actor_id)
+            node = await get_placement_impl().find_position(service_type, actor_id)
         if node is None:
             logger.warning("IncomingMessageSlow, Actor:%s/%s cannot find position" % (service_type, actor_id))
             return
@@ -62,7 +61,7 @@ async def process_gateway_incoming_message(session: SocketSession, message: obje
         asyncio.create_task(_process_gateway_incoming_message_slow(session, msg.data, True))
         return
     service_type, actor_id = user_data.destination()
-    node = _placement.impl.find_position_in_cache(service_type, actor_id)
+    node = get_placement_impl().find_position_in_cache(service_type, actor_id)
     if node is None:
         asyncio.create_task(_process_gateway_incoming_message_slow(session, msg.data, False))
         return
@@ -116,5 +115,3 @@ async def process_gateway_close_connection(session: SocketSession, msg: object):
     if client is not None:
         client.close()
     pass
-
-

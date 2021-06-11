@@ -5,7 +5,7 @@ from koala.server.actor_base import ActorBase
 from koala.meta.rpc_meta import *
 from koala.network.constant import CODEC_RPC
 from koala.network.socket_session import SocketSessionManager
-from koala.placement.placement import PlacementInjection
+from koala.placement.placement import get_placement_impl, set_placement_impl
 from koala.pd.simple import SelfHostedPlacement
 from koala.server.rpc_proxy import get_rpc_proxy
 from koala.logger import logger
@@ -39,7 +39,7 @@ class Service1Impl(IService1, ActorBase):
 
     async def say_hello(self, hello: str) -> str:
         service_2 = self.get_proxy(IService2, "2")
-        logger.info("service 2 return %s" % service_2.hello(self.uid, random.randrange(0, 10000)))
+        logger.info("service 2 return %s" % await service_2.hello(self.uid, random.randrange(0, 10000)))
         return "my name is %s, and yours is %s" % (self.uid, hello)
 
     async def say(self):
@@ -68,7 +68,7 @@ async def service_1():
 
 @rpc_interface
 class IBench:
-    def echo(self, e: str) -> str:
+    async def echo(self, e: str) -> str:
         pass
 
 
@@ -77,7 +77,7 @@ class BenchImpl(IBench, ActorBase):
     def __init__(self):
         super(BenchImpl, self).__init__()
 
-    def echo(self, e: str) -> str:
+    async def echo(self, e: str) -> str:
         return e
 
 
@@ -89,7 +89,7 @@ async def bench(index: object):
     await asyncio.sleep(3)
     proxy = get_rpc_proxy(IBench, index)
     while True:
-        r = proxy.echo("12121212")
+        _ = await proxy.echo("12121212")
         finished += 1
 
 
@@ -104,18 +104,18 @@ async def qps():
 
 
 placement = SelfHostedPlacement(5555, {IService1.__qualname__: IService2.__qualname__})
-PlacementInjection().set_impl(placement)
+set_placement_impl(placement)
+logger.info(get_placement_impl())
 
 
 server_base.init_server()
 server_base.listen(5555, CODEC_RPC)
-
-asyncio.create_task(service_1())
+server_base.create_task(service_1())
 
 for item in range(1):
     i = item
-    asyncio.create_task(bench(i))
+    server_base.create_task(bench(i))
 
-asyncio.create_task(qps())
+server_base.create_task(qps())
 
 server_base.run_server()

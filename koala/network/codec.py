@@ -1,4 +1,5 @@
 from abc import ABC, abstractmethod
+from koala.typing import *
 from koala.network.buffer import Buffer
 
 
@@ -14,7 +15,7 @@ class Codec(ABC):
 
     # (Buffer) => object
     @abstractmethod
-    def decode(self, buffer: Buffer) -> object:
+    def decode(self, buffer: Buffer) -> Tuple[Type, Optional[object]]:
         pass
 
     # (msg) => bytes

@@ -6,7 +6,7 @@ from koala.network.socket_session import SocketSession, SocketSessionManager
 from koala.network.tcp_server import TcpServer
 from koala.network import event_handler
 from koala.logger import logger, init_logger
-from koala.placement.placement import PlacementInjection
+from koala.placement.placement import get_placement_impl
 from koala.message.rpc import RpcRequest, RpcResponse
 from koala.message.message import HeartBeatRequest, HeartBeatResponse
 from koala.message.gateway import NotifyNewMessage, NotifyConnectionAborted, NotifyConnectionComing, \
@@ -40,8 +40,8 @@ def register_user_socket_closed_handler(cls: MessageType, handler: Callable[[Soc
     pass
 
 
-async def _message_handler(session: SocketSession, msg: object):
-    t = msg.__class__
+async def _message_handler(session: SocketSession, clz: Type, msg: object):
+    t = clz
     if t not in _user_message_handler_map:
         logger.error("process user message, Type:%s not found a processor" % str(t))
         return
@@ -81,7 +81,7 @@ def _init_internal_message_handler():
 
 
 async def _run_placement():
-    impl = PlacementInjection().impl
+    impl = get_placement_impl()
     if impl is None:
         logger.error("Placement module not initialized")
         return

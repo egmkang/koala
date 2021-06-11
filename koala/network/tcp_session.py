@@ -77,10 +77,10 @@ class TcpSocketSession(SocketSession):
     async def recv_message(self):
         try:
             while not self._stop:
-                msg = await self._recv_data()
+                clz, msg = await self._recv_data()
                 if msg is None:
                     break
-                await _process_socket_message(self, msg)
+                await _process_socket_message(self, clz, msg)
         except Exception as e:
             logger.error("TcpSocketSession.recv_message, SessionID:%d Exception:%s" % (self.session_id, e))
             pass
@@ -89,9 +89,9 @@ class TcpSocketSession(SocketSession):
 
     async def _recv_data(self):
         while not self._stop:
-            msg = self._codec.decode(self._buffer)
+            clz, msg = self._codec.decode(self._buffer)
             if msg is not None:
-                return msg
+                return clz, msg
             self._buffer.shrink()
 
             data = await self._reader.read(1024)

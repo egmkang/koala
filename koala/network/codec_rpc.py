@@ -40,16 +40,16 @@ class CodecRpc(Codec):
             return model.parse_raw(array[name_length + 1:])
         return None
 
-    def decode(self, buffer: Buffer) -> Optional[Message]:
+    def decode(self, buffer: Buffer) -> Tuple[Type, Optional[Message]]:
         if buffer.readable_length() < self.HEADER_LENGTH:
-            return None
+            return BaseModel.__class__, None
         # 这边需要对包的长度进行判断
         header = buffer.slice(self.HEADER_LENGTH)
         magic = header[:4].decode()
         meta_length = int.from_bytes(header[4:8], 'little')
         body_length = int.from_bytes(header[8:], 'little')
         if buffer.readable_length() < meta_length + body_length + self.HEADER_LENGTH:
-            return None
+            return BaseModel.__class__, None
         if magic != "KOLA":
             raise Exception("header exception, magic number not correct")
         buffer.has_read(self.HEADER_LENGTH)
@@ -57,7 +57,7 @@ class CodecRpc(Codec):
         body_data = buffer.read(body_length)
         meta = self._decode_meta(meta_data)
         if meta is not None:
-            return meta, body_data if body_data else b""
+            return meta.__class__, (meta, body_data if body_data else b"")
         raise Exception("decode meta fail")
 
     def encode(self, msg: object) -> bytes:
