@@ -9,7 +9,7 @@ _config = Config()
 def init_server():
     _pd_impl = PDPlacementImpl()
     init_logger(_config.log_name, _config.log_level)
-    PlacementInjection().set_impl(_pd_impl)
+    set_placement_impl(_pd_impl)
     server_base.init_server(_config.thread_count)
 
 

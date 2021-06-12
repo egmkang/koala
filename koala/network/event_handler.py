@@ -8,7 +8,7 @@ from koala.logger import logger
 
 _session_manager = SocketSessionManager()
 _last_process_message_time = time.time()
-_message_handler: Optional[Callable[[SocketSession, object], Coroutine]] = None
+_message_handler: Optional[Callable[[SocketSession, Type, object], Coroutine]] = None
 _socket_close_handler: Optional[Callable[[SocketSession], None]] = None
 
 
@@ -33,10 +33,10 @@ def _process_close_socket(session_id: int):
     return
 
 
-async def _process_socket_message(session: SocketSession, msg: object):
+async def _process_socket_message(session: SocketSession, clz: Type, msg: object):
     try:
         if _message_handler:
-            await _message_handler(session, msg)
+            await _message_handler(session, clz, msg)
         else:
             logger.error("process_socket_message, user message handler is None")
     except Exception as e:
@@ -52,7 +52,7 @@ def _process_connect_success(session: SocketSession):
         logger.error("SocketSessionManager, SessionID:%d not found" % session.session_id)
 
 
-def register_message_handler(handler: Callable[[SocketSession, object], Coroutine]):
+def register_message_handler(handler: Callable[[SocketSession, Type, object], Coroutine]):
     global _message_handler
     _message_handler = handler
     pass

@@ -82,13 +82,9 @@ class TestInterfaceMap(object):
         assert is_interface(Interface3)
         assert not is_interface(str)
 
-
-class TestImplMap(object):
     def test_impl(self):
         assert get_impl_type(Interface1) == Impl1
         assert get_impl_type(Interface2) == Impl2
         assert get_impl_type(Interface3) == ImplMix
         assert get_impl_type(Interface4) == ImplMix
         assert get_impl_type(str) is None
-
-

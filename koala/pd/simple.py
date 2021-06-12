@@ -1,0 +1,79 @@
+import asyncio
+import time
+from koala.typing import *
+from koala.membership.server_node import ServerNode
+from koala.placement.placement import Placement
+from koala.network.socket_session import SocketSessionManager, SocketSession
+from koala.network.tcp_session import TcpSocketSession
+from koala.network.constant import CODEC_RPC
+from koala.membership.membership_manager import MembershipManager
+from koala.message import HeartBeatRequest
+from koala.logger import logger
+
+
+_membership = MembershipManager()
+_session_manager = SocketSessionManager()
+
+
+class SelfHostedPlacement(Placement):
+    def __init__(self, port: int, service_list: Dict[str, str]):
+        super(SelfHostedPlacement, self).__init__()
+        self.server_port = "%d" % port
+        self.proxy: Optional[SocketSession] = None
+
+        self.server_node = ServerNode(server_uid=1,
+                                      host="127.0.0.1",
+                                      port=self.server_port,
+                                      service_type=service_list,
+                                      server_name="single node cluster")
+
+        pass
+
+    def server_id(self) -> int:
+        return self.server_node.server_uid
+
+    async def register_server(self):
+        pass
+
+    def set_load(self, load: int):
+        pass
+
+    def _on_remove_server(self, node: ServerNode):
+        pass
+
+    async def placement_loop(self):
+        await asyncio.sleep(1.0)
+        if self.proxy is None:
+            self.add_server(self.server_node)
+        if int(time.time()) % 5 == 0:
+            if self.proxy is not None:
+                heartbeat = HeartBeatRequest()
+                heartbeat.milli_seconds = int(time.time() * 1000)
+                await self.proxy.send_message((heartbeat, None))
+        pass
+
+    def _on_add_server(self, node: ServerNode):
+        asyncio.create_task(self._try_connect(node))
+        pass
+
+    def find_position_in_cache(self, i_type: str, uid: object) -> Optional[ServerNode]:
+        return _membership.get_member(self.server_node.server_uid)
+        pass
+
+    async def find_position(self, i_type: str, uid: object) -> Optional[ServerNode]:
+        return _membership.get_member(self.server_node.server_uid)
+
+    def remove_position_cache(self, i_type: str, uid: object):
+        pass
+
+    async def _try_connect(self, node: ServerNode):
+        try:
+            session = await TcpSocketSession.connect(node.host, int(node.port), CODEC_RPC)
+            if session is not None:
+                node.set_session(session)
+                logger.info("try_connect ServerID:%d, Host:%s:%s success" % (node.server_uid, node.host, node.port))
+                self.proxy = session
+        except Exception as e:
+            logger.error("try_connect ServerID:%d, Host:%s:%s, Exception:%s" %
+                         (node.server_uid, node.host, node.port, e))
+        pass

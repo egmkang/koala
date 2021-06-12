@@ -1,45 +1,46 @@
 from typing import List, Optional
+from koala.message.base import SimpleMessage
+from dataclasses import dataclass
 
 
-class NotifyConnectionComing(object):
-    def __init__(self):
-        self.service_type = ""
-        self.actor_id = ""
-        self.session_id = 0
-        self.token = b""
+@dataclass
+class NotifyConnectionComing(SimpleMessage):
+    service_type: str = ""
+    actor_id: str = ""
+    session_id: int = 0
+    token: bytes = b""
 
 
-class NotifyConnectionAborted(object):
-    def __init__(self):
-        self.session_id = 0
-        self.service_type = ""
-        self.actor_id = ""
+@dataclass
+class NotifyConnectionAborted(SimpleMessage):
+    session_id: int = 0
+    service_type: str = ""
+    actor_id: str = ""
 
 
-class RequestCloseConnection(object):
-    def __init__(self):
-        self.session_id = 0
-        self.service_type = ""
+@dataclass
+class RequestCloseConnection(SimpleMessage):
+    session_id: int = 0
+    service_type: str = ""
 
 
-class NotifyNewMessage(object):
-    def __init__(self):
-        self.session_id = 0
-        self.service_type = ""
-        self.actor_id = ""
-        self.message = b""
+@dataclass
+class NotifyNewMessage(SimpleMessage):
+    session_id: int = 0
+    service_type: str = ""
+    actor_id: str = ""
+    message: bytes = b""
 
 
-class RequestSendMessageToPlayer(object):
-    def __init__(self):
-        self.session_ids: Optional[List[int]] = None
-        self.session_id: int = 0
-        self.message = b""
+@dataclass
+class RequestSendMessageToPlayer(SimpleMessage):
+    session_ids: Optional[List[int]] = None
+    session_id: int = 0
+    message: bytes = b""
 
 
-class RequestChangeMessageDestination(object):
-    def __init__(self):
-        self.session_id = 0
-        self.new_service_type = ""
-        self.new_actor_id = ""
-
+@dataclass
+class RequestChangeMessageDestination(SimpleMessage):
+    session_id: int = 0
+    new_service_type: str = ""
+    new_actor_id: str = ""

@@ -12,7 +12,7 @@ class GatewayRawMessage:
 # 后面再抽象编解码器
 class GatewayCodec(Codec):
     def __init__(self):
-        super().__init__()
+        super().__init__(CODEC_GATEWAY)
         pass
 
     def codec_id(self) -> int:
@@ -30,5 +30,3 @@ class GatewayCodec(Codec):
             return msg
         raw_msg = cast(GatewayRawMessage, msg)
         return raw_msg.data
-
-

@@ -2,6 +2,7 @@ import asyncio
 import traceback
 import weakref
 from typing import cast
+from koala.compact_pickle import pickle_dumps
 from koala.message.rpc import RpcResponse, RpcRequest
 from koala.meta.rpc_meta import get_rpc_impl_method
 from koala.network.socket_session import SocketSession
@@ -28,7 +29,7 @@ async def _send_error_resp(proxy: SocketSession, request_id: int, e: Exception):
     else:
         resp.error_code = RPC_ERROR_UNKNOWN
         resp.error_str = traceback.format_exc()
-    await proxy.send_message(resp)
+    await proxy.send_message((resp, None))
 
 
 async def _dispatch_actor_rpc_request(actor: ActorBase, proxy: SocketSession, req: RpcRequest):
@@ -38,12 +39,14 @@ async def _dispatch_actor_rpc_request(actor: ActorBase, proxy: SocketSession, re
             raise RpcException.method_not_found()
 
         result = method.__call__(actor, *req.args, **req.kwargs)
+        if asyncio.iscoroutine(result):
+            result = await result
         resp = RpcResponse()
         resp.request_id = req.request_id
-        resp.response = result
+        raw_response = pickle_dumps(result)
 
         if proxy:
-            await proxy.send_message(resp)
+            await proxy.send_message((resp, raw_response))
     except Exception as e:
         logger.error("_dispatch_actor_rpc_request, Actor:%s/%s, Exception:%s, StackTrace:%s" %
                      (actor.type_name, actor.uid, e, traceback.format_exc()))

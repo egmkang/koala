@@ -12,9 +12,9 @@ _session_manager = SocketSessionManager()
 
 
 async def _send_message(session_id: int, msg: object):
-    proxy = _session_manager.get_session(session_id)
-    if proxy:
-        await proxy.send_message(msg)
+    session = _session_manager.get_session(session_id)
+    if session:
+        await session.send_message((msg, None))
 
 
 class ActorBase(ABC):
@@ -84,7 +84,7 @@ class ActorBase(ABC):
             if session:
                 socket_proxy = session
         if socket_proxy:
-            await socket_proxy.send_message(msg)
+            await socket_proxy.send_message((msg, None))
         else:
             logger.warning("Actor.SendMessage, Actor:%s/%s , SocketSession not found" % (self.type_name, self.uid))
 

@@ -1,6 +1,7 @@
 import traceback
 from abc import ABC, abstractmethod
-from koala.membership.server_node import ServerNode, ServerNodeMetaData
+from koala.typing import *
+from koala.membership.server_node import ServerNode
 from koala.membership.membership_manager import MembershipManager
 from koala.singleton import Singleton
 from koala.logger import logger
@@ -15,7 +16,7 @@ class Placement(ABC):
         pass
 
     @abstractmethod
-    def register_server(self):
+    async def register_server(self):
         pass
 
     @abstractmethod
@@ -23,19 +24,19 @@ class Placement(ABC):
         pass
 
     @abstractmethod
-    def find_position_in_cache(self, i_type: str, uid: object) -> ServerNode:
+    def find_position_in_cache(self, i_type: str, uid: object) -> Optional[ServerNode]:
         pass
 
     @abstractmethod
-    async def find_position(self, i_type: str, uid: object) -> ServerNode:
+    async def find_position(self, i_type: str, uid: object) -> Optional[ServerNode]:
         pass
 
     @abstractmethod
     def remove_position_cache(self, i_type: str, uid: object):
         pass
 
-    def add_server(self, node: ServerNodeMetaData):
-        server = ServerNode(node)
+    def add_server(self, node: ServerNode):
+        server = node
         _membership_manager.add_member(server)
         try:
             self._on_add_server(server)
@@ -75,15 +76,15 @@ class Placement(ABC):
         pass
 
 
-class PlacementInjection(Singleton):
-    __impl: Placement
+__placement_impl: Optional[Placement] = None
 
-    def __init__(self) -> None:
-        super(PlacementInjection, self).__init__()
 
-    def set_impl(self, impl: Placement):
-        self.__impl = impl
+def get_placement_impl() -> Optional[Placement]:
+    return __placement_impl
 
-    @property
-    def impl(self) -> Placement:
-        return self.__impl
+
+def set_placement_impl(impl: Placement):
+    global __placement_impl
+    __placement_impl = impl
+    logger.info("init placement impl %s" % __placement_impl)
+

@@ -1,159 +1,111 @@
-import json
-import urllib3
+import asyncio
+import time
+import httpx
+from pydantic import BaseModel
 from koala.typing import *
 
+ResultType = TypeVar("ResultType", bound='PDResponse')
 
-http = urllib3.PoolManager()
+__PD_ADDRESS = "http://127.0.0.1:2379"
+__PD_API_ADDRESS = f"{__PD_ADDRESS}/pd/api/v"
 
-ResultType = TypeVar("ResultType")
-
-
-__PD_ADDRESS = "http://10.246.34.33:2379"
-__PD_INTERNAL_ADDRESS = __PD_ADDRESS + "/pd/api/v1"
-
-PD_VERSION_URL = __PD_INTERNAL_ADDRESS + "/version"
-
-PD_ID_NEW_SERVER_URL = __PD_INTERNAL_ADDRESS + "/id/new_server_id"
-PD_ID_NEW_SEQUENCE_URL = __PD_INTERNAL_ADDRESS + "/id/new_sequence/"
-PD_MEMBERSHIP_REGISTER_URL = __PD_INTERNAL_ADDRESS + "/membership/register"
-PD_MEMBERSHIP_KEEP_ALIVE_URL = __PD_INTERNAL_ADDRESS + "/membership/keep_alive"
-PD_PLACEMENT_FIND_POSITION_URL = __PD_INTERNAL_ADDRESS + "/placement/find_position"
-PD_PLACEMENT_NEW_TOKEN_URL = __PD_INTERNAL_ADDRESS + "/placement/new_token"
-
-__header = {'content-type': 'application/json'}
-__POST = "POST"
-__GET = "GET"
+PD_VERSION_URL = f"{__PD_API_ADDRESS}/version"
+PD_ID_NEW_SERVER_URL = f"{__PD_API_ADDRESS}/id/new_server_id"
+PD_ID_NEW_SEQUENCE_URL = f"{__PD_API_ADDRESS}/id/new_sequence"
+PD_MEMBERSHIP_REGISTER_URL = f"{__PD_API_ADDRESS}/membership/register"
+PD_MEMBERSHIP_KEEP_ALIVE_URL = f"{__PD_API_ADDRESS}/membership/keep_alive"
+PD_PLACEMENT_FIND_POSITION_URL = f"{__PD_API_ADDRESS}/placement/find_position"
+PD_PLACEMENT_NEW_TOKEN_URL = f"{__PD_API_ADDRESS}/placement/new_token"
 
 
 #
 # 请求和返回的定义
 #
-
-
-class PDResponse(object):
-    def __init__(self):
-        self.error_code = 0
-        self.error_msg: str = ""
-    pass
+class PDResponse(BaseModel):
+    error_code: int = 0
+    error_msg: str = ""
 
 
 class VersionResponse(PDResponse):
-    def __init__(self):
-        super().__init__()
-        self.version: str = ""
-        pass
+    version: str = ""
 
 
-class NewIDResponse(PDResponse):
-    def __init__(self):
-        super().__init__()
-        self.id = 0
+class NewServerIdResponse(PDResponse):
+    id: int = 0
 
 
-class HostNodeInfo(object):
-    def __init__(self):
-        self.server_id = 0
-        self.load = 0
-        self.start_time = 0
-        self.ttl = 0
-        self.address = ""
-        self.services: Dict[str, str] = dict()
-        self.desc = ""
+class NewSequenceIdResponse(PDResponse):
+    id: int = 0
+
+
+class HostNodeInfo(BaseModel):
+    server_id: int = 0
+    load: int = 0
+    start_time: int = 0
+    ttl: int = 0
+    address: str = ""
+    services: Dict[str, str]
+    desc: str = ""
 
 
 class RegisterNewServerRequest(HostNodeInfo):
-    def __init__(self):
-        super().__init__()
-        pass
     pass
 
 
 class RegisterNewServerResponse(PDResponse):
-    def __init__(self):
-        super().__init__()
-        self.lease_id = 0
-        pass
+    lease_id: int
 
 
-class KeepAliveServerRequest(object):
-    def __init__(self):
-        self.server_id = 0
-        self.lease_id = 0
-        self.load = 0
-        pass
+class KeepAliveServerRequest(BaseModel):
+    server_id: int = 0
+    lease_id: int = 0
+    load: int = 0
 
 
-class HostNodeAddRemoveEvent(object):
-    def __init__(self):
-        self.time = 0
-        self.add: List[int] = []
-        self.remove: List[int] = []
-        pass
+class HostNodeAddRemoveEvent(BaseModel):
+    time: int = 0
+    add: List[int] = []
+    remove: List[int] = []
 
 
 class KeepAliveServerResponse(PDResponse):
-    def __init__(self):
-        super().__init__()
-        self.hosts: Dict[int, HostNodeInfo] = dict()
-        self.events: List[HostNodeAddRemoveEvent] = list()
-
-    def rebuild(self):
-        json_hosts: dict = self.hosts
-        json_events: list = self.events
-        self.hosts = dict()
-        self.events = list()
-        for key in json_hosts:
-            host = HostNodeInfo()
-            host.__dict__.update(json_hosts[key])
-            self.hosts[host.server_id] = host
-            pass
-        for item in json_events:
-            event = HostNodeAddRemoveEvent()
-            event.__dict__.update(item)
-            self.events.append(event)
-            pass
-        pass
-    pass
+    hosts: Dict[int, HostNodeInfo] = dict()
+    events: List[HostNodeAddRemoveEvent] = list()
 
 
-class FindActorPositionRequest(object):
-    def __init__(self):
-        self.actor_type = ""
-        self.actor_id = ""
-        self.ttl = 0
-        pass
+class FindActorPositionRequest(BaseModel):
+    actor_type: str = ""
+    actor_id: str = ""
+    ttl: int = 0
 
 
 class FindActorPositionResponse(PDResponse):
-    def __init__(self):
-        super().__init__()
-        self.actor_type = ""
-        self.actor_id = ""
-        self.ttl = 0
-        self.create_time = 0
-        self.server_id = 0
-        self.server_address = ""
-        pass
+    actor_type: str = ""
+    actor_id: str = ""
+    ttl: int = 0
+    create_time: int = 0
+    server_id: int = 0
+    server_address: str = ""
 
 
-def __format_result(code: int, body: bytes, t: Type[ResultType]) -> ResultType:
-    obj: ResultType = t()
+def __format_result(code: int, body: bytes, result_type: Type[ResultType]) -> ResultType:
+    if len(body) == 0:
+        body = b'{}'
     if code == 200:
-        d = json.loads(body.decode("utf-8"))
+        return result_type.parse_raw(body.decode("utf-8"))
     else:
-        d = dict()
-        d["error_code"] = code
-        d["error_msg"] = body.decode("utf-8")
-    obj.__dict__.update(d)
-    return obj
+        obj = result_type()
+        obj.error_code = code
+        obj.error_msg = body.decode("utf-8")
+        return obj
 
 
-def __request(url: str, args: Optional[dict], method: str = __POST, header: dict = __header) -> (int, bytes):
-    data = None
-    if args is not None:
-        data = json.dumps(args).encode("utf-8")
-    req = http.request(method, url, body=data, headers=header)
-    return req.status, req.data
+async def __request(url: str, args: Optional[dict]) -> Tuple[int, bytes]:
+    if args is None:
+        args = {}
+    async with httpx.AsyncClient() as client:
+        response = await client.post(url, json=args)
+        return response.status_code, response.content
 
 
 def set_pd_address(address: str):
@@ -164,64 +116,65 @@ def set_pd_address(address: str):
     pass
 
 
-def get_version() -> VersionResponse:
-    code, body = __request(PD_VERSION_URL, None, __GET, {})
+async def get_version() -> VersionResponse:
+    code, body = await __request(PD_VERSION_URL, None)
     return __format_result(code, body, VersionResponse)
 
 
-def new_server_id() -> NewIDResponse:
-    code, body = __request(PD_ID_NEW_SERVER_URL, None)
-    return __format_result(code, body, NewIDResponse)
+async def new_server_id() -> NewServerIdResponse:
+    code, body = await __request(PD_ID_NEW_SERVER_URL, None)
+    return __format_result(code, body, NewServerIdResponse)
 
 
-def new_sequence_id(key: str, step: int = 100) -> NewIDResponse:
+async def new_sequence_id(key: str, step: int = 512) -> NewSequenceIdResponse:
     url = "%s/%s/%d" % (PD_ID_NEW_SEQUENCE_URL, key, step)
-    code, body = __request(url, None)
-    return __format_result(code, body, NewIDResponse)
+    code, body = await __request(url, None)
+    return __format_result(code, body, NewSequenceIdResponse)
 
 
-def register_server(server_id: int, start_time: int, ttl: int, address: str, services: Dict[str, str], desc: str = "", load: int = 0) -> RegisterNewServerResponse:
-    req = RegisterNewServerRequest()
-    req.server_id = server_id
-    req.start_time = start_time
-    req.ttl = ttl
-    req.address = address
-    req.services = services
-    req.desc = desc
-    req.load = load
+async def register_server(server_id: int, start_time: int, ttl: int, address: str, services: Dict[str, str],
+                          desc: str = "", load: int = 0) -> RegisterNewServerResponse:
+    req = RegisterNewServerRequest(server_id=server_id,
+                                   start_time=start_time,
+                                   ttl=ttl,
+                                   address=address,
+                                   desc=desc,
+                                   load=load,
+                                   services=services)
 
-    code, body = __request(PD_MEMBERSHIP_REGISTER_URL, req.__dict__)
+    code, body = await __request(PD_MEMBERSHIP_REGISTER_URL, req.dict())
     return __format_result(code, body, RegisterNewServerResponse)
 
 
-def keep_alive(server_id: int, lease_id: int, load: int) -> KeepAliveServerResponse:
-    req = KeepAliveServerRequest()
-    req.server_id = server_id
-    req.lease_id = lease_id
-    req.load = load
+async def keep_alive(server_id: int, lease_id: int, load: int) -> KeepAliveServerResponse:
+    req = KeepAliveServerRequest(server_id=server_id, load=load, lease_id=lease_id)
 
-    code, body = __request(PD_MEMBERSHIP_KEEP_ALIVE_URL, req.__dict__)
+    code, body = await __request(PD_MEMBERSHIP_KEEP_ALIVE_URL, req.dict())
     result = __format_result(code, body, KeepAliveServerResponse)
-    result.rebuild()
     return result
 
 
-def find_actor_position(actor_type: str, actor_id: str, ttl: int) -> FindActorPositionResponse:
-    req = FindActorPositionRequest()
-    req.actor_type = actor_type
-    req.actor_id = actor_id
-    req.ttl = ttl
+async def find_actor_position(actor_type: str, actor_id: str, ttl: int) -> FindActorPositionResponse:
+    req = FindActorPositionRequest(actor_type=actor_type, actor_id=actor_id, ttl=ttl)
 
-    code, body = __request(PD_PLACEMENT_FIND_POSITION_URL, req.__dict__)
+    code, body = await __request(PD_PLACEMENT_FIND_POSITION_URL, req.dict())
     return __format_result(code, body, FindActorPositionResponse)
 
 
 if __name__ == "__main__":
-    f1 = find_actor_position("ITest", "1", 0)
-    print(f1)
+    async def main():
+        server_id = await new_server_id()
+        print(server_id.__class__, server_id)
+        new_id = await new_sequence_id("hello")
+        print(new_id.__class__, new_id)
+        register_result = await register_server(server_id.id, int(time.time()), ttl=45, address="127.0.0.1:9999",
+                                                services={'ITest': 'TestImpl'}, desc="debug server", load=1)
+        print(register_result.__class__, register_result)
+        await keep_alive(server_id.id, register_result.lease_id, 10)
+        await asyncio.sleep(10)
+        f1 = await find_actor_position("ITest", "1", 0)
+        print(f1.__class__, f1)
+        pass
 
-    new_id = new_server_id()
-    print(new_id)
-    new_id = new_sequence_id("hello")
-    print(new_id)
 
+    asyncio.run(main())

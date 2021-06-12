@@ -1,5 +1,6 @@
 import asyncio
 import time
+import traceback
 from koala.typing import *
 from koala.network.buffer import Buffer
 from koala.logger import logger
@@ -7,7 +8,7 @@ from koala.network.codec import Codec
 from koala.network.codec_manager import CodecManager
 from koala.network.socket_session import SocketSession
 from koala.network.session_id_gen import new_session_id
-from koala.network.constant import SOCKET_PROXY_HEART_BEAT, WINDOW_SIZE
+from koala.network.constant import SOCKET_HEART_BEAT, WINDOW_SIZE
 from koala.network.event_handler import _process_socket_message, _process_income_socket, _process_close_socket
 
 
@@ -49,7 +50,7 @@ class TcpSocketSession(SocketSession):
         self._last_update_time = time_now
 
     def is_dead(self, current_time: float) -> bool:
-        return current_time - self._last_update_time >= SOCKET_PROXY_HEART_BEAT
+        return current_time - self._last_update_time >= SOCKET_HEART_BEAT
 
     @property
     def is_client(self) -> bool:
@@ -77,21 +78,21 @@ class TcpSocketSession(SocketSession):
     async def recv_message(self):
         try:
             while not self._stop:
-                msg = await self._recv_data()
+                clz, msg = await self._recv_data()
                 if msg is None:
                     break
-                await _process_socket_message(self, msg)
+                await _process_socket_message(self, clz, msg)
         except Exception as e:
-            logger.error("TcpSocketSession.recv_message, SessionID:%d Exception:%s" % (self.session_id, e))
+            logger.error("TcpSocketSession.recv_message, SessionID:%d Exception:%s, StackTrace:%s" % (self.session_id, e, traceback.format_exc()))
             pass
         finally:
             _process_close_socket(session_id=self.session_id)
 
     async def _recv_data(self):
         while not self._stop:
-            msg = self._codec.decode(self._buffer)
+            clz, msg = self._codec.decode(self._buffer)
             if msg is not None:
-                return msg
+                return clz, msg
             self._buffer.shrink()
 
             data = await self._reader.read(1024)
@@ -101,9 +102,12 @@ class TcpSocketSession(SocketSession):
             self._buffer.append(data)
 
     async def send_message(self, msg: object):
-        data = self._codec.encode(msg)
-        self._writer.write(data)
-        await self._writer.drain()
+        try:
+            data = self._codec.encode(msg)
+            self._writer.write(data)
+        except Exception as e:
+            logger.error("send_message, Exception:%s" % (e))
+        # await self._writer.drain()
 
     @classmethod
     async def connect(cls, host: str, port: int, codec_id: int) -> Optional[SocketSession]:
@@ -115,7 +119,5 @@ class TcpSocketSession(SocketSession):
         reader, writer = await asyncio.open_connection(host=host, port=port, limit=WINDOW_SIZE)
         session = TcpSocketSession(new_session_id(), codec, reader, writer)
         session._is_client = True
-        _process_income_socket(session)
         asyncio.create_task(session.recv_message())
         return session
-
