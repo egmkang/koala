@@ -8,8 +8,8 @@ from koala.logger import logger
 
 KOLA_MAGIC = "KOLA".encode()
 Message = Tuple[SimpleMessage, bytes]
-__json_dumps = json.dumps
-__json_loads = lambda b: json.loads(b.decode())
+json_dumps = lambda o: json.dumps(o).encode()
+json_loads = lambda b: json.loads(b.decode())
 
 
 # 4字节magic `KOLA`
@@ -23,10 +23,11 @@ class CodecRpc(Codec):
     def __init__(self):
         super(CodecRpc, self).__init__(CODEC_RPC)
         try:
-            global __json_dumps, __json_loads
+            pass
+            global json_loads, json_dumps
             import orjson
-            __json_loads = orjson.loads
-            __json_dumps = orjson.dumps
+            json_loads = orjson.loads
+            json_dumps = orjson.dumps
         except:
             pass
 
@@ -35,19 +36,19 @@ class CodecRpc(Codec):
         # 1字节长度
         # N字节MessageName
         # M字节json
-        global __json_dumps
+        global json_dumps
         name: str = o.__class__.__qualname__
-        json_data: bytes = cast(bytes, __json_dumps(o.to_dict()))
+        json_data: bytes = cast(bytes, json_dumps(o.to_dict()))
         return b"".join((int.to_bytes(len(name), 1, 'little'), name.encode(), json_data))
 
     @classmethod
     def _decode_meta(cls, array: bytes) -> Optional[SimpleMessage]:
-        global __json_loads
+        global json_loads
         name_length = array[0]
         name = array[1: name_length + 1].decode()
         model = find_model(name)
         if model is not None:
-            json = __json_loads(array[name_length + 1:])
+            json = json_loads(array[name_length + 1:])
             return model.from_dict(json)
         return None
 

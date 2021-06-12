@@ -8,3 +8,4 @@
 * loguru
 * httpx
 * pydantic
+* lz4

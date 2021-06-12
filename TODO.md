@@ -4,9 +4,9 @@ v0.2 Koala
 
 * [ ] using PD
   * [ ] PD Impl
-  * [ ] Single Node Cluster Impl
+  * [x] Single Node Cluster Impl
      * [ ] Interfaces and Services
-* [ ] asyncio rewrite
+* [x] asyncio rewrite
 * [ ] Koala Framework
 * [ ] Gateway Protocol 
   * [ ] using RPC Protocol
