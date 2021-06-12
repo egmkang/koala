@@ -13,7 +13,7 @@ class TestCodec:
         heart_beat = HeartBeatRequest()
         heart_beat.milli_seconds = 1212123
         data = codec.encode((heart_beat, None))
-        msg, body = cast(Message, codec.decode(Buffer.from_bytes(data)))
+        t, (msg, body) = cast(Tuple[Type, Optional[Message]], codec.decode(Buffer.from_bytes(data)))
         msg = cast(HeartBeatRequest, msg)
         assert heart_beat.milli_seconds == msg.milli_seconds
         assert body is None or body == b''
@@ -21,7 +21,7 @@ class TestCodec:
     def test_echo_codec(self):
         codec = CodecEcho()
         data = codec.encode("1234567890")
-        msg = codec.decode(Buffer.from_bytes(data))
+        t, msg = codec.decode(Buffer.from_bytes(data))
         assert "1234567890" == msg
 
     def test_codec_manager(self):
@@ -29,11 +29,11 @@ class TestCodec:
         rpc_input = (HeartBeatRequest(), b"11223344556677889900")
         codec = manager.get_codec(CODEC_RPC)
         data = codec.encode(rpc_input)
-        msg = codec.decode(Buffer.from_bytes(data))
-        assert rpc_input == msg
+        t, (msg, body) = codec.decode(Buffer.from_bytes(data))
+        assert rpc_input == (msg, body)
 
         s = "11223344556677889900"
         codec = manager.get_codec(CODEC_ECHO)
         data = codec.encode(s)
-        msg = codec.decode(Buffer.from_bytes(data))
+        t, msg = codec.decode(Buffer.from_bytes(data))
         assert s == msg

@@ -1,9 +1,12 @@
 from koala import compact_pickle
-import pydantic
+from dataclasses import dataclass
+from koala.message import *
+from koala.message.base import SimpleMessage
 from typing import Dict, Any
 
 
-class A(pydantic.BaseModel):
+@dataclass
+class A(SimpleMessage):
     a: int
     b: float
     c: str

@@ -1,21 +1,18 @@
 from koala.typing import *
-from pydantic import BaseModel, PrivateAttr
-from koala.message.util import json_message
+from koala.message.base import SimpleMessage
+from dataclasses import dataclass
 
 
-@json_message
-class RpcRequest(BaseModel):
+@dataclass
+class RpcRequest(SimpleMessage):
     service_name: str = ""
     method_name: str = ""
     actor_id: ActorID = ""
     reentrant_id: int = 0
     request_id: int = 0
     server_id: int = 0
-    _args: Optional[list] = PrivateAttr(default=None)
-    _kwargs: Optional[dict] = PrivateAttr(default=None)
-
-    class Config:
-        validate_assignment = False
+    _args: Optional[list] = None
+    _kwargs: Optional[dict] = None
 
     @property
     def args(self):
@@ -26,17 +23,13 @@ class RpcRequest(BaseModel):
         return self._kwargs
 
 
-@json_message
-class RpcResponse(BaseModel):
+@dataclass
+class RpcResponse(SimpleMessage):
     request_id: int = 0
     error_code: int = 0
     error_str: str = ""
-    _response: Optional[object] = PrivateAttr(default=None)
-
-    class Config:
-        validate_assignment = False
+    _response: Optional[object] = None
 
     @property
     def response(self):
         return self._response
-

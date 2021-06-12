@@ -3,14 +3,14 @@ from koala.network.buffer import Buffer
 from koala.network.codec import Codec
 from koala.network.constant import *
 from koala.message import *
-from koala.message.util import find_model
+from koala.message.base import find_model, SimpleMessage
 from koala.logger import logger
 
 
 KOLA_MAGIC = "KOLA".encode()
 
 
-Message = Tuple[BaseModel, bytes]
+Message = Tuple[SimpleMessage, bytes]
 
 
 # 4字节magic `KOLA`
@@ -25,34 +25,34 @@ class CodecRpc(Codec):
         super(CodecRpc, self).__init__(CODEC_RPC)
 
     @classmethod
-    def _encode_meta(cls, o: BaseModel) -> bytes:
+    def _encode_meta(cls, o: SimpleMessage) -> bytes:
         # 1字节长度
         # N字节MessageName
         # M字节json
         name: str = o.__class__.__qualname__
-        json_data: bytes = cast(bytes, orjson.dumps(o.__dict__))
+        json_data: bytes = cast(bytes, orjson.dumps(o.to_dict()))
         return b"".join((int.to_bytes(len(name), 1, 'little'), name.encode(), json_data))
 
     @classmethod
-    def _decode_meta(cls, array: bytes) -> Optional[BaseModel]:
+    def _decode_meta(cls, array: bytes) -> Optional[SimpleMessage]:
         name_length = array[0]
         name = array[1: name_length + 1].decode()
         model = find_model(name)
         if model is not None:
             json = orjson.loads(array[name_length+1:])
-            return model.parse_obj(json)
+            return model.from_dict(json)
         return None
 
     def decode(self, buffer: Buffer) -> Tuple[Type, Optional[Message]]:
         if buffer.readable_length() < self.HEADER_LENGTH:
-            return BaseModel.__class__, None
+            return SimpleMessage.__class__, None
         # 这边需要对包的长度进行判断
         header = buffer.slice(self.HEADER_LENGTH)
         magic = header[:4].decode()
         meta_length = int.from_bytes(header[4:8], 'little')
         body_length = int.from_bytes(header[8:], 'little')
         if buffer.readable_length() < meta_length + body_length + self.HEADER_LENGTH:
-            return BaseModel.__class__, None
+            return SimpleMessage.__class__, None
         if magic != "KOLA":
             raise Exception("header exception, magic number not correct")
         buffer.has_read(self.HEADER_LENGTH)

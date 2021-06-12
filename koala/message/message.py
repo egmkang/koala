@@ -1,20 +1,12 @@
-from pydantic import BaseModel
-from koala.message.util import json_message
+from koala.message.base import SimpleMessage
+from dataclasses import dataclass
 
 
-@json_message
-class HeartBeatRequest(BaseModel):
+@dataclass
+class HeartBeatRequest(SimpleMessage):
     milli_seconds: int = 0
 
-    class Config:
-        validate_assignment = False
 
-
-@json_message
-class HeartBeatResponse(BaseModel):
+@dataclass
+class HeartBeatResponse(SimpleMessage):
     milli_seconds: int = 0
-
-    class Config:
-        validate_assignment = False
-
-

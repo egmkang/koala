@@ -1,46 +1,46 @@
 from typing import List, Optional
-from pydantic import BaseModel
-from koala.message.util import json_message
+from koala.message.base import SimpleMessage
+from dataclasses import dataclass
 
 
-@json_message
-class NotifyConnectionComing(BaseModel):
+@dataclass
+class NotifyConnectionComing(SimpleMessage):
     service_type: str = ""
     actor_id: str = ""
     session_id: int = 0
     token: bytes = b""
 
 
-@json_message
-class NotifyConnectionAborted(BaseModel):
+@dataclass
+class NotifyConnectionAborted(SimpleMessage):
     session_id: int = 0
     service_type: str = ""
     actor_id: str = ""
 
 
-@json_message
-class RequestCloseConnection(BaseModel):
+@dataclass
+class RequestCloseConnection(SimpleMessage):
     session_id: int = 0
     service_type: str = ""
 
 
-@json_message
-class NotifyNewMessage(BaseModel):
+@dataclass
+class NotifyNewMessage(SimpleMessage):
     session_id: int = 0
     service_type: str = ""
     actor_id: str = ""
     message: bytes = b""
 
 
-@json_message
-class RequestSendMessageToPlayer(BaseModel):
+@dataclass
+class RequestSendMessageToPlayer(SimpleMessage):
     session_ids: Optional[List[int]] = None
     session_id: int = 0
     message: bytes = b""
 
 
-@json_message
-class RequestChangeMessageDestination(BaseModel):
+@dataclass
+class RequestChangeMessageDestination(SimpleMessage):
     session_id: int = 0
     new_service_type: str = ""
     new_actor_id: str = ""
