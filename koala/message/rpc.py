@@ -14,6 +14,9 @@ class RpcRequest(BaseModel):
     _args: Optional[list] = PrivateAttr(default=None)
     _kwargs: Optional[dict] = PrivateAttr(default=None)
 
+    class Config:
+        validate_assignment = False
+
     @property
     def args(self):
         return self._args
@@ -29,6 +32,9 @@ class RpcResponse(BaseModel):
     error_code: int = 0
     error_str: str = ""
     _response: Optional[object] = PrivateAttr(default=None)
+
+    class Config:
+        validate_assignment = False
 
     @property
     def response(self):
