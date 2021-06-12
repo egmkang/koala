@@ -1,10 +1,19 @@
 from koala.network.buffer import Buffer
-from koala.message.message import HeartBeatRequest
+from koala.message import *
+from koala.message.rpc_protocol import RpcProtocol
 from koala.network.codec_rpc import CodecRpc, Message
 from koala.network.codec_echo import CodecEcho
 from koala.network.codec_manager import CodecManager
 from koala.network.constant import *
 from koala.message import *
+
+
+class TestRpcProtocol:
+    def test_rpc_protocol_message(self):
+        req = RpcRequest()
+        body = b"121212"
+        rpc_message = RpcProtocol.from_msg(req, body)
+        assert rpc_message.__class__ == req.__class__
 
 
 class TestCodec:
