@@ -9,3 +9,4 @@
 * httpx
 * pydantic
 * lz4
+* orjson (可选)

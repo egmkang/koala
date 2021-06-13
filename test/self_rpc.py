@@ -112,7 +112,7 @@ server_base.init_server()
 server_base.listen(15555, CODEC_RPC)
 server_base.create_task(service_1())
 
-for item in range(8):
+for item in range(16):
     i = item
     server_base.create_task(bench(i))
 
