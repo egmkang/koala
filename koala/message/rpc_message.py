@@ -11,5 +11,4 @@ class RpcMessage:
     @classmethod
     def from_msg(cls, meta: JsonMessage, body: Optional[bytes] = None) -> 'RpcMessage':
         msg = RpcMessage(meta=meta, body=body)
-        msg.__class__ = meta.__class__
         return msg

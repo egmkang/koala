@@ -1,6 +1,8 @@
 import asyncio
 import time
 import traceback
+
+from koala.message import RpcMessage
 from koala.typing import *
 from koala.network.buffer import Buffer
 from koala.logger import logger
@@ -75,13 +77,19 @@ class TcpSocketSession(SocketSession):
         self._writer.close()
         self._stop = True
 
+    @classmethod
+    def get_real_type(cls, o: object):
+        if isinstance(o, RpcMessage):
+            return o.meta.__class__
+        return o.__class__
+
     async def recv_message(self):
         try:
             while not self._stop:
                 msg = await self._recv_data()
                 if msg is None:
                     break
-                await _process_socket_message(self, msg.__class__, msg)
+                await _process_socket_message(self, self.get_real_type(msg), msg)
         except Exception as e:
             logger.error("TcpSocketSession.recv_message, SessionID:%d Exception:%s, StackTrace:%s" % (self.session_id, e, traceback.format_exc()))
             pass

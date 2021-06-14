@@ -73,7 +73,7 @@ class CodecRpc(Codec):
         raise Exception("decode meta fail")
 
     def encode(self, msg: object) -> bytes:
-        if not(hasattr(msg, 'meta') and hasattr(msg, 'body')):
+        if not isinstance(msg, RpcMessage):
             msg = RpcMessage.from_msg(cast(JsonMessage, msg), None)
         msg = cast(RpcMessage, msg)
         if msg is None:
