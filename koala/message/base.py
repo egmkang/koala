@@ -1,3 +1,5 @@
+import dataclasses
+
 from koala.typing import *
 
 
@@ -10,7 +12,7 @@ def register_model(cls):
     __json_mapper[cls.__qualname__] = cls
 
 
-def find_model(name: str) -> Optional[Type['SimpleMessage']]:
+def find_model(name: str) -> Optional[Type['JsonMessage']]:
     if name in __json_mapper:
         return __json_mapper[name]
     return None
@@ -23,15 +25,28 @@ class JsonMeta(type):
         return cls
 
 
-class SimpleMessage(metaclass=JsonMeta):
+def to_dict(obj):
+    if isinstance(obj, dict):
+        return {k: to_dict(v) for k, v in obj.items()}
+    elif hasattr(obj, "_ast"):
+        return to_dict(obj._ast())
+    elif not isinstance(obj, str) and hasattr(obj, "__iter__"):
+        return [to_dict(v) for v in obj]
+    elif hasattr(obj, "__dict__"):
+        return {
+            k: to_dict(v)
+            for k, v in obj.__dict__.items()
+            if not callable(v) and not k.startswith('_')
+        }
+    else:
+        return obj
+
+
+@dataclasses.dataclass
+class JsonMessage(metaclass=JsonMeta):
     @classmethod
     def from_dict(cls, kwargs: dict):
         return cls(**kwargs)
 
     def to_dict(self) -> dict:
-        d = {}
-        for k, v in self.__dict__.items():
-            if k[0] == '_':
-                continue
-            d[k] = v
-        return d
+        return to_dict(self)

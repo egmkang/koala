@@ -15,7 +15,7 @@ class Codec(ABC):
 
     # (Buffer) => object
     @abstractmethod
-    def decode(self, buffer: Buffer) -> Tuple[Type, Optional[object]]:
+    def decode(self, buffer: Buffer) -> Optional[object]:
         pass
 
     # (msg) => bytes

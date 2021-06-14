@@ -2,8 +2,8 @@ import asyncio
 import time
 from koala.typing import *
 from koala.compact_pickle import pickle_loads
-from koala.message.rpc import RpcRequest, RpcResponse
-from koala.message.message import HeartBeatRequest, HeartBeatResponse
+from koala.message import RpcRequest, RpcResponse, HeartBeatRequest, HeartBeatResponse
+from koala.message.rpc_message import RpcMessage
 from koala.meta.rpc_meta import *
 from koala.server.rpc_future import *
 from koala.server.actor_message_loop import _send_error_resp, \
@@ -47,7 +47,9 @@ async def process_rpc_request_slow(proxy: SocketSession, request: object):
 
 
 async def process_rpc_request(proxy: SocketSession, request: object):
-    req, raw_args = cast(Tuple[RpcRequest, bytes], request)
+    request = cast(RpcMessage, request)
+    req, raw_args = request.meta, request.body if request.body else b""
+    req = cast(RpcRequest, req)
     req._args, req._kwargs = pickle_loads(raw_args)
     try:
         node = get_placement_impl().find_position_in_cache(req.service_name, req.actor_id)
@@ -69,7 +71,9 @@ async def process_rpc_request(proxy: SocketSession, request: object):
 
 
 async def process_rpc_response(session: SocketSession, response: object):
-    resp, raw_response = cast(Tuple[RpcResponse, bytes], response)
+    response = cast(RpcMessage, response)
+    resp, raw_response = response.meta, response.body if response.body else b""
+    resp = cast(RpcResponse, resp)
     resp._response = pickle_loads(raw_response)
 
     future: Future = get_future(resp.request_id)
@@ -80,17 +84,19 @@ async def process_rpc_response(session: SocketSession, response: object):
 
 
 async def process_heartbeat_request(session: SocketSession, request: object):
-    req, _ = cast(Tuple[HeartBeatRequest, bytes], request)
+    request = cast(RpcMessage, request)
+    req = cast(HeartBeatRequest, request.meta)
     resp = HeartBeatResponse()
     resp.milli_seconds = req.milli_seconds
     session.heart_beat(_last_process_time)
-    await session.send_message((resp, None))
+    await session.send_message(resp)
     logger.trace("process_rpc_heartbeat_request, SessionID:%d" % session.session_id)
 
 
 async def process_heartbeat_response(session: SocketSession, response: object):
     now = int(time.time() * 1000)
-    resp, _ = cast(Tuple[HeartBeatResponse, bytes], response)
+    response = cast(RpcMessage, response)
+    resp = cast(HeartBeatResponse, response.meta)
     session.heart_beat(_last_process_time)
     if now - resp.milli_seconds > 10:
         logger.warning("rpc_heartbeat delay:%dms" % (now - resp.milli_seconds))

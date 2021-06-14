@@ -1,6 +1,6 @@
 import pickle
 import pickletools
-
+from koala.typing import *
 import lz4.frame
 
 THRESHOLD = 300
@@ -8,7 +8,7 @@ COMPRESSED = b'1'
 UNCOMPRESSED = b'0'
 
 
-def pickle_dumps(o: object) -> bytes:
+def pickle_dumps(o: Any) -> bytes:
     array = pickle.dumps(o, protocol=pickle.HIGHEST_PROTOCOL)
     # array = pickletools.optimize(array)
     compressed = UNCOMPRESSED + array
@@ -19,7 +19,7 @@ def pickle_dumps(o: object) -> bytes:
     return compressed
 
 
-def pickle_loads(array: bytes) -> object:
+def pickle_loads(array: bytes) -> Any:
     flag = array[0:1]
     data = array[1:]
     if flag == COMPRESSED:

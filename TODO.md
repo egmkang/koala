@@ -1,6 +1,6 @@
 TODO:
 
-v0.2 Koala
+v0.3 Koala
 
 * [ ] using PD
   * [ ] PD Impl
@@ -14,6 +14,7 @@ v0.2 Koala
 
 
 
+v0.2 Flash prototype
 v0.1 Flash prototype
 
 * [x] RPC
