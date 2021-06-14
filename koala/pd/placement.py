@@ -176,7 +176,7 @@ class PDPlacementImpl(Placement):
                 await self._try_connect(host)
                 continue
             session = host.session
-            await session.send_message((heart_beat, None))
+            await session.send_message(heart_beat)
         pass
 
     @classmethod

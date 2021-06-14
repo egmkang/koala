@@ -1,10 +1,10 @@
 from koala.message import *
 from dataclasses import dataclass
-from koala.message.base import SimpleMessage
+from koala.message.base import JsonMessage
 
 
 @dataclass
-class B(SimpleMessage):
+class B(JsonMessage):
     service_name: str = ""
     method_name: str = ""
     actor_id: str = ""
@@ -15,7 +15,7 @@ class B(SimpleMessage):
     _kwargs: Optional[dict] = None
 
 
-class TestSimpleMessage:
+class TestJsonMessage:
     def test_simple_message(self):
         b = B(server_id=1, service_name="s1212", method_name="func", reentrant_id=2222, request_id=3)
         d = b.to_dict()

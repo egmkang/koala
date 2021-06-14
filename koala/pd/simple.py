@@ -49,7 +49,7 @@ class SelfHostedPlacement(Placement):
             if self.proxy is not None:
                 heartbeat = HeartBeatRequest()
                 heartbeat.milli_seconds = int(time.time() * 1000)
-                await self.proxy.send_message((heartbeat, None))
+                await self.proxy.send_message(heartbeat)
         pass
 
     def _on_add_server(self, node: ServerNode):

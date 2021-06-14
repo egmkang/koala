@@ -25,7 +25,7 @@ async def _dispatch_user_message_slow(proxy: SocketSession, service_type: str, a
         if node:
             session = node.session
             if session:
-                await session.send_message((msg, None))
+                await session.send_message(msg)
         else:
             logger.warning("Actor:%s/%s, cannot find position" % (service_type, actor_id))
     pass

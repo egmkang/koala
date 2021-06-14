@@ -79,7 +79,7 @@ class Placement(ABC):
 __placement_impl: Optional[Placement] = None
 
 
-def get_placement_impl() -> Optional[Placement]:
+def get_placement_impl() -> Placement:
     return __placement_impl
 
 

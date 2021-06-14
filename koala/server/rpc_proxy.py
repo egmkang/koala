@@ -1,8 +1,9 @@
 import asyncio
 from asyncio.futures import Future
 from koala.compact_pickle import pickle_dumps
+from koala.message.rpc_message import RpcMessage
 from koala.meta.rpc_meta import *
-from koala.message.rpc import RpcRequest
+from koala.message import RpcRequest
 from koala.server.rpc_exception import *
 from koala.server.rpc_future import *
 from koala.server.actor_context import ActorContext
@@ -48,7 +49,7 @@ class _RpcMethodObject(object):
         req.server_id = position.server_uid
 
         raw_args = pickle_dumps((arg, kwargs))
-        await proxy.send_message((req, raw_args))
+        await proxy.send_message(RpcMessage.from_msg(req, raw_args))
         return req.request_id
 
     async def __call__(self, *args, **kwargs):

@@ -1,12 +1,12 @@
 from koala import compact_pickle
 from dataclasses import dataclass
 from koala.message import *
-from koala.message.base import SimpleMessage
+from koala.message.base import JsonMessage
 from typing import Dict, Any
 
 
 @dataclass
-class A(SimpleMessage):
+class A(JsonMessage):
     a: int
     b: float
     c: str

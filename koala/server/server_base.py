@@ -7,9 +7,8 @@ from koala.network.tcp_server import TcpServer
 from koala.network import event_handler
 from koala.logger import logger, init_logger
 from koala.placement.placement import get_placement_impl
-from koala.message.rpc import RpcRequest, RpcResponse
-from koala.message.message import HeartBeatRequest, HeartBeatResponse
-from koala.message.gateway import NotifyNewMessage, NotifyConnectionAborted, NotifyConnectionComing, \
+from koala.message import RpcRequest, RpcResponse, HeartBeatRequest, HeartBeatResponse, NotifyNewMessage, \
+    NotifyConnectionAborted, NotifyConnectionComing, \
     RequestCloseConnection, RequestChangeMessageDestination, RequestSendMessageToPlayer
 from koala.server.rpc_message_dispatch import process_rpc_request, process_rpc_response, \
     process_heartbeat_request, process_heartbeat_response, update_process_time

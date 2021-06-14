@@ -3,7 +3,8 @@ import traceback
 import weakref
 from typing import cast
 from koala.compact_pickle import pickle_dumps
-from koala.message.rpc import RpcResponse, RpcRequest
+from koala.message import RpcResponse, RpcRequest
+from koala.message.rpc_message import RpcMessage
 from koala.meta.rpc_meta import get_rpc_impl_method
 from koala.network.socket_session import SocketSession
 from koala.server.actor_base import ActorBase
@@ -29,7 +30,7 @@ async def _send_error_resp(proxy: SocketSession, request_id: int, e: Exception):
     else:
         resp.error_code = RPC_ERROR_UNKNOWN
         resp.error_str = traceback.format_exc()
-    await proxy.send_message((resp, None))
+    await proxy.send_message(resp)
 
 
 async def _dispatch_actor_rpc_request(actor: ActorBase, proxy: SocketSession, req: RpcRequest):
@@ -46,7 +47,7 @@ async def _dispatch_actor_rpc_request(actor: ActorBase, proxy: SocketSession, re
         raw_response = pickle_dumps(result)
 
         if proxy:
-            await proxy.send_message((resp, raw_response))
+            await proxy.send_message(RpcMessage.from_msg(resp, raw_response))
     except Exception as e:
         logger.error("_dispatch_actor_rpc_request, Actor:%s/%s, Exception:%s, StackTrace:%s" %
                      (actor.type_name, actor.uid, e, traceback.format_exc()))
