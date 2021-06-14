@@ -13,7 +13,7 @@ class TestRpcProtocol:
         req = RpcRequest()
         body = b"121212"
         rpc_message = RpcMessage.from_msg(req, body)
-        assert rpc_message.__class__ == req.__class__
+        assert rpc_message.meta.__class__ == req.__class__
 
 
 class TestCodec:

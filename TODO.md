@@ -8,8 +8,9 @@ v0.3 Koala
      * [ ] Interfaces and Services
 * [x] asyncio rewrite
 * [ ] Koala Framework
-* [ ] Gateway Protocol 
-  * [ ] using RPC Protocol
+  * [ ] Gateway
+* [x] Gateway Protocol 
+  * [x] using RPC Protocol
 * [ ] Sample
 
 
