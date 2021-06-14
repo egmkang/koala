@@ -15,4 +15,4 @@ PyMySQL==1.0.2
 pytest==6.2.4
 PyYAML==5.4.1
 typing-extensions==3.10.0.0
-websockets==9.0.2
+websockets==9.1
