@@ -11,9 +11,6 @@ from koala.server.rpc_proxy import get_rpc_proxy
 from koala.logger import logger
 
 
-_session_manager = SocketSessionManager()
-
-
 @rpc_interface
 class IService1:
     async def say_hello(self, hello: str) -> str:
@@ -103,7 +100,7 @@ async def qps():
             last = v
 
 
-placement = SelfHostedPlacement(15555, {IService1.__qualname__: IService2.__qualname__})
+placement = SelfHostedPlacement(15555)
 set_placement_impl(placement)
 logger.info(get_placement_impl())
 

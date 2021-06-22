@@ -49,6 +49,13 @@ def get_all_impl_types() -> List[Tuple[str, Any]]:
     return l
 
 
+def get_all_services() -> Dict[str, str]:
+    services: Dict[str, str] = {}
+    for (interface_name, impl) in get_all_impl_types():
+        services[interface_name] = impl.__qualname__
+    return services
+
+
 def get_rpc_impl_method(name: str):
     if name in __impl_method:
         return __impl_method[name]

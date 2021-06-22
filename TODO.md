@@ -5,7 +5,7 @@ v0.3 Koala
 * [ ] using PD
   * [ ] PD Impl
   * [x] Single Node Cluster Impl
-     * [ ] Interfaces and Services
+     * [x] Interfaces and Services
 * [x] asyncio rewrite
 * [ ] Koala Framework
   * [ ] Gateway

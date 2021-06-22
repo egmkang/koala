@@ -8,6 +8,7 @@ from koala.network.tcp_session import TcpSocketSession
 from koala.network.constant import CODEC_RPC
 from koala.membership.membership_manager import MembershipManager
 from koala.message import HeartBeatRequest
+from koala.meta.rpc_meta import get_all_services
 from koala.logger import logger
 
 
@@ -16,11 +17,11 @@ _session_manager = SocketSessionManager()
 
 
 class SelfHostedPlacement(Placement):
-    def __init__(self, port: int, service_list: Dict[str, str]):
+    def __init__(self, port: int):
         super(SelfHostedPlacement, self).__init__()
         self.server_port = "%d" % port
         self.proxy: Optional[SocketSession] = None
-
+        service_list = get_all_services()
         self.server_node = ServerNode(server_uid=1,
                                       host="127.0.0.1",
                                       port=self.server_port,
