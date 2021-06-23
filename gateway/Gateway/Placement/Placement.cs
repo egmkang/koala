@@ -12,7 +12,6 @@ using static Gateway.Placement.IPlacement;
 
 namespace Gateway.Placement
 {
-
     public static partial class Extensions
     {
         public static StringContent AsJson(this object o)
