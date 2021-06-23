@@ -5,3 +5,6 @@ test/.pytest_cache
 bin
 obj
 .vs
+gateway/Gateway/Gateway.csproj.user
+gateway/Gateway/Properties/
+gateway/.config/dotnet-tools.json

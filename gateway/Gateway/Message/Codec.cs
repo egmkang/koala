@@ -38,7 +38,7 @@ namespace Gateway.Message
         }
         public (Memory<byte> memory, int size) Encode(IBufferWriter<byte> writer, RpcMessage msg)
         {
-            var name = msg.Meta.GetType().Name;
+            var name = StringMap.GetStringBytes(msg.Meta.GetType().Name);
             var meta = JsonSerializer.SerializeToUtf8Bytes(msg.Meta as object);
             var metaLength = 1 + name.Length + meta.Length;
             var bodyLength = msg.Body != null ? msg.Body.Length : 0;
@@ -52,7 +52,7 @@ namespace Gateway.Message
 
             // 1字节NameLength + Name + M字节Meta
             memoryWrite.WriteInt8((byte)name.Length);
-            memoryWrite.WriteBytes(Encoding.UTF8.GetBytes(name));
+            memoryWrite.WriteBytes(name);
             memoryWrite.WriteBytes(meta);
 
             if (msg.Body != null && msg.Body.Length > 0) 
