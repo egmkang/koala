@@ -81,9 +81,8 @@ namespace Gateway.Message
             {
                 return 0;
             }
-            var nameLength = memoryReader.ReadInt8();
-            Span<byte> messageName = stackalloc byte[nameLength];
-            memoryReader.ReadBytes(messageName, nameLength);
+            Span<byte> messageName = stackalloc byte[memoryReader.ReadInt8()];
+            memoryReader.ReadBytes(messageName, messageName.Length);
             var name = Encoding.UTF8.GetString(messageName);
             if (!MessageTypes.TryGetValue(name, out var messageType)) 
             {
@@ -91,11 +90,11 @@ namespace Gateway.Message
             }
 
             var metaBodyLength = metaLength - 1 - name.Length;
-            byte[] metaBody = ArrayPool<byte>.Shared.Rent(metaBodyLength);
-            try 
+            using (var memoryOwner = MemoryPool<byte>.Shared.Rent(metaBodyLength)) 
             {
-                memoryReader.ReadBytes(metaBody.AsSpan(), metaBodyLength);
-                var meta = JsonSerializer.Deserialize(new ReadOnlySpan<byte>(metaBody, 0, metaBodyLength), messageType);
+                var metaBody = memoryOwner.Memory;
+                memoryReader.ReadBytes(metaBody.Span, metaBodyLength);
+                var meta = JsonSerializer.Deserialize(metaBody.Span.Slice(0, metaBodyLength), messageType);
                 var body = Empty;
                 if (bodyLength > 0) 
                 {
@@ -104,10 +103,6 @@ namespace Gateway.Message
                 }
                 msg = new RpcMessage(meta as RpcMeta, body);
                 return totalLength;
-            }
-            finally 
-            {
-                ArrayPool<byte>.Shared.Return(metaBody);
             }
         }
 

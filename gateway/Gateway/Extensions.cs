@@ -1,16 +1,61 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics.Contracts;
 using System.Linq;
+using System.Threading;
 using System.Threading.Tasks;
+using Gateway.Network;
 using Gateway.Placement;
 using Gateway.Utils;
+using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Connections;
+using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
 
 namespace Gateway
 {
     public static class Extensions
     {
+        public static void ListenSocket(this IServiceProvider serviceProvider, int port) 
+        {
+        }
+
+        public static void ListenWebSocket(this IApplicationBuilder app, 
+                                            IServiceProvider serviceProvider, 
+                                            string path) 
+        {
+            var manager = serviceProvider.GetRequiredService<SessionManager>();
+            var loggerFactory = serviceProvider.GetRequiredService<ILoggerFactory>();
+            var messageCenter = serviceProvider.GetRequiredService<IMessageCenter>();
+            var logger = loggerFactory.CreateLogger("WebSocket");
+
+            app.UseForwardedHeaders(new ForwardedHeadersOptions
+            {
+                ForwardedHeaders = ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto,
+            });
+
+            app.UseWebSockets(new WebSocketOptions()
+            {
+                KeepAliveInterval = TimeSpan.FromSeconds(15),
+            });
+
+            app.Use(async (context, next) =>
+            {
+                if (context.Request.Path == path)
+                {
+                    var address = context.Connection.RemoteIpAddress.ToString();
+                    using (var websocket = await context.WebSockets.AcceptWebSocketAsync())
+                    {
+                        var session = new WebSocketSession(manager.NewSessionID, websocket, address, logger, messageCenter);
+                        manager.AddSession(session);
+                        await session.RecvLoop().ConfigureAwait(false);
+                    }
+                }
+                await next();
+            });
+        } 
+
         public static void ConfigureServices(this IServiceCollection services)
         {
             Type connectionFactoryType = GetSocketConnectionFactory();
@@ -18,6 +63,7 @@ namespace Gateway
             {
                 throw new Exception("SocketConnectionFactory Not Found");
             }
+            services.AddSingleton<IMessageCenter, MessageCenter>();
             services.AddSingleton(typeof(IConnectionFactory), connectionFactoryType);
             services.AddSingleton<IPlacement, PDPlacement>();
             services.AddSingleton<SessionUniqueSequence>();

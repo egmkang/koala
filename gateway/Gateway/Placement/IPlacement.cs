@@ -1,8 +1,9 @@
-﻿using Newtonsoft.Json;
-using System;
+﻿using System;
+using System.Text.Json;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using System.Text.Json.Serialization;
 
 namespace Gateway.Placement
 {
@@ -14,47 +15,47 @@ namespace Gateway.Placement
         /// <summary>
         /// 服务器唯一ID
         /// </summary>
-        [JsonProperty("server_id")]
+        [JsonPropertyName("server_id")]
         public long ServerID = 0;
         /// <summary>
         /// 租约
         /// </summary>
-        [JsonProperty("lease_id")]
+        [JsonPropertyName("lease_id")]
         public long LeaseID = 0;
         /// <summary>
         /// 服务器的负载(运行时也就只有负载可变, 其他信息都不允许发生变化)
         /// </summary>
-        [JsonProperty("load")]
+        [JsonPropertyName("load")]
         public long Load = 0;
         /// <summary>
         /// 服务器启动时间, 相对于UTC的毫秒数
         /// </summary>
-        [JsonProperty("start_time")]
+        [JsonPropertyName("start_time")]
         public long StartTime = 0;
         /// <summary>
         /// 服务器的生存期
         /// </summary>
-        [JsonProperty("ttl")]
+        [JsonPropertyName("ttl")]
         public long TTL = 0;
         /// <summary>
         /// 服务器的地址
         /// </summary>
-        [JsonProperty("address")]
+        [JsonPropertyName("address")]
         public string Address = "";
         /// <summary>
         /// 服务器能提供的Actor对象类型, 即服务能力
         /// </summary>
-        [JsonProperty("services")]
+        [JsonPropertyName("services")]
         public Dictionary<string, string> Services = new Dictionary<string, string>();
         /// <summary>
         /// 服务的描述信息
         /// </summary>
-        [JsonProperty("desc")]
+        [JsonPropertyName("desc")]
         public string Desc = "";
         /// <summary>
         /// 服务器的额外属性, 用来表示网关等信息
         /// </summary>
-        [JsonProperty("labels")]
+        [JsonPropertyName("labels")]
         public Dictionary<string, string> Labels = new Dictionary<string, string>();
     }
 
@@ -66,17 +67,17 @@ namespace Gateway.Placement
         /// <summary>
         /// 事件的事件
         /// </summary>
-        [JsonProperty("time")]
+        [JsonPropertyName("time")]
         public long Time = 0;
         /// <summary>
         /// 增加的服务器ID
         /// </summary>
-        [JsonProperty("add")]
+        [JsonPropertyName("add")]
         public List<long> Add = new List<long>();
         /// <summary>
         /// 删除的服务器ID
         /// </summary>
-        [JsonProperty("remove")]
+        [JsonPropertyName("remove")]
         public List<long> Remove = new List<long>();
     }
 
@@ -88,12 +89,12 @@ namespace Gateway.Placement
         /// <summary>
         /// 每次续约PD会将所有的服务器信息下发, 该framework所能处理的集群规模, 也就是百十来台, 所以将所有服务器下发没有问题
         /// </summary>
-        [JsonProperty("hosts")]
+        [JsonPropertyName("hosts")]
         public Dictionary<long, PlacementActorHostInfo> Hosts = new Dictionary<long, PlacementActorHostInfo>();
         /// <summary>
         /// 服务器最近的事件(增减和删除)
         /// </summary>
-        [JsonProperty("events")]
+        [JsonPropertyName("events")]
         public List<PlacementEvents> Events = new List<PlacementEvents>();
     }
 
@@ -105,18 +106,18 @@ namespace Gateway.Placement
         /// <summary>
         /// Actor的接口类型, PD里面有实现的类型
         /// </summary>
-        [JsonProperty("actor_type")]
+        [JsonPropertyName("actor_type")]
         public string ActorType = "";
         /// <summary>
         /// Actor的ID, 在该ActorType下必须唯一
         /// </summary>
-        [JsonProperty("actor_id")]
+        [JsonPropertyName("actor_id")]
         public string ActorID = "";
         /// <summary>
         /// Actor的生命周期, 通常为0, 那么Actor的宿主挂掉之后, PD会寻求再次分配新的位置
         /// 不为0时, 那么Actor的宿主挂掉之后, PD不会再次分配新的位置. 通常用来做一次性定位, 比如一场战斗, 战斗服务器挂掉后很难恢复.
         /// </summary>
-        [JsonProperty("ttl")]
+        [JsonPropertyName("ttl")]
         public long TTL = 0;
     }
 
@@ -128,40 +129,40 @@ namespace Gateway.Placement
         /// <summary>
         /// Actor的类型, 参见ActorType
         /// </summary>
-        [JsonProperty("actor_type")]
+        [JsonPropertyName("actor_type")]
         public string ActorType = "";
         /// <summary>
         /// ActorType类型下唯一的ID
         /// </summary>
-        [JsonProperty("actor_id")]
+        [JsonPropertyName("actor_id")]
         public string ActorID = "";
         /// <summary>
         /// 生存期
         /// </summary>
-        [JsonProperty("ttl")]
+        [JsonPropertyName("ttl")]
         public long TTL = 0;
         /// <summary>
         /// Actor分配的时间
         /// </summary>
-        [JsonProperty("create_time")]
+        [JsonPropertyName("create_time")]
         public long CreateTime = 0;
         /// <summary>
         /// 宿主的唯一ID
         /// </summary>
-        [JsonProperty("server_id")]
+        [JsonPropertyName("server_id")]
         public long ServerID = 0;
         /// <summary>
         /// 宿主的地址
         /// </summary>
-        [JsonProperty("server_address")]
+        [JsonPropertyName("server_address")]
         public string ServerAddress = "";
     }
 
     public class PlacementVersionInfo
     {
-        [JsonProperty("version")]
+        [JsonPropertyName("version")]
         public string Version;
-        [JsonProperty("last_heart_beat_time")]
+        [JsonPropertyName("last_heart_beat_time")]
         public long LastHeartBeatTime;
     }
 

@@ -2,20 +2,27 @@
 using System.Collections.Generic;
 using System.Net;
 using System.Net.Http;
+using System.Net.Http.Headers;
 using System.Text;
+using System.Text.Json;
+using System.Text.Json.Serialization;
 using System.Threading;
 using System.Threading.Tasks;
 using Gateway.Utils;
 using Microsoft.Extensions.Logging;
-using Newtonsoft.Json;
 using static Gateway.Placement.IPlacement;
 
 namespace Gateway.Placement
 {
     public static partial class Extensions
     {
-        public static StringContent AsJson(this object o)
-            => new StringContent(JsonConvert.SerializeObject(o), Encoding.UTF8, "application/json");
+        static readonly MediaTypeHeaderValue HeaderJson = new MediaTypeHeaderValue("application/json");
+        public static HttpContent AsJson(this object o)
+        {
+            var content = new ByteArrayContent(JsonSerializer.SerializeToUtf8Bytes(o));
+            content.Headers.ContentType = HeaderJson;
+            return content;
+        }
     }
 
     public sealed class PDPlacement : IPlacement
@@ -114,7 +121,7 @@ namespace Gateway.Placement
                 throw new PlacementException(code, str);
             }
 
-            var position = JsonConvert.DeserializeObject<PlacementFindActorPositionResponse>(str);
+            var position =  JsonSerializer.Deserialize<PlacementFindActorPositionResponse>(str);
 
             //如果服务器要下线了, 那么存到LRU里面, 还是需要每次都去重新定位
             if (this.offlineServer.Get(position.ServerID) == null)
@@ -126,7 +133,8 @@ namespace Gateway.Placement
 
         internal class SequenceResponse
         {
-            public long id;
+            [JsonPropertyName("id")]
+            public long ID = 0;
         }
 
         private static readonly object EmptyObject = new Dictionary<string, string>();
@@ -142,8 +150,8 @@ namespace Gateway.Placement
                 throw new PlacementException(code, str);
             }
 
-            var response = JsonConvert.DeserializeObject<SequenceResponse>(str);
-            return response.id;
+            var response = JsonSerializer.Deserialize<SequenceResponse>(str);
+            return response.ID;
         }
 
         public async Task<long> GenerateNewTokenAsync()
@@ -157,8 +165,8 @@ namespace Gateway.Placement
                 throw new PlacementException(code, str);
             }
 
-            var response = JsonConvert.DeserializeObject<SequenceResponse>(str);
-            return response.id;
+            var response = JsonSerializer.Deserialize<SequenceResponse>(str);
+            return response.ID;
         }
 
         public async Task<long> GenerateServerIDAsync()
@@ -172,8 +180,8 @@ namespace Gateway.Placement
                 throw new PlacementException(code, str);
             }
 
-            var response = JsonConvert.DeserializeObject<SequenceResponse>(str);
-            return response.id;
+            var response = JsonSerializer.Deserialize<SequenceResponse>(str);
+            return response.ID;
         }
 
         public async Task<PlacementKeepAliveResponse> KeepAliveServerAsync(long serverID, long leaseID, long load)
@@ -190,13 +198,13 @@ namespace Gateway.Placement
                 this.logger.LogError("KeepAliveServerAsync fail, ErrorMessage:{0}", str);
                 throw new PlacementException(code, str);
             }
-            var response = JsonConvert.DeserializeObject<PlacementKeepAliveResponse>(str);
+            var response = JsonSerializer.Deserialize<PlacementKeepAliveResponse>(str);
             return response;
         }
 
         class RegisterServerResponse
         {
-            [JsonProperty("lease_id")]
+            [JsonPropertyName("lease_id")]
             public long LeaseID = 0;
         }
 
@@ -213,7 +221,7 @@ namespace Gateway.Placement
                 this.logger.LogError("RegisterServerAsync fail, ErrorMessage:{0}", str);
                 throw new PlacementException(code, str);
             }
-            var response = JsonConvert.DeserializeObject<RegisterServerResponse>(str);
+            var response = JsonSerializer.Deserialize<RegisterServerResponse>(str);
             if (response.LeaseID != 0)
             {
                 this.currentServerInfo.ServerID = info.ServerID;
@@ -238,7 +246,7 @@ namespace Gateway.Placement
                 throw new PlacementException(code, str);
             }
 
-            var position = JsonConvert.DeserializeObject<PlacementVersionInfo>(str);
+            var position = JsonSerializer.Deserialize<PlacementVersionInfo>(str);
             return position;
         }
 
