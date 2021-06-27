@@ -4,6 +4,32 @@ from dataclasses import dataclass
 
 
 @dataclass
+class RequestQueryAccount(JsonMessage):
+    open_id: str = ""
+    server_id: int = 0
+    session_id: int = 0
+
+
+@dataclass
+class ResponseQueryAccount(JsonMessage):
+    open_id: str = ""
+    server_id: int = 0
+    session_id: int = 0
+    service_type: str = ""
+    actor_id: str = ""
+
+
+@dataclass
+class NotifyConnectionLogin(JsonMessage):
+    open_id: str = ""
+    server_id: int = 0
+    session_id: int = 0
+    service_type: str = ""
+    actor_id: str = ""
+    token: bytes = b""
+
+
+@dataclass
 class NotifyConnectionComing(JsonMessage):
     service_type: str = ""
     actor_id: str = ""

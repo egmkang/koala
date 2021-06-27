@@ -1,8 +1,8 @@
-using Gateway.Message;
 using System;
 using System.Buffers;
+using System.Text;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
-
+using Gateway.Message;
 
 namespace test
 {
@@ -106,6 +106,18 @@ namespace test
 
             var messageSize2 = rpcCodec.Decode(sequence.Slice(messageSize1), out var decodedMessage2);
             RpcMessageEqual(rpcMessage2, size2, decodedMessage2, messageSize2);
+        }
+
+        [TestMethod]
+        public void TestClientFirstMessage() 
+        {
+            var json = "{\"open_id\":\"1\", \"server_id\": 2}";
+            var memory = new Memory<byte>(Encoding.UTF8.GetBytes(json));
+            var codec = new ClientMessageCodec();
+
+            var (OpenID, ServerID) = codec.Decode(memory, memory.Length);
+            Assert.AreEqual(OpenID, "1");
+            Assert.AreEqual(ServerID, 2);
         }
     }
 }

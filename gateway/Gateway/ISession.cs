@@ -15,13 +15,27 @@ namespace Gateway
     public interface ISessionInfo 
     {
         long SessionID { get; }
+        byte[] Token { get; set; }
         //这边是WebSocket的Session信息
-        string OpenID { get; }
-        int ServerID { get; }
+        string OpenID { get; set; }
+        //游戏服务器ID
+        int GameServerID { get; set; }
+        /// <summary>
+        /// 目标Actor的类型
+        /// </summary>
         string ActorType { get; set; }
+        /// <summary>
+        /// 目标Actor的唯一ID
+        /// </summary>
         string ActorID { get; set; }
-        //这边是服务器内部Session的信息
-        int UniqueServerID { get; }
+        /// <summary>
+        /// 消息转发给哪个服务器
+        /// </summary>
+        long DestServerID { get; set; }
+        /// <summary>
+        /// 服务器的唯一ID, 通过PD获取到的
+        /// </summary>
+        long UniqueServerID { get; }
 
         Dictionary<string, string> ExtraInfo { get; }
     }
@@ -33,7 +47,9 @@ namespace Gateway
         SessionType SessionType { get; }
         long LastMessageTime { get; set; }
         ISessionInfo UserData { get; }
-        void Close();
+        bool IsActive { get; }
+        Task RecvLoop();
+        Task CloseAsync();
         Task SendMessage(object msg);
     }
 }

@@ -22,6 +22,15 @@ namespace Gateway
 
         public long NewSessionID => sessionSequence.NewSessionID;
 
+        public ISession GetSession(long sessionID) 
+        {
+            if (this.sessions.TryGetValue(sessionID, out var session))
+            {
+                return session;
+            }
+            return null;
+        }
+
         public void AddSession(ISession session) 
         {
             sessions.TryAdd(session.SessionID, session);

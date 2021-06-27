@@ -8,6 +8,44 @@ namespace Gateway.Message
 {
     public class RpcMeta { }
 
+    public class RequestQueryAccount : RpcMeta 
+    {
+        [JsonPropertyName("open_id")]
+        public string OpenID { get; set; }
+        [JsonPropertyName("server_id")]
+        public int ServerID { get; set; }
+        [JsonPropertyName("session_id")]
+        public long SessionID { get; set; }
+    }
+
+    public class ResponseQueryAccount : RpcMeta 
+    {
+        [JsonPropertyName("open_id")]
+        public string OpenID { get; set; }
+        [JsonPropertyName("server_id")]
+        public int ServerID { get; set; }
+        [JsonPropertyName("session_id")]
+        public long SessionID { get; set; }
+        [JsonPropertyName("server_type")]
+        public string ServiceType { get; set; }
+        [JsonPropertyName("actor_id")]
+        public string ActorId { get; set; }
+    }
+
+    public class NotifyConnectionLogin : RpcMeta
+    {
+        [JsonPropertyName("open_id")]
+        public string OpenID { get; set; }
+        [JsonPropertyName("server_id")]
+        public int ServerID { get; set; }
+        [JsonPropertyName("session_id")]
+        public long SessionID { get; set; }
+        [JsonPropertyName("server_type")]
+        public string ServiceType { get; set; }
+        [JsonPropertyName("actor_id")]
+        public string ActorId { get; set; }
+    }
+
     // token的bytes, 带在RPC PROTOCOL的body里面
     public class NotifyConnectionComming : RpcMeta
     {

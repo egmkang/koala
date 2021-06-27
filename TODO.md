@@ -2,6 +2,7 @@ TODO:
 
 v0.3 Koala
 
+* [ ] naming
 * [ ] using PD
   * [ ] PD Impl
   * [x] Single Node Cluster Impl

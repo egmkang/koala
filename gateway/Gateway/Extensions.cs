@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Diagnostics.Contracts;
 using System.Linq;
+using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using Gateway.Network;
@@ -15,8 +16,17 @@ using Microsoft.Extensions.Logging;
 
 namespace Gateway
 {
-    public static class Extensions
+    public static partial class Extensions
     {
+        public static unsafe int CastToInt(this string str) 
+        {
+            var bytes = Encoding.UTF8.GetBytes(str);
+            fixed (byte* p = bytes) 
+            {
+                return *(int*)p;
+            }
+        }
+
         public static void ListenSocket(this IServiceProvider serviceProvider, int port) 
         {
         }
@@ -47,9 +57,18 @@ namespace Gateway
                     var address = context.Connection.RemoteIpAddress.ToString();
                     using (var websocket = await context.WebSockets.AcceptWebSocketAsync())
                     {
-                        var session = new WebSocketSession(manager.NewSessionID, websocket, address, logger, messageCenter);
-                        manager.AddSession(session);
-                        await session.RecvLoop().ConfigureAwait(false);
+                        var sessionInfo = new DefaultSessionInfo(manager.NewSessionID, 0);
+                        try
+                        {
+                            var session = new WebSocketSession(sessionInfo.SessionID, websocket, address, logger, messageCenter, sessionInfo);
+                            manager.AddSession(session);
+                            await session.RecvLoop().ConfigureAwait(false);
+                        }
+                        catch (Exception e) 
+                        {
+                            logger.LogError("WebSocket, SessionID:{0}, Address:{1}, Exception:{2}",
+                                sessionInfo.SessionID, address, e);
+                        }
                     }
                 }
                 await next();

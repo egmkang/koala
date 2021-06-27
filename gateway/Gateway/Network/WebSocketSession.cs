@@ -8,6 +8,7 @@ using System.Threading.Channels;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
 using Gateway.Utils;
+using Gateway.Message;
 
 namespace Gateway.Network
 {
@@ -24,13 +25,15 @@ namespace Gateway.Network
         private readonly Channel<byte[]> outboundMessages = Channel.CreateUnbounded<byte[]>(Options);
         private readonly CancellationTokenSource cancellationTokenSource = new CancellationTokenSource();
         private readonly IMessageCenter messageCenter;
-        private readonly DefaultSessionInfo sessionInfo;
+        private readonly ISessionInfo sessionInfo;
+        private readonly ClientMessageCodec codec = new ClientMessageCodec();
 
         public WebSocketSession(long sessionID, 
                                 WebSocket webSocket, 
                                 string address,
                                 ILogger logger, 
-                                IMessageCenter messageCenter) 
+                                IMessageCenter messageCenter,
+                                ISessionInfo sessionInfo) 
         {
             this.SessionID = sessionID;
             this.webSocket = webSocket;
@@ -38,14 +41,16 @@ namespace Gateway.Network
             this.logger = logger;
             this.messageCenter = messageCenter;
             this.LastMessageTime = Platform.GetMilliSeconds();
-            this.sessionInfo = new DefaultSessionInfo(sessionID, 0);
+            this.sessionInfo = sessionInfo;
         }
 
-        public void Close()
+        public bool IsActive => !this.cancellationTokenSource.IsCancellationRequested;
+
+        public Task CloseAsync()
         {
             try
             {
-                this.logger.LogInformation("WebSocket:{0} Close, RemoteAddress:{1}", this.SessionID, this.RemoteAddress);
+                this.logger.LogInformation("WebSocketSession:{0} Close, RemoteAddress:{1}", this.SessionID, this.RemoteAddress);
                 this.cancellationTokenSource.Cancel();
                 _ = this.webSocket.CloseAsync(WebSocketCloseStatus.Empty, "", CancellationToken.None);
             }
@@ -53,6 +58,7 @@ namespace Gateway.Network
             {
                 this.messageCenter.OnWebSocketClose(this);
             }
+            return Task.CompletedTask;
         }
 
         public long SessionID { get; private set; }
@@ -94,10 +100,24 @@ namespace Gateway.Network
                     var result = await this.webSocket.ReceiveAsync(memory, this.cancellationTokenSource.Token).ConfigureAwait(false);
                     if (result.MessageType == WebSocketMessageType.Close)
                     {
-                        this.Close();
+                        this.logger.LogInformation("WebSocketSession, SessionID:{0} Receive Close Message", this.SessionID);
+                        await this.CloseAsync().ConfigureAwait(false);
                         break;
                     }
-                    this.messageCenter.OnWebSocketMessage(this, memory, result.Count);
+
+                    if (this.sessionInfo.GameServerID != 0)
+                    {
+                        await this.messageCenter.OnWebSocketMessage(this, memory, result.Count).ConfigureAwait(false);
+                    }
+                    else 
+                    {
+                        var (OpenID, ServerID) = this.codec.Decode(memory, result.Count);
+                        this.logger.LogInformation("WebSocketSession Login, SessionID:{0}, OpenID:{1}, ServerID:{2}",
+                                                    this.SessionID, OpenID, ServerID);
+                        this.sessionInfo.OpenID = OpenID;
+                        this.sessionInfo.GameServerID = ServerID;
+                        await this.messageCenter.OnWebSocketLoginMessage(this, OpenID, ServerID, memory, result.Count);
+                    }
                 }
             }
         }

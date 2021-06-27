@@ -7,18 +7,20 @@ namespace Gateway.Network
 {
     public class DefaultSessionInfo : ISessionInfo
     {
-        public DefaultSessionInfo(long sessionID, int uniqueServerID) 
+        public DefaultSessionInfo(long sessionID, long uniqueServerID) 
         {
             this.SessionID = sessionID;
             this.UniqueServerID = uniqueServerID;
         }
 
+        public byte[] Token { get; set; }
+        public long DestServerID { get; set; }
         public long SessionID { get; private set; }
         public string OpenID { get; set; }
-        public int ServerID { get; set; }
+        public int GameServerID { get; set; }
         public string ActorType { get;  set; }
         public string ActorID { get;  set; }
-        public int UniqueServerID { get; private set; }
+        public long UniqueServerID { get; private set; }
         public Dictionary<string, string> ExtraInfo { get; private set; } = new Dictionary<string, string>();
     }
 }

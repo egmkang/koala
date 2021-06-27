@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Text.Json;
+using System.Text.Json.Serialization;
 using System.Threading.Tasks;
 using Gateway.Utils;
 
@@ -16,9 +17,9 @@ namespace Gateway.Message
     /// N字节Meta
     /// M字节Body
     /// </summary>
-    public unsafe class RpcMessageCodec
+    public class RpcMessageCodec
     {
-        readonly int Magic = MakeMagic("KOLA");
+        readonly int Magic = "KOLA".CastToInt();
         const int HeaderLength = sizeof(int) + sizeof(int) + sizeof(int);
         static Dictionary<string, Type> MessageTypes = new Dictionary<string, Type>();
         readonly byte[] Empty = new byte[0];
@@ -105,18 +106,22 @@ namespace Gateway.Message
                 return totalLength;
             }
         }
+    }
 
-        private static int MakeMagic(string magic) 
-        {
-            var bytes = Encoding.UTF8.GetBytes(magic);
-            fixed (byte* p = bytes) 
-            {
-                return *(int*)p;
-            }
-        }
+    class FirstMessage 
+    {
+        [JsonPropertyName("open_id")]
+        public string OpenID { get; set; }
+        [JsonPropertyName("server_id")]
+        public int ServerID { get; set; }
     }
 
     public class ClientMessageCodec 
     {
+        public (string OpenID, int ServerID) Decode(Memory<byte> memory, int length) 
+        {
+            var message = JsonSerializer.Deserialize<FirstMessage>(memory.Span.Slice(0, length));
+            return (message.OpenID, message.ServerID);
+        }
     }
 }
