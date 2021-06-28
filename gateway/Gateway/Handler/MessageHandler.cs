@@ -18,18 +18,18 @@ namespace Gateway.Handler
         private readonly ClientConnectionPool clientConnectionPool;
         private readonly IMessageCenter messageCenter;
         public MessageHandler(IServiceProvider serviceProvider,
-                                IMessageCenter messageCenter, 
+                                IMessageCenter messageCenter,
+                                ILoggerFactory loggerFactory,
                                 SessionManager sessionManager, 
                                 IPlacement placement, 
                                 ClientConnectionPool clientConnectionPool) 
         {
             this.serviceProvider = serviceProvider;
+            this.logger = loggerFactory.CreateLogger("MessageHandler");
             this.messageCenter = messageCenter;
             this.sessionManager = sessionManager;
             this.placement = placement;
             this.clientConnectionPool = clientConnectionPool;
-
-
 
             this.RegisterHandler<ResponseQueryAccount>(this.ProcessResponseQueryAccount);
             this.RegisterHandler<RequestCloseConnection>(this.ProcessRequestCloseConnection);
@@ -41,6 +41,7 @@ namespace Gateway.Handler
         {
             MessageCallback f = (session, msg, body) => func(session, (T)msg, body);
             this.messageCenter.RegisterMessageHandler(typeof(T), f);
+            this.logger.LogDebug("RegisterHandler, Type:{0}", typeof(T).Name);
         }
 
         private Task ProcessResponseQueryAccount(ISession session, ResponseQueryAccount response, byte[] body) 

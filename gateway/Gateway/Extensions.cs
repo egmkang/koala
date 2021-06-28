@@ -14,6 +14,7 @@ using Microsoft.AspNetCore.Connections;
 using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
+using NLog.Extensions.Logging;
 
 namespace Gateway
 {
@@ -82,7 +83,7 @@ namespace Gateway
                 }
                 await next();
             });
-        } 
+        }
 
 
         public static void ConfigureServices(this IServiceCollection services)
@@ -92,6 +93,14 @@ namespace Gateway
             {
                 throw new Exception("SocketConnectionFactory Not Found");
             }
+
+            services.AddLogging(builder =>
+            {
+                builder.ClearProviders();
+                builder.SetMinimumLevel(Microsoft.Extensions.Logging.LogLevel.Trace);
+                builder.AddNLog();
+            });
+
             services.AddSingleton<IMessageCenter, MessageCenter>();
             services.AddSingleton(typeof(IConnectionFactory), connectionFactoryType);
             services.AddSingleton<IPlacement, PDPlacement>();
