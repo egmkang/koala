@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 using Gateway.Utils;
 using Microsoft.Extensions.Logging;
 
-namespace Gateway
+namespace Gateway.Network
 {
     public class SessionManager
     {
@@ -14,9 +14,9 @@ namespace Gateway
         private readonly SessionUniqueSequence sessionSequence;
         private readonly ConcurrentDictionary<long, ISession> sessions = new ConcurrentDictionary<long, ISession>(4, 10 * 1024);
 
-        public SessionManager(ILogger logger, SessionUniqueSequence sessionSequence) 
+        public SessionManager(ILoggerFactory loggerFactory, SessionUniqueSequence sessionSequence) 
         {
-            this.logger = logger;
+            this.logger = loggerFactory.CreateLogger("SessionManager");
             this.sessionSequence = sessionSequence;
         }
 

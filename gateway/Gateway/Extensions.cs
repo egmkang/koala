@@ -5,6 +5,7 @@ using System.Linq;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
+using Gateway.Handler;
 using Gateway.Network;
 using Gateway.Placement;
 using Gateway.Utils;
@@ -25,6 +26,14 @@ namespace Gateway
             {
                 return *(int*)p;
             }
+        }
+
+        public static void PrepareGateway(this IServiceProvider serviceProvider) 
+        {
+            var messageCenter = serviceProvider.GetRequiredService<IMessageCenter>();
+            var clientPool = serviceProvider.GetRequiredService<ClientConnectionPool>();
+            clientPool.MessageCenter = messageCenter;
+            serviceProvider.GetRequiredService<MessageHandler>();
         }
 
         public static void ListenSocket(this IServiceProvider serviceProvider, int port) 
@@ -55,7 +64,7 @@ namespace Gateway
                 if (context.Request.Path == path)
                 {
                     var address = context.Connection.RemoteIpAddress.ToString();
-                    using (var websocket = await context.WebSockets.AcceptWebSocketAsync())
+                    using (var websocket = await context.WebSockets.AcceptWebSocketAsync().ConfigureAwait(false))
                     {
                         var sessionInfo = new DefaultSessionInfo(manager.NewSessionID, 0);
                         try
@@ -75,6 +84,7 @@ namespace Gateway
             });
         } 
 
+
         public static void ConfigureServices(this IServiceCollection services)
         {
             Type connectionFactoryType = GetSocketConnectionFactory();
@@ -86,6 +96,9 @@ namespace Gateway
             services.AddSingleton(typeof(IConnectionFactory), connectionFactoryType);
             services.AddSingleton<IPlacement, PDPlacement>();
             services.AddSingleton<SessionUniqueSequence>();
+            services.AddSingleton<SessionManager>();
+            services.AddSingleton<ClientConnectionPool>();
+            services.AddSingleton<MessageHandler>();
         }
 
         static Type GetSocketConnectionFactory() 

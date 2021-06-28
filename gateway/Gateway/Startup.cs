@@ -27,6 +27,8 @@ namespace Gateway
 
         public void Configure(IApplicationBuilder app, IWebHostEnvironment env, IServiceProvider serviceProvider)
         {
+            serviceProvider.PrepareGateway();
+
             var clientFactory = serviceProvider.GetRequiredService<IConnectionFactory>();
             var connListnerFactory = serviceProvider.GetRequiredService<IConnectionListenerFactory>();
 

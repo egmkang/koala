@@ -1,4 +1,5 @@
-﻿using Gateway.Utils;
+﻿using Gateway.Handler;
+using Gateway.Utils;
 using Microsoft.AspNetCore.Connections;
 using Microsoft.Extensions.Logging;
 using System;
@@ -11,7 +12,6 @@ namespace Gateway.Network
     public class ClientConnectionPool
     {
         private readonly ILogger logger;
-        private readonly IMessageCenter messageCenter;
         private readonly IConnectionFactory connectionFactory;
         private readonly SessionManager sessionManager;
         private readonly ConcurrentDictionary<long, WeakReference<ISession>> clients = new ConcurrentDictionary<long, WeakReference<ISession>>(4, 1024);
@@ -23,15 +23,15 @@ namespace Gateway.Network
 
 
         public ClientConnectionPool(ILoggerFactory loggerFactory, 
-                                    IMessageCenter messageCenter, 
                                     IConnectionFactory connectionFactory,
                                     SessionManager sessionManager)
         {
             this.logger = loggerFactory.CreateLogger("Network");
-            this.messageCenter = messageCenter;
             this.connectionFactory = connectionFactory;
             this.sessionManager = sessionManager;
         }
+
+        public IMessageCenter MessageCenter { get; set; }
 
         public void OnAddServer(long serverID, EndPoint endPoint, Func<object> heartbeatMessageFn) 
         {
@@ -135,7 +135,7 @@ namespace Gateway.Network
         {
             var sessionID = this.sessionManager.NewSessionID;
             var sessionInfo = new DefaultSessionInfo(sessionID, serverID);
-            var session = new TcpSocketSession(sessionID, connection, sessionInfo);
+            var session = new TcpSocketSession(sessionID, connection, sessionInfo, this.logger, this.MessageCenter);
 
             this.sessionManager.AddSession(session);
             return session;

@@ -5,7 +5,7 @@ using System.Threading.Tasks;
 
 namespace Gateway.Message
 {
-    public struct RpcMessage
+    public class RpcMessage
     {
         private static readonly byte[] Empty = new byte[0];
 

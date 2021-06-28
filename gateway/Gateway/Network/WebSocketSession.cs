@@ -9,6 +9,7 @@ using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
 using Gateway.Utils;
 using Gateway.Message;
+using Gateway.Handler;
 
 namespace Gateway.Network
 {
@@ -46,19 +47,18 @@ namespace Gateway.Network
 
         public bool IsActive => !this.cancellationTokenSource.IsCancellationRequested;
 
-        public Task CloseAsync()
+        public async Task CloseAsync()
         {
             try
             {
                 this.logger.LogInformation("WebSocketSession:{0} Close, RemoteAddress:{1}", this.SessionID, this.RemoteAddress);
                 this.cancellationTokenSource.Cancel();
-                _ = this.webSocket.CloseAsync(WebSocketCloseStatus.Empty, "", CancellationToken.None);
+                await this.webSocket.CloseAsync(WebSocketCloseStatus.Empty, "", CancellationToken.None).ConfigureAwait(false);
             }
             finally
             {
-                this.messageCenter.OnWebSocketClose(this);
+                await this.messageCenter.OnWebSocketClose(this).ConfigureAwait(false);
             }
-            return Task.CompletedTask;
         }
 
         public long SessionID { get; private set; }
@@ -67,11 +67,17 @@ namespace Gateway.Network
         public long LastMessageTime { get; set; }
         ISessionInfo ISession.UserData => sessionInfo;
 
+        private static readonly Exception ErrorMessage = new Exception("Input Message Must Be byte[]");
         public async Task SendMessage(object msg)
         {
-            if (!this.outboundMessages.Writer.TryWrite(msg as byte[])) 
+            var message = msg as byte[];
+            if (message == null)
             {
-                await this.outboundMessages.Writer.WriteAsync(msg as byte[]).ConfigureAwait(false);
+                throw ErrorMessage;
+            }
+            if (!this.outboundMessages.Writer.TryWrite(message)) 
+            {
+                await this.outboundMessages.Writer.WriteAsync(message).ConfigureAwait(false);
             }
         }
 

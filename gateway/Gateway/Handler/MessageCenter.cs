@@ -8,7 +8,7 @@ using Gateway.Message;
 using Gateway.Placement;
 using Gateway.Network;
 
-namespace Gateway
+namespace Gateway.Handler
 {
     public class MessageCenter : IMessageCenter
     {
@@ -17,6 +17,8 @@ namespace Gateway
         private readonly SessionManager sessionManager;
         private readonly IPlacement placement;
         private readonly ClientConnectionPool clientConnectionPool;
+        private MessageCallback defaultHandler;
+        private readonly Dictionary<Type, MessageCallback> messageHandlers = new Dictionary<Type, MessageCallback>();
 
         public MessageCenter(IServiceProvider serviceProvider, 
                             SessionManager sessionManager, 
@@ -33,30 +35,60 @@ namespace Gateway
 
         public Task OnSocketClose(ISession session)
         {
-            throw new NotImplementedException();
+            this.logger.LogWarning("MessageCenter OnSocketClose, SessionID:{0}", session.SessionID);
+            return Task.CompletedTask;
         }
 
-        public Task OnSocketMessage(ISession session, RpcMeta rpcMeta, byte[] body)
+        public async Task OnSocketMessage(ISession session, RpcMeta rpcMeta, byte[] body)
         {
-            throw new NotImplementedException();
+            try
+            {
+                if (this.messageHandlers.TryGetValue(rpcMeta.GetType(), out var handler))
+                {
+                    await handler(session, rpcMeta, body).ConfigureAwait(false);
+                }
+                else 
+                {
+                    await defaultHandler(session, rpcMeta, body).ConfigureAwait(false);
+                }
+            }
+            catch (Exception e)
+            {
+                this.logger.LogError("MessageCenter OnSocketMessage, SessionID:{0} Exception:{1}", session.SessionID, e);
+            }
         }
 
-        public Task OnWebSocketClose(ISession session)
+        public async Task OnWebSocketClose(ISession session)
         {
             try 
             {
-                //TODO
-                // 发送消息给Actor
-                //this.onWebSocketClose(session);
+                var sessionInfo = session.UserData;
+                if (sessionInfo.DestServerID != 0)
+                {
+                    var closeMessage = new RpcMessage(new NotifyConnectionAborted()
+                    {
+                        SessionId = session.SessionID,
+                        ServiceType = sessionInfo.ActorType,
+                        ActorId = sessionInfo.ActorID,
+                    }, null);
+
+                    await this.SendMessageToServer(sessionInfo.DestServerID, closeMessage).ConfigureAwait(false);
+                    this.logger.LogInformation("WebSocketSession OnClose, SessionID:{0}, Actor:{1}/{2}, Dest ServerID:{3}",
+                        session.SessionID, sessionInfo.ActorType, sessionInfo.ActorID, sessionInfo.DestServerID);
+                }
+                else 
+                {
+                    this.logger.LogInformation("WebSocketSession OnClose, SessionID:{0}, DestServerID: 0", session.SessionID);
+                }
             }
             catch (Exception e) 
             {
+                this.logger.LogError("WebSocketSession OnClose, SessionID:{0}, Exception:{1}", session.SessionID, e);
             }
             finally 
             {
                 this.sessionManager.RemoveSession(session.SessionID);
             }
-            return Task.CompletedTask;
         }
 
         static readonly Random random = new Random();
@@ -140,6 +172,18 @@ namespace Gateway
                 return;
             }
             await session.SendMessage(msg).ConfigureAwait(false);
+        }
+
+        public void RegisterMessageHandler(Type type, MessageCallback handler)
+        {
+            if (type == null)
+            {
+                this.defaultHandler = handler;
+            }
+            else 
+            {
+                this.messageHandlers.Add(type, handler);
+            }
         }
     }
 }
