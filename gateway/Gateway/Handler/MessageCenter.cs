@@ -174,7 +174,7 @@ namespace Gateway.Handler
             await session.SendMessage(msg).ConfigureAwait(false);
         }
 
-        public void RegisterMessageHandler(Type type, MessageCallback handler)
+        public void RegisterMessageCallback(Type type, MessageCallback handler)
         {
             if (type == null)
             {

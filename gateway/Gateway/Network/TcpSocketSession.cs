@@ -19,7 +19,6 @@ namespace Gateway.Network
              SingleReader = true,
              SingleWriter = false,
         };
-        private readonly long sessionID;
         private readonly ILogger logger;
         private readonly ConnectionContext context;
         private readonly ISessionInfo sessionInfo;
@@ -28,9 +27,8 @@ namespace Gateway.Network
         private readonly CancellationTokenSource cancellationTokenSource = new CancellationTokenSource();
         private readonly RpcMessageCodec codec = new RpcMessageCodec();
 
-        public TcpSocketSession(long sessionID, ConnectionContext context, ISessionInfo sessionInfo, ILogger logger, IMessageCenter messageCenter)
+        public TcpSocketSession(ConnectionContext context, ISessionInfo sessionInfo, ILogger logger, IMessageCenter messageCenter)
         {
-            this.sessionID = sessionID;
             this.context = context;
             this.logger = logger;
             this.messageCenter = messageCenter;
@@ -39,7 +37,7 @@ namespace Gateway.Network
             this.LastMessageTime = Platform.GetMilliSeconds();
         }
 
-        public long SessionID => this.sessionID;
+        public long SessionID => this.sessionInfo.SessionID;
 
         public string RemoteAddress { get; private set; }
 
@@ -55,7 +53,7 @@ namespace Gateway.Network
         {
             try
             {
-                this.logger.LogInformation("TcpSocketSession Close, SessionID:{0}, RemoteAddress:{1}", this.sessionID, this.RemoteAddress);
+                this.logger.LogInformation("TcpSocketSession Close, SessionID:{0}, RemoteAddress:{1}", this.SessionID, this.RemoteAddress);
                 this.cancellationTokenSource.Cancel();
                 await this.messageCenter.OnWebSocketClose(this).ConfigureAwait(false);
             }
@@ -91,8 +89,6 @@ namespace Gateway.Network
 
         public async Task RecvLoop()
         {
-            _ = this.SendLoop();
-
             var input = this.context.Transport.Input;
             while (!this.cancellationTokenSource.IsCancellationRequested) 
             {
@@ -130,6 +126,11 @@ namespace Gateway.Network
             {
                 await this.outboundMessages.Writer.WriteAsync(message).ConfigureAwait(false);
             }
+        }
+
+        public async Task MainLoop()
+        {
+            await Task.WhenAll(this.RecvLoop(), this.SendLoop());
         }
     }
 }

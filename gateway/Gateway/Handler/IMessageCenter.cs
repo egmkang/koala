@@ -16,7 +16,7 @@ namespace Gateway.Handler
         /// </summary>
         /// <param name="type">类型, NULL的时候, 就是默认的处理函数</param>
         /// <param name="handler">回调函数</param>
-        void RegisterMessageHandler(Type type, MessageCallback handler);
+        void RegisterMessageCallback(Type type, MessageCallback handler);
 
         Task OnWebSocketClose(ISession session);
         Task OnWebSocketLoginMessage(ISession session, string openID, int serverID, Memory<byte> memory, int size);

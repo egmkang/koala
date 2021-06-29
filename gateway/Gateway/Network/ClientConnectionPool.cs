@@ -133,9 +133,8 @@ namespace Gateway.Network
 
         private TcpSocketSession NewTcpClientSession(ConnectionContext connection, long serverID) 
         {
-            var sessionID = this.sessionManager.NewSessionID;
-            var sessionInfo = new DefaultSessionInfo(sessionID, serverID);
-            var session = new TcpSocketSession(sessionID, connection, sessionInfo, this.logger, this.MessageCenter);
+            var sessionInfo = new DefaultSessionInfo(this.sessionManager.NewSessionID, serverID);
+            var session = new TcpSocketSession(connection, sessionInfo, this.logger, this.MessageCenter);
 
             this.sessionManager.AddSession(session);
             return session;
@@ -161,7 +160,7 @@ namespace Gateway.Network
                 var weak = new WeakReference<ISession>(session);
                 this.clients.AddOrUpdate(serverID, weak, (_1, _2) => weak);
 
-                _ = session.RecvLoop();
+                _ = session.MainLoop();
                 _ = this.TrySendHeartBeatLoop(session, heartbeatMessageFn);
             }
             catch (Exception e)

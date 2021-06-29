@@ -48,7 +48,8 @@ namespace Gateway.Network
         long LastMessageTime { get; set; }
         ISessionInfo UserData { get; }
         bool IsActive { get; }
-        Task RecvLoop();
+
+        Task MainLoop();
         Task CloseAsync();
         Task SendMessage(object msg);
     }

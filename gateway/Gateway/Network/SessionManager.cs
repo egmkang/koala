@@ -22,6 +22,9 @@ namespace Gateway.Network
 
         public long NewSessionID => sessionSequence.NewSessionID;
 
+
+        public long Count => this.sessions.Count;
+
         public ISession GetSession(long sessionID) 
         {
             if (this.sessions.TryGetValue(sessionID, out var session))

@@ -29,14 +29,12 @@ namespace Gateway.Network
         private readonly ISessionInfo sessionInfo;
         private readonly ClientMessageCodec codec = new ClientMessageCodec();
 
-        public WebSocketSession(long sessionID, 
-                                WebSocket webSocket, 
+        public WebSocketSession(WebSocket webSocket, 
                                 string address,
                                 ILogger logger, 
                                 IMessageCenter messageCenter,
                                 ISessionInfo sessionInfo) 
         {
-            this.SessionID = sessionID;
             this.webSocket = webSocket;
             this.RemoteAddress = address;
             this.logger = logger;
@@ -51,8 +49,11 @@ namespace Gateway.Network
         {
             try
             {
-                this.logger.LogInformation("WebSocketSession:{0} Close, RemoteAddress:{1}", this.SessionID, this.RemoteAddress);
+                if (this.cancellationTokenSource.IsCancellationRequested) 
+                    return;
                 this.cancellationTokenSource.Cancel();
+
+                this.logger.LogInformation("WebSocketSession:{0} Close, RemoteAddress:{1}", this.SessionID, this.RemoteAddress);
                 await this.webSocket.CloseAsync(WebSocketCloseStatus.Empty, "", CancellationToken.None).ConfigureAwait(false);
             }
             finally
@@ -61,7 +62,7 @@ namespace Gateway.Network
             }
         }
 
-        public long SessionID { get; private set; }
+        public long SessionID => this.sessionInfo.SessionID;
         public string RemoteAddress { get; private set; }
         public SessionType SessionType => SessionType.SessionType_WebSocket;
         public long LastMessageTime { get; set; }
@@ -81,51 +82,73 @@ namespace Gateway.Network
             }
         }
 
-        public async Task SendLoop() 
+        public async Task SendLoop()
         {
             var reader = this.outboundMessages.Reader;
-            while (!this.cancellationTokenSource.IsCancellationRequested) 
+            while (!this.cancellationTokenSource.IsCancellationRequested)
             {
                 if (!await reader.WaitToReadAsync(this.cancellationTokenSource.Token).ConfigureAwait(false))
                     continue;
-                while (reader.TryRead(out var msg))
+                try
                 {
-                    await this.webSocket.SendAsync(msg, WebSocketMessageType.Binary, true, CancellationToken.None).ConfigureAwait(false);
+                    while (reader.TryRead(out var msg))
+                    {
+                        await this.webSocket.SendAsync(msg, WebSocketMessageType.Binary, true, CancellationToken.None).ConfigureAwait(false);
+                    }
+                }
+                catch (Exception e)
+                {
+                    this.logger.LogError("WebSocketSession SendLoop, SessionID:{0}, Exception:{1}", this.SessionID, e);
+                    await this.CloseAsync().ConfigureAwait(false);
+                    break;
                 }
             }
         }
 
         public async Task RecvLoop()
         {
-            _ = this.SendLoop();
             using (var buffer = MemoryPool<byte>.Shared.Rent(RecvBufferSize))
             {
                 var memory = buffer.Memory;
                 while (!this.cancellationTokenSource.IsCancellationRequested)
                 {
-                    var result = await this.webSocket.ReceiveAsync(memory, this.cancellationTokenSource.Token).ConfigureAwait(false);
-                    if (result.MessageType == WebSocketMessageType.Close)
+                    try 
                     {
-                        this.logger.LogInformation("WebSocketSession, SessionID:{0} Receive Close Message", this.SessionID);
+                        var result = await this.webSocket.ReceiveAsync(memory, this.cancellationTokenSource.Token).ConfigureAwait(false);
+                        if (result.MessageType == WebSocketMessageType.Close)
+                        {
+                            this.logger.LogInformation("WebSocketSession, SessionID:{0} Receive Close Message", this.SessionID);
+                            await this.CloseAsync().ConfigureAwait(false);
+                            break;
+                        }
+
+                        if (this.sessionInfo.GameServerID != 0)
+                        {
+                            await this.messageCenter.OnWebSocketMessage(this, memory, result.Count).ConfigureAwait(false);
+                        }
+                        else
+                        {
+                            var (OpenID, ServerID) = this.codec.Decode(memory, result.Count);
+                            this.logger.LogInformation("WebSocketSession Login, SessionID:{0}, OpenID:{1}, ServerID:{2}",
+                                                        this.SessionID, OpenID, ServerID);
+                            this.sessionInfo.OpenID = OpenID;
+                            this.sessionInfo.GameServerID = ServerID;
+                            await this.messageCenter.OnWebSocketLoginMessage(this, OpenID, ServerID, memory, result.Count);
+                        }
+                    }
+                    catch (Exception e)
+                    {
+                        this.logger.LogError("WebSocketSession RecvLoop, SessionID:{0} Exception:{1}", this.SessionID, e);
                         await this.CloseAsync().ConfigureAwait(false);
                         break;
                     }
-
-                    if (this.sessionInfo.GameServerID != 0)
-                    {
-                        await this.messageCenter.OnWebSocketMessage(this, memory, result.Count).ConfigureAwait(false);
-                    }
-                    else 
-                    {
-                        var (OpenID, ServerID) = this.codec.Decode(memory, result.Count);
-                        this.logger.LogInformation("WebSocketSession Login, SessionID:{0}, OpenID:{1}, ServerID:{2}",
-                                                    this.SessionID, OpenID, ServerID);
-                        this.sessionInfo.OpenID = OpenID;
-                        this.sessionInfo.GameServerID = ServerID;
-                        await this.messageCenter.OnWebSocketLoginMessage(this, OpenID, ServerID, memory, result.Count);
-                    }
                 }
             }
+        }
+
+        public async Task MainLoop()
+        {
+            await Task.WhenAll(this.RecvLoop(), this.SendLoop());
         }
     }
 }
