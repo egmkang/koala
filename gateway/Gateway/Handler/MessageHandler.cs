@@ -111,6 +111,7 @@ namespace Gateway.Handler
             {
                 this.logger.LogWarning("ProcessResponseHeartBeat, SessionID:{0} CostTime:{1}", session.SessionID, costTime);
             }
+            session.LastMessageTime = Platform.GetMilliSeconds();
             return Task.CompletedTask;
         }
     }

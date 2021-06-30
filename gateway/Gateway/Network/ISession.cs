@@ -15,6 +15,7 @@ namespace Gateway.Network
     public interface ISessionInfo 
     {
         long SessionID { get; }
+        bool IsClient { get; set; }
         byte[] Token { get; set; }
         //这边是WebSocket的Session信息
         string OpenID { get; set; }
@@ -35,7 +36,7 @@ namespace Gateway.Network
         /// <summary>
         /// 服务器的唯一ID, 通过PD获取到的
         /// </summary>
-        long UniqueServerID { get; }
+        long SessionServerID { get; }
 
         Dictionary<string, string> ExtraInfo { get; }
     }

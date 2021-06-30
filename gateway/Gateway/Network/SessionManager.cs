@@ -37,14 +37,16 @@ namespace Gateway.Network
         public void AddSession(ISession session) 
         {
             sessions.TryAdd(session.SessionID, session);
-            logger.LogInformation("SessionManager.AddSession, SessionID:{0}, SessionType:{1}", session.SessionID, session.SessionType);
+            logger.LogInformation("SessionManager.AddSession, SessionID:{0}, SessionType:{1}, IsClient:{2}", 
+                                    session.SessionID, session.SessionType, session.UserData.IsClient);
         }
 
         public void RemoveSession(long sessionID) 
         {
             if (sessions.TryRemove(sessionID, out var session) && session != null) 
             {
-                logger.LogInformation("SessionManager.RemoveSession, SessionID:{0}, SessionType:{1}", session.SessionID, session.SessionType);
+                logger.LogInformation("SessionManager.RemoveSession, SessionID:{0}, SessionType:{1}", 
+                                        session.SessionID, session.SessionType);
             }
         }
     }

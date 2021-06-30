@@ -131,10 +131,10 @@ namespace Gateway.Placement
             return position;
         }
 
-        internal class SequenceResponse
+        public class SequenceResponse
         {
             [JsonPropertyName("id")]
-            public long ID = 0;
+            public long ID { get; set; }
         }
 
         private static readonly object EmptyObject = new Dictionary<string, string>();
@@ -205,7 +205,7 @@ namespace Gateway.Placement
         class RegisterServerResponse
         {
             [JsonPropertyName("lease_id")]
-            public long LeaseID = 0;
+            public long LeaseID { get; set; }
         }
 
         public async Task<long> RegisterServerAsync(PlacementActorHostInfo info)
@@ -259,7 +259,7 @@ namespace Gateway.Placement
 
         public void SetServerLoad(long load)
         {
-            Interlocked.Exchange(ref this.currentServerInfo.Load, load);
+            this.currentServerInfo.Load = load;
             if (this.logger.IsEnabled(LogLevel.Trace))
             {
                 this.logger.LogTrace("UpdateServerLoad, Load:{0}", load);
@@ -385,21 +385,26 @@ namespace Gateway.Placement
                 var timerInterval = this.currentServerInfo.TTL / 3 * 1000;
                 var currentMilliSeconds = Platform.GetMilliSeconds();
                 var timerCount = 0;
+                var failedCount = 0;
                 while (!pullingCancelTokenSource.Token.IsCancellationRequested)
                 {
                     try
                     {
                         await this.PullOnce(pullingCancelTokenSource.Token).ConfigureAwait(false);
+                        failedCount = 0;
                     }
                     catch (Exception e)
                     {
                         this.logger.LogError("PD KeepAlive PullOnce fail, Exception:{0}", e.Message);
-                        //这边异常情况, 服务器需要主动退出
-                        if (this.onFatalError != null)
+                        if (++failedCount >= 3) 
                         {
-                            this.onFatalError(e);
+                            //这边异常情况, 服务器需要主动退出
+                            if (this.onFatalError != null)
+                            {
+                                this.onFatalError(e);
+                            }
+                            break;
                         }
-                        break;
                     }
                     finally
                     {

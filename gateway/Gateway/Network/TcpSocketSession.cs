@@ -75,7 +75,8 @@ namespace Gateway.Network
                 {
                     while (reader.TryRead(out var msg))
                     {
-                        this.codec.Encode(output, msg);
+                        var (memory, size) = this.codec.Encode(output, msg);
+                        output.Advance(size);
                     }
                     await output.FlushAsync().ConfigureAwait(false);
                 }
@@ -92,18 +93,27 @@ namespace Gateway.Network
             var input = this.context.Transport.Input;
             while (!this.cancellationTokenSource.IsCancellationRequested) 
             {
-                var readResult = await input.ReadAsync();
+                var readResult = await input.ReadAsync().ConfigureAwait(false);
+                if (readResult.IsCanceled || readResult.IsCompleted)
+                    break;
                 var buffer = readResult.Buffer;
-                if (readResult.IsCanceled || readResult.IsCompleted) break;
 
                 try 
                 {
-                    var len = 0;
-                    if ((len = this.codec.Decode(buffer, out var message)) > 0)
+                    while (true)
                     {
-                        input.AdvanceTo(buffer.Start, buffer.GetPosition(len));
+                        var len = 0;
+                        if ((len = this.codec.Decode(buffer, out var message)) > 0)
+                        {
+                            buffer = buffer.Slice(len);
+                            input.AdvanceTo(buffer.Start);
 
-                        await this.messageCenter.OnSocketMessage(this, message.Meta, message.Body).ConfigureAwait(false);
+                            await this.messageCenter.OnSocketMessage(this, message.Meta, message.Body).ConfigureAwait(false);
+                        }
+                        else 
+                        {
+                            break;
+                        }
                     }
                 }
                 catch (Exception e) 
@@ -118,6 +128,7 @@ namespace Gateway.Network
         public async Task SendMessage(object msg)
         {
             var message = msg as RpcMessage;
+            //this.logger.LogInformation("SendMessage Type:{0}", message.Meta.GetType().Name);
             if (message == null) 
             {
                 throw ErrorMessage;

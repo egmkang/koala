@@ -3,6 +3,7 @@ using System.Collections.Concurrent;
 using System.Net;
 using System.Threading.Tasks;
 using Gateway.Handler;
+using Gateway.Message;
 using Gateway.Utils;
 using Microsoft.AspNetCore.Connections;
 using Microsoft.Extensions.Logging;
@@ -80,7 +81,7 @@ namespace Gateway.Network
                 if (this.clients.TryGetValue(serverID, out var c) && c.TryGetTarget(out var session))
                 {
                     this.logger.LogInformation("TryCloseCurrentClient, ServerID:{1} SessionID:{0}",
-                        session.UserData.SessionID, serverID);
+                                                session.UserData.SessionID, serverID);
                     _ = session.CloseAsync();
 
                     this.clients.TryRemove(serverID, out var _);
@@ -111,12 +112,14 @@ namespace Gateway.Network
                     if (Platform.GetMilliSeconds() - session.LastMessageTime > HeartBeatTimeOut)
                     {
                         this.logger.LogError("HearBeatTimeOut, SessionID:{0}, ServerID:{1}, RemoteAddress:{2}, TimeOut:{3}",
-                            sessionInfo.SessionID, sessionInfo.GameServerID, session.RemoteAddress, Platform.GetMilliSeconds() - session.LastMessageTime);
+                            sessionInfo.SessionID, sessionInfo.SessionServerID, session.RemoteAddress, Platform.GetMilliSeconds() - session.LastMessageTime);
 
-                        this.TryCloseCurrentClient(sessionInfo.GameServerID);
+                        this.TryCloseCurrentClient(sessionInfo.SessionServerID);
                         break;
                     }
 
+                    //var msg = heartbeatMessageFn();
+                    //this.logger.LogInformation("SendHeartBeat, MilliSeconds:{0}", ((msg as RpcMessage).Meta as HeartBeatRequest).MilliSeconds);
                     await session.SendMessage(heartbeatMessageFn()).ConfigureAwait(false);
                 }
                 catch (Exception e)
@@ -127,13 +130,14 @@ namespace Gateway.Network
 
                 await Task.Delay(HeartBeatInterval).ConfigureAwait(false);
             }
-            this.logger.LogInformation("TrySednHeartBeatLoop Exit, SessionID:{0}", sessionInfo.SessionID);
+            this.logger.LogInformation("TrySendHeartBeatLoop Exit, SessionID:{0}", sessionInfo.SessionID);
 
         }
 
         private TcpSocketSession NewTcpClientSession(ConnectionContext connection, long serverID) 
         {
             var sessionInfo = new DefaultSessionInfo(this.sessionManager.NewSessionID, serverID);
+            sessionInfo.IsClient = true;
             var session = new TcpSocketSession(connection, sessionInfo, this.logger, this.MessageCenter);
 
             this.sessionManager.AddSession(session);
@@ -155,7 +159,7 @@ namespace Gateway.Network
                 var session = this.NewTcpClientSession(connection, serverID);
 
                 this.logger.LogInformation("TryConnectAsync, ServerID:{0}, Address:{1}, SessionID:{2}",
-                    serverID, endPoint, session.SessionID);
+                                            serverID, endPoint, session.SessionID);
 
                 var weak = new WeakReference<ISession>(session);
                 this.clients.AddOrUpdate(serverID, weak, (_1, _2) => weak);

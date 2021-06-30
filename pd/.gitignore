@@ -1,0 +1,5 @@
+/default.etcd/
+/bin/*.exe
+/bin/pd_server.exe
+.idea
+cluster

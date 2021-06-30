@@ -63,7 +63,7 @@ namespace Gateway
 
         public async Task RunGateway(IServiceProvider serviceProvider, IApplicationBuilder app) 
         {
-            var interval = 30;
+            var interval = 5;
             var port = 15000;
             var address = "127.0.0.1:15000";
             var wsPath = "/ws";
@@ -96,33 +96,18 @@ namespace Gateway
             {
                 this.logger.LogError("StartUp Gateway, Exception:{0}", e);
             }
-            this.PDKeepAlive(ServerID, LeaseID, interval);
-        }
-        private void PDKeepAlive(long serverID, long leaseID, int interval) 
-        {
-            _ = Task.Run(async () =>
+
+            this.placement.OnException(this.OnPDKeepAliveException);
+            _ = this.placement.StartPullingAsync().ContinueWith((t) =>
             {
-                int failCount = 0;
-                while (true)
-                {
-                    try
-                    {
-                        await this.placement.KeepAliveServerAsync(serverID, leaseID, this.sessionManager.Count).ConfigureAwait(false);
-                        failCount = 0;
-                    }
-                    catch (Exception e)
-                    {
-                        this.logger.LogError("PDKeepAlive, Exception:{0}", e);
-                        if (++failCount >= 3) 
-                        {
-                            this.logger.LogError("PDKeepAlive FailCount:{0}, Process Exit", failCount);
-                            NLog.LogManager.Flush();
-                            Environment.Exit(-1);
-                        }
-                    }
-                    await Task.Delay(interval);
-                }
+                this.logger.LogError("PDKeepAlive Process Exit");
+                NLog.LogManager.Flush();
+                Environment.Exit(-1);
             });
+        }
+        private void OnPDKeepAliveException(Exception e) 
+        {
+            this.logger.LogError("PDKeepAlive, Exception:{0}", e);
         }
 
         private void OnAddServer(PlacementActorHostInfo serverInfo) 
@@ -171,6 +156,8 @@ namespace Gateway
                     var context = await this.connectionListener.AcceptAsync().ConfigureAwait(false);
                     var sessionInfo = new DefaultSessionInfo(this.sessionManager.NewSessionID, 0);
                     var tcpSession = new TcpSocketSession(context, sessionInfo, logger, this.messageCenter);
+                    this.logger.LogInformation("TcpSocketSession Accept, SessionID:{0}, RemoteAddress:{1}", 
+                                                tcpSession.SessionID, tcpSession.RemoteAddress);
                     _ = this.RunTcpSession(tcpSession);
                 }
             }
