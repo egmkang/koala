@@ -32,11 +32,11 @@ namespace Gateway.Handler
             this.placement = placement;
             this.clientConnectionPool = clientConnectionPool;
 
-            this.RegisterHandler<ResponseQueryAccount>(this.ProcessResponseQueryAccount);
-            this.RegisterHandler<RequestCloseConnection>(this.ProcessRequestCloseConnection);
-            this.RegisterHandler<RequestSendMessageToPlayer>(this.ProcessRequestSendMessageToPlayer);
-            this.RegisterHandler<HeartBeatRequest>(this.ProcessRequestHeartBeat);
-            this.RegisterHandler<HeartBeatResponse>(this.ProcessResponseHeartBeat);
+            this.RegisterHandler<ResponseAccountLogin>(this.ProcessResponseAccountLogin);
+            this.RegisterHandler<RequestCloseSession>(this.ProcessRequestCloseSession);
+            this.RegisterHandler<RequestSendMessageToSession>(this.ProcessRequestSendMessageToSession);
+            this.RegisterHandler<RequestHeartBeat>(this.ProcessRequestHeartBeat);
+            this.RegisterHandler<ResponseHeartBeat>(this.ProcessResponseHeartBeat);
         }
         private void RegisterHandler<T>(Func<ISession, T, byte[], Task> func) where T : RpcMeta
         {
@@ -45,7 +45,7 @@ namespace Gateway.Handler
             this.logger.LogInformation("RegisterHandler, Type:{0}", typeof(T).Name);
         }
 
-        private async Task ProcessResponseQueryAccount(ISession session, ResponseQueryAccount response, byte[] body) 
+        private async Task ProcessResponseAccountLogin(ISession session, ResponseAccountLogin response, byte[] body) 
         {
             var destSession = this.sessionManager.GetSession(response.SessionID);
             if (destSession == null) 
@@ -55,8 +55,8 @@ namespace Gateway.Handler
             }
 
             var sessionInfo = destSession.UserData;
-            sessionInfo.ActorType = response.ServiceType;
-            sessionInfo.ActorID = response.ActorId;
+            sessionInfo.ActorType = response.ActorType;
+            sessionInfo.ActorID = response.ActorID;
             this.logger.LogInformation("ProcessResponseQueryAccount, SessionID:{0}, OpenID:{1}, Actor:{2}/{3}",
                                         sessionInfo.SessionID, sessionInfo.ActorType, sessionInfo.ActorID);
 
@@ -69,23 +69,25 @@ namespace Gateway.Handler
             sessionInfo.DestServerID = position.ServerID;
             this.logger.LogInformation("ProcessResponseQueryAccount, SessionID:{0}, Actor:{1}/{2}, Dest ServerID:{3}",
                                         sessionInfo.SessionID, sessionInfo.ActorType, sessionInfo.ActorID, sessionInfo.DestServerID);
-            await this.messageCenter.SendMessageToServer(sessionInfo.DestServerID, new RpcMessage(new NotifyConnectionComming()
+            await this.messageCenter.SendMessageToServer(sessionInfo.DestServerID, new RpcMessage(new NotifyNewActorSession()
             {
-                SessionId = sessionInfo.SessionID,
-                ServiceType = sessionInfo.ActorType,
-                ActorId = sessionInfo.ActorID,
+                SessionID = sessionInfo.SessionID,
+                OpenID = sessionInfo.OpenID,
+                ServerID = sessionInfo.GameServerID,
+                ActorType = sessionInfo.ActorType,
+                ActorID = sessionInfo.ActorID,
             }, sessionInfo.Token)).ConfigureAwait(false);
         }
-        private async Task ProcessRequestCloseConnection(ISession session, RequestCloseConnection request, byte[] body) 
+        private async Task ProcessRequestCloseSession(ISession session, RequestCloseSession request, byte[] body) 
         {
-            var closeSession = this.sessionManager.GetSession(request.SessionId);
+            var closeSession = this.sessionManager.GetSession(request.SessionID);
             if (closeSession != null) 
             {
-                this.logger.LogInformation("ProcessRequestCloseConnection, SessionID:{0}", request.SessionId);
+                this.logger.LogInformation("ProcessRequestCloseConnection, SessionID:{0}", request.SessionID);
                 await closeSession.CloseAsync().ConfigureAwait(false);
             }
         }
-        private async Task ProcessRequestSendMessageToPlayer(ISession session, RequestSendMessageToPlayer request, byte[] body) 
+        private async Task ProcessRequestSendMessageToSession(ISession session, RequestSendMessageToSession request, byte[] body) 
         {
             if (request.SessionId != 0) 
             {
@@ -99,12 +101,12 @@ namespace Gateway.Handler
                 }
             }
         }
-        private async Task ProcessRequestHeartBeat(ISession session, HeartBeatRequest request, byte[] body) 
+        private async Task ProcessRequestHeartBeat(ISession session, RequestHeartBeat request, byte[] body) 
         {
-            var response = new HeartBeatResponse() { MilliSeconds = request.MilliSeconds, };
+            var response = new ResponseHeartBeat() { MilliSeconds = request.MilliSeconds, };
             await session.SendMessage(new RpcMessage(response, null)).ConfigureAwait(false);
         }
-        private Task ProcessResponseHeartBeat(ISession session, HeartBeatResponse response, byte[] body) 
+        private Task ProcessResponseHeartBeat(ISession session, ResponseHeartBeat response, byte[] body) 
         {
             var costTime = Platform.GetMilliSeconds() - response.MilliSeconds;
             if (costTime > 50)

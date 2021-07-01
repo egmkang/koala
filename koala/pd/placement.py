@@ -6,7 +6,7 @@ from koala.placement.placement import Placement
 from koala.membership.server_node import ServerNode
 from koala.membership.membership_manager import MembershipManager
 from koala.network.constant import CODEC_RPC
-from koala.message.message import HeartBeatRequest
+from koala.message.message import RequestHeartBeat
 from koala.network.socket_session import SocketSessionManager
 from koala.network.tcp_session import TcpSocketSession
 from koala.pd import api
@@ -166,7 +166,7 @@ class PDPlacementImpl(Placement):
                 pass
 
     async def _try_send_heart_beat(self):
-        heart_beat = HeartBeatRequest()
+        heart_beat = RequestHeartBeat()
         heart_beat.milli_seconds = int(time.time() * 1000)
         for server_id in self._recent_added:
             host = _membership.get_member(server_id)

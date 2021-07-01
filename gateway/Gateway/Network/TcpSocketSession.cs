@@ -100,20 +100,13 @@ namespace Gateway.Network
 
                 try 
                 {
-                    while (true)
+                    var len = 0;
+                    while ((len = this.codec.Decode(buffer, out var message)) > 0)
                     {
-                        var len = 0;
-                        if ((len = this.codec.Decode(buffer, out var message)) > 0)
-                        {
-                            buffer = buffer.Slice(len);
-                            input.AdvanceTo(buffer.Start);
+                        buffer = buffer.Slice(len);
+                        input.AdvanceTo(buffer.Start);
 
-                            await this.messageCenter.OnSocketMessage(this, message.Meta, message.Body).ConfigureAwait(false);
-                        }
-                        else 
-                        {
-                            break;
-                        }
+                        await this.messageCenter.OnSocketMessage(this, message.Meta, message.Body).ConfigureAwait(false);
                     }
                 }
                 catch (Exception e) 

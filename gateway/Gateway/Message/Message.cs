@@ -1,14 +1,10 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text.Json.Serialization;
-using System.Threading.Tasks;
+﻿using System.Text.Json.Serialization;
 
 namespace Gateway.Message
 {
     public class RpcMeta { }
 
-    public class RequestQueryAccount : RpcMeta 
+    public class RequestAccountLogin : RpcMeta 
     {
         [JsonPropertyName("open_id")]
         public string OpenID { get; set; }
@@ -18,7 +14,7 @@ namespace Gateway.Message
         public long SessionID { get; set; }
     }
 
-    public class ResponseQueryAccount : RpcMeta 
+    public class ResponseAccountLogin : RpcMeta 
     {
         [JsonPropertyName("open_id")]
         public string OpenID { get; set; }
@@ -26,77 +22,63 @@ namespace Gateway.Message
         public int ServerID { get; set; }
         [JsonPropertyName("session_id")]
         public long SessionID { get; set; }
-        [JsonPropertyName("server_type")]
-        public string ServiceType { get; set; }
+        [JsonPropertyName("actor_type")]
+        public string ActorType { get; set; }
         [JsonPropertyName("actor_id")]
-        public string ActorId { get; set; }
-    }
-
-    public class NotifyConnectionLogin : RpcMeta
-    {
-        [JsonPropertyName("open_id")]
-        public string OpenID { get; set; }
-        [JsonPropertyName("server_id")]
-        public int ServerID { get; set; }
-        [JsonPropertyName("session_id")]
-        public long SessionID { get; set; }
-        [JsonPropertyName("server_type")]
-        public string ServiceType { get; set; }
-        [JsonPropertyName("actor_id")]
-        public string ActorId { get; set; }
+        public string ActorID { get; set; }
     }
 
     // token的bytes, 带在RPC PROTOCOL的body里面
-    public class NotifyConnectionComming : RpcMeta
+    public class NotifyNewActorSession : RpcMeta
     {
-        [JsonPropertyName("server_type")]
-        public string ServiceType { get; set; }
-
+        [JsonPropertyName("actor_type")]
+        public string ActorType { get; set; }
         [JsonPropertyName("actor_id")]
-        public string ActorId { get; set; }
-
+        public string ActorID { get; set; }
         [JsonPropertyName("session_id")]
-        public long SessionId { get; set; }
-
-        [JsonPropertyName("token")]
-        public byte[] Token { get; set; }
+        public long SessionID { get; set; }
+        [JsonPropertyName("open_id")]
+        public string OpenID { get; set; }
+        [JsonPropertyName("server_id")]
+        public int ServerID { get; set; }
     }
 
-    public class NotifyConnectionAborted : RpcMeta
+    public class NotifyActorSessionAborted : RpcMeta
     {
         [JsonPropertyName("session_id")]
-        public long SessionId { get; set; }
+        public long SessionID { get; set; }
 
-        [JsonPropertyName("server_type")]
-        public string ServiceType { get; set; }
+        [JsonPropertyName("actor_type")]
+        public string ActorType { get; set; }
 
         [JsonPropertyName("actor_id")]
-        public string ActorId { get; set; }
+        public string ActorID { get; set; }
     }
 
-    public class RequestCloseConnection : RpcMeta
+    public class RequestCloseSession : RpcMeta
     {
         [JsonPropertyName("session_id")]
-        public long SessionId { get; set; }
+        public long SessionID { get; set; }
 
-        [JsonPropertyName("server_type")]
-        public string ServiceType { get; set; }
+        [JsonPropertyName("actor_type")]
+        public string ActorType { get; set; }
     }
 
     // message携带在RPC PROTOCOL的body里面
-    public class NotifyNewMessage : RpcMeta
+    public class NotifyNewActorMessage : RpcMeta
     {
         [JsonPropertyName("session_id")]
         public long SessionId { get; set; }
 
-        [JsonPropertyName("server_type")]
-        public string ServiceType { get; set; }
+        [JsonPropertyName("actor_type")]
+        public string ActorType { get; set; }
 
         [JsonPropertyName("actor_id")]
-        public string ActorId { get; set; }
+        public string ActorID { get; set; }
     }
 
-    public class RequestSendMessageToPlayer : RpcMeta
+    // 要发送的消息携带在Body里面
+    public class RequestSendMessageToSession : RpcMeta
     {
         [JsonPropertyName("session_id")]
         public long SessionId { get; set; }
@@ -105,16 +87,15 @@ namespace Gateway.Message
         public long[] SessionIds { get; set; }
     }
 
-    public class HeartBeatRequest : RpcMeta
+    public class RequestHeartBeat : RpcMeta
     {
         [JsonPropertyName("milli_seconds")]
         public long MilliSeconds { get; set; }
     }
 
-    public class HeartBeatResponse : RpcMeta
+    public class ResponseHeartBeat : RpcMeta
     {
         [JsonPropertyName("milli_seconds")]
         public long MilliSeconds { get; set; }
     }
-
 }

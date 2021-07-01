@@ -1,5 +1,4 @@
 import dataclasses
-
 from koala.typing import *
 
 

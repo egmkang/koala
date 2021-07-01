@@ -52,7 +52,7 @@ namespace test
         [TestMethod]
         public void TestRpcCodec()
         {
-            var req = new HeartBeatRequest() { MilliSeconds = 123 };
+            var req = new RequestHeartBeat() { MilliSeconds = 123 };
             var rpcMessage = new RpcMessage(req, null);
 
             var (memory, size) = rpcCodec.Encode(new MockBufferWriter(), rpcMessage);
@@ -65,7 +65,7 @@ namespace test
         public void TestRpcCodecWithBody()
         {
             var inputBody = new byte[3] { 1, 2, 3 };
-            var req = new HeartBeatRequest() { MilliSeconds = 456 };
+            var req = new RequestHeartBeat() { MilliSeconds = 456 };
             var rpcMessage = new RpcMessage(req, inputBody);
 
             var (memory, size) = rpcCodec.Encode(new MockBufferWriter(), rpcMessage);
@@ -79,19 +79,19 @@ namespace test
             Assert.AreEqual(s1, s2);
             CollectionAssert.AreEqual(m1.Body, m2.Body);
             Assert.AreEqual(m1.Meta.GetType(), m2.Meta.GetType());
-            Assert.AreEqual((m1.Meta as HeartBeatRequest).MilliSeconds, (m2.Meta as HeartBeatRequest).MilliSeconds);
+            Assert.AreEqual((m1.Meta as RequestHeartBeat).MilliSeconds, (m2.Meta as RequestHeartBeat).MilliSeconds);
         }
 
         [TestMethod]
         public void TestMultiMessagesRpcCodec() 
         {
             var body1 = new byte[3] { 4, 5, 6 };
-            var reqHeartBeat1 = new HeartBeatRequest() { MilliSeconds = 123 };
+            var reqHeartBeat1 = new RequestHeartBeat() { MilliSeconds = 123 };
             var rpcMessage1 = new RpcMessage(reqHeartBeat1, body1);
             var (memory1, size1) = rpcCodec.Encode(new MockBufferWriter(), rpcMessage1);
 
             var body2 = new byte[4] { 7, 8, 9, 10 };
-            var reqHeartBeat2 = new HeartBeatRequest() { MilliSeconds = 34234234 };
+            var reqHeartBeat2 = new RequestHeartBeat() { MilliSeconds = 34234234 };
             var rpcMessage2 = new RpcMessage(reqHeartBeat2, body2);
             var (memory2, size2) = rpcCodec.Encode(new MockBufferWriter(), rpcMessage2);
 

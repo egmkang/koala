@@ -65,11 +65,11 @@ namespace Gateway.Handler
                 var sessionInfo = session.UserData;
                 if (sessionInfo.DestServerID != 0)
                 {
-                    var closeMessage = new RpcMessage(new NotifyConnectionAborted()
+                    var closeMessage = new RpcMessage(new NotifyActorSessionAborted()
                     {
-                        SessionId = session.SessionID,
-                        ServiceType = sessionInfo.ActorType,
-                        ActorId = sessionInfo.ActorID,
+                        SessionID = session.SessionID,
+                        ActorType = sessionInfo.ActorType,
+                        ActorID = sessionInfo.ActorID,
                     }, null);
 
                     await this.SendMessageToServer(sessionInfo.DestServerID, closeMessage).ConfigureAwait(false);
@@ -111,7 +111,7 @@ namespace Gateway.Handler
                 ActorID = RandomLoginServer.ToString(),
             }).ConfigureAwait(false);
 
-            var req = new RpcMessage(new RequestQueryAccount()
+            var req = new RpcMessage(new RequestAccountLogin()
             {
                 OpenID = sessionInfo.OpenID,
                 ServerID = sessionInfo.GameServerID,
@@ -144,10 +144,10 @@ namespace Gateway.Handler
 
             var body = new byte[size];
             memory.CopyTo(body);
-            await this.SendMessageToServer(sessionInfo.DestServerID, new RpcMessage(new NotifyNewMessage()
+            await this.SendMessageToServer(sessionInfo.DestServerID, new RpcMessage(new NotifyNewActorMessage()
             {
-                ServiceType = sessionInfo.ActorType,
-                ActorId = sessionInfo.ActorID,
+                ActorType = sessionInfo.ActorType,
+                ActorID = sessionInfo.ActorID,
                 SessionId = session.SessionID,
             }, body)).ConfigureAwait(false);
         }

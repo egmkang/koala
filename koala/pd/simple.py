@@ -7,7 +7,7 @@ from koala.network.socket_session import SocketSessionManager, SocketSession
 from koala.network.tcp_session import TcpSocketSession
 from koala.network.constant import CODEC_RPC
 from koala.membership.membership_manager import MembershipManager
-from koala.message import HeartBeatRequest
+from koala.message import RequestHeartBeat
 from koala.meta.rpc_meta import get_all_services
 from koala.logger import logger
 
@@ -48,7 +48,7 @@ class SelfHostedPlacement(Placement):
             self.add_server(self.server_node)
         if int(time.time()) % 5 == 0:
             if self.proxy is not None:
-                heartbeat = HeartBeatRequest()
+                heartbeat = RequestHeartBeat()
                 heartbeat.milli_seconds = int(time.time() * 1000)
                 await self.proxy.send_message(heartbeat)
         pass

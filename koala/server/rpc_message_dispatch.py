@@ -2,7 +2,7 @@ import asyncio
 import time
 from koala.typing import *
 from koala.compact_pickle import pickle_loads
-from koala.message import RpcRequest, RpcResponse, HeartBeatRequest, HeartBeatResponse
+from koala.message import RpcRequest, RpcResponse, RequestHeartBeat, ResponseHeartBeat
 from koala.message.rpc_message import RpcMessage
 from koala.meta.rpc_meta import *
 from koala.server.rpc_future import *
@@ -85,8 +85,8 @@ async def process_rpc_response(session: SocketSession, response: object):
 
 async def process_heartbeat_request(session: SocketSession, request: object):
     request = cast(RpcMessage, request)
-    req = cast(HeartBeatRequest, request.meta)
-    resp = HeartBeatResponse()
+    req = cast(RequestHeartBeat, request.meta)
+    resp = ResponseHeartBeat()
     resp.milli_seconds = req.milli_seconds
     session.heart_beat(_last_process_time)
     await session.send_message(resp)
@@ -96,7 +96,7 @@ async def process_heartbeat_request(session: SocketSession, request: object):
 async def process_heartbeat_response(session: SocketSession, response: object):
     now = int(time.time() * 1000)
     response = cast(RpcMessage, response)
-    resp = cast(HeartBeatResponse, response.meta)
+    resp = cast(ResponseHeartBeat, response.meta)
     session.heart_beat(_last_process_time)
     if now - resp.milli_seconds > 10:
         logger.warning("rpc_heartbeat delay:%dms" % (now - resp.milli_seconds))

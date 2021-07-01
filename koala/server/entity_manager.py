@@ -43,8 +43,8 @@ class EntityManager(Singleton):
             return actor
         return d[uid]
 
-    def get_or_new_by_name(self, service_type: str, uid: object) -> ActorBase:
-        i_type = get_interface_type(service_type)
+    def get_or_new_by_name(self, actor_type: str, uid: object) -> ActorBase:
+        i_type = get_interface_type(actor_type)
         if i_type is None:
             raise RpcException.interface_invalid()
         return self.get_or_new(i_type, uid)

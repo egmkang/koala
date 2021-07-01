@@ -67,7 +67,7 @@ namespace Gateway
             var port = 15000;
             var address = "127.0.0.1:15000";
             var wsPath = "/ws";
-            var placementAddress = "http://127.0.0.1:2379";
+            var placementAddress = "http://10.1.1.192:2379";
 
             this.PrepareGateway(serviceProvider);
             this.ListenWebSocket(app, serviceProvider, wsPath);
@@ -114,7 +114,7 @@ namespace Gateway
         {
             Func<object> fn = () =>
             {
-                var rpcMessage = new RpcMessage(new HeartBeatRequest() { MilliSeconds = Platform.GetMilliSeconds()}, null);
+                var rpcMessage = new RpcMessage(new RequestHeartBeat() { MilliSeconds = Platform.GetMilliSeconds()}, null);
                 return rpcMessage;
             };
 

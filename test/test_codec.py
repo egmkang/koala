@@ -19,11 +19,11 @@ class TestRpcProtocol:
 class TestCodec:
     def test_rpc_codec(self):
         codec = CodecRpc()
-        heart_beat = HeartBeatRequest()
+        heart_beat = RequestHeartBeat()
         heart_beat.milli_seconds = 1212123
         data = codec.encode(RpcMessage.from_msg(heart_beat, None))
         decoded_msg = cast(RpcMessage, codec.decode(Buffer.from_bytes(data)))
-        msg = cast(HeartBeatRequest, decoded_msg.meta)
+        msg = cast(RequestHeartBeat, decoded_msg.meta)
         assert heart_beat.milli_seconds == msg.milli_seconds
         assert decoded_msg.body is None or decoded_msg.body == b''
 
@@ -35,7 +35,7 @@ class TestCodec:
 
     def test_codec_manager(self):
         manager = CodecManager()
-        rpc_input = RpcMessage.from_msg(HeartBeatRequest(), b"11223344556677889900")
+        rpc_input = RpcMessage.from_msg(RequestHeartBeat(), b"11223344556677889900")
         codec = manager.get_codec(CODEC_RPC)
         data = codec.encode(rpc_input)
         msg = cast(RpcMessage, codec.decode(Buffer.from_bytes(data)))
