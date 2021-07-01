@@ -11,7 +11,7 @@ from koala.network.socket_session import SocketSessionManager
 from koala.network.tcp_session import TcpSocketSession
 from koala.pd import api
 from koala.conf.config import Config
-from koala.error.error_code import *
+from koala.error_code import *
 from koala.logger import logger
 
 

@@ -1,4 +1,3 @@
-import json
 from koala.network.buffer import Buffer
 from koala.network.codec import Codec
 from koala.network.constant import *
@@ -6,10 +5,10 @@ from koala.message import *
 from koala.message.rpc_message import RpcMessage
 from koala.message.base import find_model, JsonMessage
 from koala.logger import logger
+from koala.json_util import json_dumps, json_loads
+
 
 KOLA_MAGIC = "KOLA".encode()
-json_dumps = lambda o: json.dumps(o).encode()
-json_loads = lambda b: json.loads(b.decode())
 
 
 # 4字节magic `KOLA`
@@ -22,28 +21,18 @@ class CodecRpc(Codec):
 
     def __init__(self):
         super(CodecRpc, self).__init__(CODEC_RPC)
-        try:
-            pass
-            global json_loads, json_dumps
-            import orjson
-            json_loads = orjson.loads
-            json_dumps = orjson.dumps
-        except:
-            pass
 
     @classmethod
     def _encode_meta(cls, o: JsonMessage) -> bytes:
         # 1字节长度
         # N字节MessageName
         # M字节json
-        global json_dumps
         name: str = o.__class__.__qualname__
         json_data: bytes = cast(bytes, json_dumps(o.to_dict()))
         return b"".join((int.to_bytes(len(name), 1, 'little'), name.encode(), json_data))
 
     @classmethod
     def _decode_meta(cls, array: bytes) -> Optional[JsonMessage]:
-        global json_loads
         name_length = array[0]
         name = array[1: name_length + 1].decode()
         model = find_model(name)

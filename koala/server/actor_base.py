@@ -1,6 +1,7 @@
 import traceback
 import weakref
 from abc import ABC
+from koala.message import RpcMessage
 from koala.typing import *
 from koala.logger import logger
 from koala.network.socket_session import SocketSession, SocketSessionManager
@@ -94,7 +95,11 @@ class ActorBase(ABC):
         不要抛出异常
         :param msg: 用户自定义消息
         """
-        logger.debug("Actor.DispatchUserMessage, Actor:%s/%s" % (self.type_name, self.uid))
+        if isinstance(msg, RpcMessage):
+            logger.debug("Actor.DispatchUserMessage, Actor:%s/%s, MessageType:%s" %
+                         (self.type_name, self.uid, type(msg.meta)))
+        else:
+            logger.debug("Actor.DispatchUserMessage, Actor:%s/%s" % (self.type_name, self.uid))
 
     def get_proxy(self, i_type: Type[T], uid: object) -> T:
         o = get_rpc_proxy(i_type, uid, self.context)

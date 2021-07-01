@@ -12,8 +12,6 @@ class RequestAccountLogin(JsonMessage):
 
 @dataclass
 class ResponseAccountLogin(JsonMessage):
-    open_id: str = ""
-    server_id: int = 0
     session_id: int = 0
     actor_type: str = ""
     actor_id: str = ""

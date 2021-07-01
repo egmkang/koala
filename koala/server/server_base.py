@@ -8,11 +8,11 @@ from koala.network import event_handler
 from koala.logger import logger, init_logger
 from koala.placement.placement import get_placement_impl
 from koala.message import RpcRequest, RpcResponse, RequestHeartBeat, ResponseHeartBeat, NotifyNewActorMessage, \
-    NotifyActorSessionAborted, NotifyNewActorSession
+    NotifyActorSessionAborted, NotifyNewActorSession, RequestAccountLogin
 from koala.server.rpc_message_dispatch import process_rpc_request, process_rpc_response, \
     process_heartbeat_request, process_heartbeat_response, update_process_time
-from koala.server.gateway_message_dispatch import process_gateway_actor_session_aborted, process_gateway_new_actor_message, \
-    process_gateway_new_actor_session
+from koala.server.gateway_message_dispatch import process_gateway_actor_session_aborted, \
+    process_gateway_new_actor_message, process_gateway_new_actor_session, process_gateway_account_login
 from koala.server.rpc_request_id import set_request_id_seed
 
 _socket_session_manager: SocketSessionManager = SocketSessionManager()
@@ -59,8 +59,9 @@ def _init_internal_message_handler():
     register_user_handler(RequestHeartBeat, process_heartbeat_request)
     register_user_handler(ResponseHeartBeat, process_heartbeat_response)
     # 网关消息和集群内的消息
-    register_user_handler(NotifyActorSessionAborted, process_gateway_actor_session_aborted)
+    register_user_handler(RequestAccountLogin, process_gateway_account_login)
     register_user_handler(NotifyNewActorSession, process_gateway_new_actor_session)
+    register_user_handler(NotifyActorSessionAborted, process_gateway_actor_session_aborted)
     register_user_handler(NotifyNewActorMessage, process_gateway_new_actor_message)
     # 在这边可以初始化内置的消息处理器
     # 剩下的消息可以交给用户自己去处理
