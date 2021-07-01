@@ -19,7 +19,7 @@ PLACEMENT_CACHE_SIZE = 10 * 10000
 
 _config = Config()
 _membership = MembershipManager()
-_proxy_manager = SocketSessionManager()
+_session_manager = SocketSessionManager()
 
 
 class PDPlacementImpl(Placement):

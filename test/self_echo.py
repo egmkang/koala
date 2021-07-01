@@ -7,7 +7,7 @@ from koala.network.tcp_session import TcpSocketSession
 from koala.logger import logger
 
 
-_proxy_manager = SocketSessionManager()
+_session_manager = SocketSessionManager()
 codec_id = CODEC_ECHO
 
 

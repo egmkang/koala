@@ -36,8 +36,8 @@ class _RpcMethodObject(object):
         if position is None:
             raise Exception("Placement Service Not Valid")
 
-        proxy = position.session
-        if proxy is None:
+        session = position.session
+        if session is None:
             raise Exception("Target Server Not Valid, ServerUID: %d" % position.server_uid)
 
         req = RpcRequest()
@@ -49,7 +49,7 @@ class _RpcMethodObject(object):
         req.server_id = position.server_uid
 
         raw_args = pickle_dumps((arg, kwargs))
-        await proxy.send_message(RpcMessage.from_msg(req, raw_args))
+        await session.send_message(RpcMessage.from_msg(req, raw_args))
         return req.request_id
 
     async def __call__(self, *args, **kwargs):

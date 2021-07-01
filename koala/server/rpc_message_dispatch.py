@@ -26,7 +26,7 @@ async def update_process_time():
         _last_process_time = time.time()
 
 
-async def process_rpc_request_slow(proxy: SocketSession, request: object):
+async def process_rpc_request_slow(session: SocketSession, request: object):
     placement = get_placement_impl()
     req, _ = cast(Tuple[RpcRequest, bytes], request)
     placement.remove_position_cache(req.service_name, req.actor_id)
@@ -37,16 +37,16 @@ async def process_rpc_request_slow(proxy: SocketSession, request: object):
             if actor is None:
                 raise RpcException.entity_not_found()
             run_actor_message_loop(actor)
-            await dispatch_actor_message(actor, proxy, req)
+            await dispatch_actor_message(actor, session, req)
         else:
-            await _send_error_resp(proxy, req.request_id, RpcException.position_changed())
+            await _send_error_resp(session, req.request_id, RpcException.position_changed())
     except Exception as e:
         logger.error("process_rpc_request, Exception:%s, StackTrace:%s" % (e, traceback.format_exc()))
-        await _send_error_resp(proxy, req.request_id, e)
+        await _send_error_resp(session, req.request_id, e)
     pass
 
 
-async def process_rpc_request(proxy: SocketSession, request: object):
+async def process_rpc_request(session: SocketSession, request: object):
     request = cast(RpcMessage, request)
     req, raw_args = request.meta, request.body if request.body else b""
     req = cast(RpcRequest, req)
@@ -61,12 +61,12 @@ async def process_rpc_request(proxy: SocketSession, request: object):
             if actor is None:
                 raise RpcException.entity_not_found()
             run_actor_message_loop(actor)
-            await dispatch_actor_message(actor, proxy, req)
+            await dispatch_actor_message(actor, session, req)
         else:
-            asyncio.create_task(process_rpc_request_slow(proxy, request))
+            asyncio.create_task(process_rpc_request_slow(session, request))
     except Exception as e:
         logger.error("process_rpc_request, Exception:%s, StackTrace:%s" % (e, traceback.format_exc()))
-        await _send_error_resp(proxy, req.request_id, e)
+        await _send_error_resp(session, req.request_id, e)
     pass
 
 
