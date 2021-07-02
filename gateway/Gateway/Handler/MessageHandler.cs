@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading;
 using System.Threading.Tasks;
 using Gateway.Message;
 using Gateway.Network;
@@ -18,6 +19,8 @@ namespace Gateway.Handler
         private readonly IPlacement placement;
         private readonly ClientConnectionPool clientConnectionPool;
         private readonly IMessageCenter messageCenter;
+        private readonly ClientMessageCodec codec = new ClientMessageCodec();
+
         public MessageHandler(IServiceProvider serviceProvider,
                                 IMessageCenter messageCenter,
                                 ILoggerFactory loggerFactory,
@@ -32,6 +35,9 @@ namespace Gateway.Handler
             this.placement = placement;
             this.clientConnectionPool = clientConnectionPool;
 
+            this.messageCenter.RegisterWebSocketCallback(this.ProcessWebSocketMessage, this.ProcessWebSocketClose);
+
+            this.messageCenter.RegisterMessageCallback(null, this.ProcessDefaultMessage);
             this.RegisterHandler<ResponseAccountLogin>(this.ProcessResponseAccountLogin);
             this.RegisterHandler<RequestCloseSession>(this.ProcessRequestCloseSession);
             this.RegisterHandler<RequestSendMessageToSession>(this.ProcessRequestSendMessageToSession);
@@ -43,6 +49,12 @@ namespace Gateway.Handler
             MessageCallback f = (session, msg, body) => func(session, msg as T, body);
             this.messageCenter.RegisterMessageCallback(typeof(T), f);
             this.logger.LogInformation("RegisterHandler, Type:{0}", typeof(T).Name);
+        }
+
+        private Task ProcessDefaultMessage(ISession session, RpcMeta rpcMeta, byte[] body) 
+        {
+            this.logger.LogWarning("ProcessDefaultMessage, SessionID:{0} MessageType:{1}", session.SessionID, rpcMeta?.GetType().Name);
+            return Task.CompletedTask;
         }
 
         private async Task ProcessResponseAccountLogin(ISession session, ResponseAccountLogin response, byte[] body) 
@@ -60,15 +72,14 @@ namespace Gateway.Handler
             this.logger.LogInformation("ProcessResponseQueryAccount, SessionID:{0}, OpenID:{1}, Actor:{2}/{3}",
                                         sessionInfo.SessionID, sessionInfo.ActorType, sessionInfo.ActorID);
 
-            var position = await this.placement.FindActorPositonAsync(new PlacementFindActorPositionRequest()
+            var position = await this.FindActorPositionAsync(sessionInfo.ActorType, sessionInfo.ActorID).ConfigureAwait(false);
+            if (sessionInfo.DestServerID != position.ServerID) 
             {
-                ActorType = sessionInfo.ActorType,
-                ActorID = sessionInfo.ActorID,
-            }).ConfigureAwait(false);
+                sessionInfo.DestServerID = position.ServerID;
+                this.logger.LogInformation("ProcessResponseQueryAccount, SessionID:{0}, Actor:{1}/{2}, Dest ServerID:{3}",
+                                            sessionInfo.SessionID, sessionInfo.ActorType, sessionInfo.ActorID, sessionInfo.DestServerID);
+            }
 
-            sessionInfo.DestServerID = position.ServerID;
-            this.logger.LogInformation("ProcessResponseQueryAccount, SessionID:{0}, Actor:{1}/{2}, Dest ServerID:{3}",
-                                        sessionInfo.SessionID, sessionInfo.ActorType, sessionInfo.ActorID, sessionInfo.DestServerID);
             await this.messageCenter.SendMessageToServer(sessionInfo.DestServerID, new RpcMessage(new NotifyNewActorSession()
             {
                 SessionID = sessionInfo.SessionID,
@@ -115,6 +126,113 @@ namespace Gateway.Handler
             }
             session.LastMessageTime = Platform.GetMilliSeconds();
             return Task.CompletedTask;
+        }
+        private async Task ProcessWebSocketMessage(ISession session, Memory<byte> memory, int size) 
+        {
+            var sessionInfo = session.UserData;
+            if (sessionInfo.GameServerID != 0)
+            {
+                await this.ProcessWebSocketCommonMessage(session, memory, size).ConfigureAwait(false);
+            }
+            else
+            {
+                await this.ProcessWebSocketFirstMessage(session, memory, size).ConfigureAwait(false);
+            }
+        }
+
+        static readonly Random random = new Random();
+        private static int RandomLoginServer => random.Next(0, 1024 * 10);
+        public static readonly string AccountService = "IAccount";
+        private static ThreadLocal<PlacementFindActorPositionRequest> findActorRequestCache = new ThreadLocal<PlacementFindActorPositionRequest>(() => new PlacementFindActorPositionRequest());
+
+        private async Task<PlacementFindActorPositionResponse> FindActorPositionAsync(string actorType, string actorID) 
+        {
+            var findPositionReq = findActorRequestCache.Value;
+            findPositionReq.ActorType = actorType;
+            findPositionReq.ActorID = actorID;
+            var position = await this.placement.FindActorPositonAsync(findPositionReq).ConfigureAwait(false);
+            return position;
+        }
+
+        private async Task ProcessWebSocketFirstMessage(ISession session, Memory<byte> memory, int size)
+        {
+            // TODO
+            //这边还要处理断线重来
+            var sessionInfo = session.UserData;
+            var (OpenID, ServerID) = this.codec.Decode(memory, size);
+            this.logger.LogInformation("WebSocketSession Login, SessionID:{0}, OpenID:{1}, ServerID:{2}",
+                                        sessionInfo.SessionID, OpenID, ServerID);
+            sessionInfo.OpenID = OpenID;
+            sessionInfo.GameServerID = ServerID;
+
+            var body = new byte[size];
+            memory.CopyTo(body);
+            sessionInfo.Token = body;
+
+            //这边需要通过账号信息, 查找目标Actor的位置
+            var position =  await this.FindActorPositionAsync(AccountService, RandomLoginServer.ToString()).ConfigureAwait(false);
+
+            var req = new RpcMessage(new RequestAccountLogin()
+            {
+                OpenID = sessionInfo.OpenID,
+                ServerID = sessionInfo.GameServerID,
+                SessionID = session.SessionID,
+            }, body);
+            await this.messageCenter.SendMessageToServer(position.ServerID, req).ConfigureAwait(false);
+        }
+        private async Task ProcessWebSocketCommonMessage(ISession session, Memory<byte> memory, int size) 
+        {
+            var sessionInfo = session.UserData;
+            if (string.IsNullOrEmpty(sessionInfo.ActorType)) 
+            {
+                this.logger.LogError("WebSocketSession Invalid Dest Server, SessionID:{0}", session.SessionID);
+                return;
+            }
+
+            var position = await this.FindActorPositionAsync(sessionInfo.ActorType, sessionInfo.ActorID).ConfigureAwait(false);
+            if (sessionInfo.DestServerID != position.ServerID) 
+            {
+                sessionInfo.DestServerID = position.ServerID;
+                this.logger.LogInformation("WebSocketSession, SessionID:{0}, Actor:{1}/{2}, Dest ServerID:{3}",
+                                            session.SessionID, sessionInfo.ActorType, sessionInfo.ActorID,
+                                            sessionInfo.DestServerID);
+            }
+
+            var body = new byte[size];
+            memory.CopyTo(body);
+            await this.messageCenter.SendMessageToServer(sessionInfo.DestServerID, new RpcMessage(new NotifyNewActorMessage()
+            {
+                ActorType = sessionInfo.ActorType,
+                ActorID = sessionInfo.ActorID,
+                SessionId = session.SessionID,
+            }, body)).ConfigureAwait(false);
+        }
+        private async Task ProcessWebSocketClose(ISession session)
+        {
+            try
+            {
+                var sessionInfo = session.UserData;
+                var position = await this.FindActorPositionAsync(sessionInfo.ActorType, sessionInfo.ActorID).ConfigureAwait(false);
+
+                var closeMessage = new RpcMessage(new NotifyActorSessionAborted()
+                {
+                    SessionID = session.SessionID,
+                    ActorType = sessionInfo.ActorType,
+                    ActorID = sessionInfo.ActorID,
+                }, null);
+
+                await this.messageCenter.SendMessageToServer(position.ServerID, closeMessage).ConfigureAwait(false);
+                this.logger.LogInformation("WebSocketSession OnClose, SessionID:{0}, Actor:{1}/{2}, Dest ServerID:{3}",
+                    session.SessionID, sessionInfo.ActorType, sessionInfo.ActorID, position.ServerID);
+            }
+            catch (Exception e)
+            {
+                this.logger.LogError("WebSocketSession OnClose, SessionID:{0}, Exception:{1}", session.SessionID, e);
+            }
+            finally
+            {
+                this.sessionManager.RemoveSession(session.SessionID);
+            }
         }
     }
 }

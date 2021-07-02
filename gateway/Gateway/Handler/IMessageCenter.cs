@@ -8,6 +8,8 @@ using Gateway.Network;
 namespace Gateway.Handler
 {
     public delegate Task MessageCallback(ISession session, RpcMeta meta, byte[] body);
+    public delegate Task WebSocketMessage(ISession session, Memory<byte> memory, int size);
+    public delegate Task WebSocketClose(ISession session);
 
     public interface IMessageCenter
     {
@@ -18,11 +20,14 @@ namespace Gateway.Handler
         /// <param name="handler">回调函数</param>
         void RegisterMessageCallback(Type type, MessageCallback handler);
 
+        void RegisterWebSocketCallback(WebSocketMessage messageCallback, WebSocketClose closeCallback);
+
         Task OnWebSocketClose(ISession session);
-        Task OnWebSocketLoginMessage(ISession session, string openID, int serverID, Memory<byte> memory, int size);
         Task OnWebSocketMessage(ISession session, Memory<byte> memory, int size);
+
         Task OnSocketClose(ISession session);
         Task OnSocketMessage(ISession session, RpcMeta rpcMeta, byte[] body);
+
         Task SendMessageToSession(long sessionID, object msg);
         Task SendMessageToServer(long serverID, object msg);
     }

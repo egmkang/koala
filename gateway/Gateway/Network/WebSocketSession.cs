@@ -122,19 +122,8 @@ namespace Gateway.Network
                             break;
                         }
 
-                        if (this.sessionInfo.GameServerID != 0)
-                        {
-                            await this.messageCenter.OnWebSocketMessage(this, memory, result.Count).ConfigureAwait(false);
-                        }
-                        else
-                        {
-                            var (OpenID, ServerID) = this.codec.Decode(memory, result.Count);
-                            this.logger.LogInformation("WebSocketSession Login, SessionID:{0}, OpenID:{1}, ServerID:{2}",
-                                                        this.SessionID, OpenID, ServerID);
-                            this.sessionInfo.OpenID = OpenID;
-                            this.sessionInfo.GameServerID = ServerID;
-                            await this.messageCenter.OnWebSocketLoginMessage(this, OpenID, ServerID, memory, result.Count);
-                        }
+                        await this.messageCenter.OnWebSocketMessage(this, memory, result.Count).ConfigureAwait(false);
+
                     }
                     catch (Exception e)
                     {

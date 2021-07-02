@@ -15,7 +15,6 @@ namespace Gateway.Handler
         private readonly IServiceProvider serviceProvider;
         private readonly ILogger logger;
         private readonly SessionManager sessionManager;
-        private readonly IPlacement placement;
         private readonly ClientConnectionPool clientConnectionPool;
         private MessageCallback defaultHandler;
         private readonly Dictionary<Type, MessageCallback> messageHandlers = new Dictionary<Type, MessageCallback>();
@@ -28,10 +27,13 @@ namespace Gateway.Handler
         {
             this.serviceProvider = serviceProvider;
             this.sessionManager = sessionManager;
-            this.placement = placement;
             this.clientConnectionPool = clientConnectionPool;
             this.logger = loggerFactory.CreateLogger("MessageCenter");
         }
+
+        private WebSocketClose WebSocketClose { get; set; }
+        private WebSocketMessage WebSocketMessage { get; set; }
+
 
         public Task OnSocketClose(ISession session)
         {
@@ -58,98 +60,14 @@ namespace Gateway.Handler
             }
         }
 
-        public async Task OnWebSocketClose(ISession session)
+        public Task OnWebSocketClose(ISession session)
         {
-            try 
-            {
-                var sessionInfo = session.UserData;
-                if (sessionInfo.DestServerID != 0)
-                {
-                    var closeMessage = new RpcMessage(new NotifyActorSessionAborted()
-                    {
-                        SessionID = session.SessionID,
-                        ActorType = sessionInfo.ActorType,
-                        ActorID = sessionInfo.ActorID,
-                    }, null);
-
-                    await this.SendMessageToServer(sessionInfo.DestServerID, closeMessage).ConfigureAwait(false);
-                    this.logger.LogInformation("WebSocketSession OnClose, SessionID:{0}, Actor:{1}/{2}, Dest ServerID:{3}",
-                        session.SessionID, sessionInfo.ActorType, sessionInfo.ActorID, sessionInfo.DestServerID);
-                }
-                else 
-                {
-                    this.logger.LogInformation("WebSocketSession OnClose, SessionID:{0}, DestServerID: 0", session.SessionID);
-                }
-            }
-            catch (Exception e) 
-            {
-                this.logger.LogError("WebSocketSession OnClose, SessionID:{0}, Exception:{1}", session.SessionID, e);
-            }
-            finally 
-            {
-                this.sessionManager.RemoveSession(session.SessionID);
-            }
+            return this.WebSocketClose(session);
         }
 
-        static readonly Random random = new Random();
-        private static int RandomLoginServer => random.Next(0, 1024 * 10);
-        public static readonly string AccountService = "IAccount";
-
-        public async Task OnWebSocketLoginMessage(ISession session, string openID, int serverID, Memory<byte> memory, int size)
+        public Task OnWebSocketMessage(ISession session, Memory<byte> memory, int size)
         {
-            var body = new byte[size];
-            memory.CopyTo(body);
-            //这边需要通过账号信息, 查找目标Actor的位置
-            var sessionInfo = session.UserData;
-            sessionInfo.OpenID = openID;
-            sessionInfo.GameServerID = serverID;
-            sessionInfo.Token = body;
-
-            var position = await this.placement.FindActorPositonAsync(new PlacementFindActorPositionRequest()
-            {
-                ActorType = AccountService,
-                ActorID = RandomLoginServer.ToString(),
-            }).ConfigureAwait(false);
-
-            var req = new RpcMessage(new RequestAccountLogin()
-            {
-                OpenID = sessionInfo.OpenID,
-                ServerID = sessionInfo.GameServerID,
-                SessionID = session.SessionID,
-            }, body);
-            await this.SendMessageToServer(position.ServerID, req).ConfigureAwait(false);
-        }
-
-        public async Task OnWebSocketMessage(ISession session, Memory<byte> memory, int size)
-        {
-            var sessionInfo = session.UserData;
-            if (string.IsNullOrEmpty(sessionInfo.ActorType)) 
-            {
-                this.logger.LogError("WebSocketSession Invalid Dest Server, SessionID:{0}", session.SessionID);
-                return;
-            }
-            if (sessionInfo.DestServerID == 0)
-            {
-                var req = new PlacementFindActorPositionRequest()
-                {
-                    ActorType = sessionInfo.ActorType,
-                    ActorID = sessionInfo.ActorID,
-                };
-                var position = await this.placement.FindActorPositonAsync(req).ConfigureAwait(false);
-
-                sessionInfo.DestServerID = position.ServerID;
-                this.logger.LogInformation("WebSocketSession, SessionID:{0}, Actor:{1}/{2}, Dest ServerID:{3}",
-                    session.SessionID, sessionInfo.ActorType, sessionInfo.ActorID, sessionInfo.DestServerID);
-            }
-
-            var body = new byte[size];
-            memory.CopyTo(body);
-            await this.SendMessageToServer(sessionInfo.DestServerID, new RpcMessage(new NotifyNewActorMessage()
-            {
-                ActorType = sessionInfo.ActorType,
-                ActorID = sessionInfo.ActorID,
-                SessionId = session.SessionID,
-            }, body)).ConfigureAwait(false);
+            return this.WebSocketMessage(session, memory, size);
         }
 
         public async Task SendMessageToServer(long serverID, object msg)
@@ -184,6 +102,12 @@ namespace Gateway.Handler
             {
                 this.messageHandlers.Add(type, handler);
             }
+        }
+
+        public void RegisterWebSocketCallback(WebSocketMessage messageCallback, WebSocketClose closeCallback)
+        {
+            this.WebSocketMessage = messageCallback;
+            this.WebSocketClose = closeCallback;
         }
     }
 }
