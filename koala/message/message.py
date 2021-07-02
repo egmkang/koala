@@ -11,7 +11,7 @@ class RpcRequest(JsonMessage):
     reentrant_id: int = 0
     request_id: int = 0
     server_id: int = 0
-    _args: Optional[list] = None
+    _args: Optional[list] = None        # 这两个参数, 在RpcMessage的Body里面携带着
     _kwargs: Optional[dict] = None
 
     @property
@@ -28,7 +28,7 @@ class RpcResponse(JsonMessage):
     request_id: int = 0
     error_code: int = 0
     error_str: str = ""
-    _response: Optional[object] = None
+    _response: Optional[object] = None      # 这个参数在RpcMessage的Body内
 
     @property
     def response(self):
@@ -36,10 +36,10 @@ class RpcResponse(JsonMessage):
 
 
 @dataclass
-class HeartBeatRequest(JsonMessage):
+class RequestHeartBeat(JsonMessage):
     milli_seconds: int = 0
 
 
 @dataclass
-class HeartBeatResponse(JsonMessage):
+class ResponseHeartBeat(JsonMessage):
     milli_seconds: int = 0

@@ -23,8 +23,8 @@ async def _rpc_call(unique_id: int) -> object:
 
 
 class _RpcMethodObject(object):
-    def __init__(self, service_type: str, actor_id: object, method_name: str, reentrant_id: int):
-        self.service_name = service_type
+    def __init__(self, actor_type: str, actor_id: object, method_name: str, reentrant_id: int):
+        self.actor_type = actor_type
         self.actor_id = actor_id
         self.method_name = method_name
         self.reentrant_id = reentrant_id
@@ -32,24 +32,24 @@ class _RpcMethodObject(object):
 
     async def __send_request(self, *arg, **kwargs):
         # position
-        position = await get_placement_impl().find_position(self.service_name, self.actor_id)
+        position = await get_placement_impl().find_position(self.actor_type, self.actor_id)
         if position is None:
             raise Exception("Placement Service Not Valid")
 
-        proxy = position.session
-        if proxy is None:
+        session = position.session
+        if session is None:
             raise Exception("Target Server Not Valid, ServerUID: %d" % position.server_uid)
 
         req = RpcRequest()
         req.request_id = new_request_id()
-        req.service_name = self.service_name
+        req.service_name = self.actor_type
         req.method_name = self.method_name
         req.actor_id = self.actor_id
         req.reentrant_id = self.reentrant_id
         req.server_id = position.server_uid
 
         raw_args = pickle_dumps((arg, kwargs))
-        await proxy.send_message(RpcMessage.from_msg(req, raw_args))
+        await session.send_message(RpcMessage.from_msg(req, raw_args))
         return req.request_id
 
     async def __call__(self, *args, **kwargs):
@@ -61,7 +61,7 @@ class _RpcMethodObject(object):
                 return await _rpc_call(request_id)
             except RpcException as e:
                 if e.code == RPC_ERROR_POSITION_CHANGED:
-                    get_placement_impl().remove_position_cache(self.service_name, self.actor_id)
+                    get_placement_impl().remove_position_cache(self.actor_type, self.actor_id)
                     continue
                 raise e
 

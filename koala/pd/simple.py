@@ -7,7 +7,7 @@ from koala.network.socket_session import SocketSessionManager, SocketSession
 from koala.network.tcp_session import TcpSocketSession
 from koala.network.constant import CODEC_RPC
 from koala.membership.membership_manager import MembershipManager
-from koala.message import HeartBeatRequest
+from koala.message import RequestHeartBeat
 from koala.meta.rpc_meta import get_all_services
 from koala.logger import logger
 
@@ -20,7 +20,7 @@ class SelfHostedPlacement(Placement):
     def __init__(self, port: int):
         super(SelfHostedPlacement, self).__init__()
         self.server_port = "%d" % port
-        self.proxy: Optional[SocketSession] = None
+        self.session: Optional[SocketSession] = None
         service_list = get_all_services()
         self.server_node = ServerNode(server_uid=1,
                                       host="127.0.0.1",
@@ -44,13 +44,13 @@ class SelfHostedPlacement(Placement):
 
     async def placement_loop(self):
         await asyncio.sleep(1.0)
-        if self.proxy is None:
+        if self.session is None:
             self.add_server(self.server_node)
         if int(time.time()) % 5 == 0:
-            if self.proxy is not None:
-                heartbeat = HeartBeatRequest()
+            if self.session is not None:
+                heartbeat = RequestHeartBeat()
                 heartbeat.milli_seconds = int(time.time() * 1000)
-                await self.proxy.send_message(heartbeat)
+                await self.session.send_message(heartbeat)
         pass
 
     def _on_add_server(self, node: ServerNode):
@@ -73,7 +73,7 @@ class SelfHostedPlacement(Placement):
             if session is not None:
                 node.set_session(session)
                 logger.info("try_connect ServerID:%d, Host:%s:%s success" % (node.server_uid, node.host, node.port))
-                self.proxy = session
+                self.session = session
         except Exception as e:
             logger.error("try_connect ServerID:%d, Host:%s:%s, Exception:%s" %
                          (node.server_uid, node.host, node.port, e))

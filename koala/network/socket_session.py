@@ -99,8 +99,8 @@ class SocketSessionManager(Singleton):
             logger.info("SocketSessionManager.remove_session, SessionID:%d" % session_id)
 
     # 可选参数
-    # 可以通过session id来获取SocketProxy
-    # 之后对SocketProxy的引用, 建议搞成弱引用, 否则生命周期会被拉长
+    # 可以通过session id来获取SocketSession
+    # 之后对SocketSession的引用, 建议搞成弱引用, 否则生命周期会被拉长
     def get_session(self, session_id: int) -> Optional[SocketSession]:
         if session_id in self._session_dict:
             return self._session_dict[session_id]

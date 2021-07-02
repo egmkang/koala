@@ -2,13 +2,14 @@ TODO:
 
 v0.3 Koala
 
-* [ ] using PD
-  * [ ] PD Impl
+* [ ] naming
+* [x] using PD
+  * [x] PD Impl
   * [x] Single Node Cluster Impl
      * [x] Interfaces and Services
 * [x] asyncio rewrite
-* [ ] Koala Framework
-  * [ ] Gateway
+* [x] Koala Framework
+  * [x] Gateway
 * [x] Gateway Protocol 
   * [x] using RPC Protocol
 * [ ] Sample

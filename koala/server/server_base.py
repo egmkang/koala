@@ -7,17 +7,13 @@ from koala.network.tcp_server import TcpServer
 from koala.network import event_handler
 from koala.logger import logger, init_logger
 from koala.placement.placement import get_placement_impl
-from koala.message import RpcRequest, RpcResponse, HeartBeatRequest, HeartBeatResponse, NotifyNewMessage, \
-    NotifyConnectionAborted, NotifyConnectionComing, \
-    RequestCloseConnection, RequestChangeMessageDestination, RequestSendMessageToPlayer
+from koala.message import RpcRequest, RpcResponse, RequestHeartBeat, ResponseHeartBeat, NotifyNewActorMessage, \
+    NotifyActorSessionAborted, NotifyNewActorSession, RequestAccountLogin
 from koala.server.rpc_message_dispatch import process_rpc_request, process_rpc_response, \
     process_heartbeat_request, process_heartbeat_response, update_process_time
-from koala.server.gateway_message_dispatch import process_gateway_connection_aborted, process_gateway_new_message, \
-    process_gateway_connection_coming
+from koala.server.gateway_message_dispatch import process_gateway_actor_session_aborted, \
+    process_gateway_new_actor_message, process_gateway_new_actor_session, process_gateway_account_login
 from koala.server.rpc_request_id import set_request_id_seed
-from koala.gateway.message_handler import process_gateway_send_message, process_gateway_change_destination, \
-    process_gateway_close_connection, process_gateway_incoming_message
-from koala.gateway.codec_gateway import GatewayRawMessage
 
 _socket_session_manager: SocketSessionManager = SocketSessionManager()
 _user_message_handler_map: Dict[MessageType, Callable[[SocketSession, object], Coroutine]] = {}
@@ -60,17 +56,13 @@ def _socket_close_handler(session: SocketSession):
 def _init_internal_message_handler():
     register_user_handler(RpcRequest, process_rpc_request)
     register_user_handler(RpcResponse, process_rpc_response)
-    register_user_handler(HeartBeatRequest, process_heartbeat_request)
-    register_user_handler(HeartBeatResponse, process_heartbeat_response)
+    register_user_handler(RequestHeartBeat, process_heartbeat_request)
+    register_user_handler(ResponseHeartBeat, process_heartbeat_response)
     # 网关消息和集群内的消息
-    register_user_handler(NotifyConnectionAborted, process_gateway_connection_aborted)
-    register_user_handler(NotifyConnectionComing, process_gateway_connection_coming)
-    register_user_handler(NotifyNewMessage, process_gateway_new_message)
-    register_user_handler(RequestChangeMessageDestination, process_gateway_change_destination)
-    register_user_handler(RequestSendMessageToPlayer, process_gateway_send_message)
-    register_user_handler(RequestCloseConnection, process_gateway_close_connection)
-    # 客户端传入的消息
-    register_user_handler(GatewayRawMessage, process_gateway_incoming_message)
+    register_user_handler(RequestAccountLogin, process_gateway_account_login)
+    register_user_handler(NotifyNewActorSession, process_gateway_new_actor_session)
+    register_user_handler(NotifyActorSessionAborted, process_gateway_actor_session_aborted)
+    register_user_handler(NotifyNewActorMessage, process_gateway_new_actor_message)
     # 在这边可以初始化内置的消息处理器
     # 剩下的消息可以交给用户自己去处理
 

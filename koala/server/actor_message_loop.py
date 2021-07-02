@@ -1,7 +1,7 @@
 import asyncio
 import traceback
 import weakref
-from typing import cast
+from koala.typing import *
 from koala.compact_pickle import pickle_dumps
 from koala.message import RpcResponse, RpcRequest
 from koala.message.rpc_message import RpcMessage
@@ -21,7 +21,7 @@ def _new_loop_id():
     return _mailbox_loop_id
 
 
-async def _send_error_resp(proxy: SocketSession, request_id: int, e: Exception):
+async def _send_error_resp(session: SocketSession, request_id: int, e: Exception):
     resp = RpcResponse()
     resp.request_id = request_id
     if isinstance(e, RpcException):
@@ -30,10 +30,10 @@ async def _send_error_resp(proxy: SocketSession, request_id: int, e: Exception):
     else:
         resp.error_code = RPC_ERROR_UNKNOWN
         resp.error_str = traceback.format_exc()
-    await proxy.send_message(resp)
+    await session.send_message(resp)
 
 
-async def _dispatch_actor_rpc_request(actor: ActorBase, proxy: SocketSession, req: RpcRequest):
+async def _dispatch_actor_rpc_request(actor: ActorBase, session: SocketSession, req: RpcRequest):
     try:
         method = get_rpc_impl_method("%s.%s" % (req.service_name, req.method_name))
         if method is None:
@@ -46,12 +46,12 @@ async def _dispatch_actor_rpc_request(actor: ActorBase, proxy: SocketSession, re
         resp.request_id = req.request_id
         raw_response = pickle_dumps(result)
 
-        if proxy:
-            await proxy.send_message(RpcMessage.from_msg(resp, raw_response))
+        if session:
+            await session.send_message(RpcMessage.from_msg(resp, raw_response))
     except Exception as e:
         logger.error("_dispatch_actor_rpc_request, Actor:%s/%s, Exception:%s, StackTrace:%s" %
                      (actor.type_name, actor.uid, e, traceback.format_exc()))
-        await _send_error_resp(proxy, req.request_id, e)
+        await _send_error_resp(session, req.request_id, e)
 
 
 async def _dispatch_actor_message_in_loop(actor: ActorBase):
@@ -64,7 +64,7 @@ async def _dispatch_actor_message_in_loop(actor: ActorBase):
 
     try:
         try:
-            await actor._activate_async()
+            await actor.activate_async()
             loaded = True
         except Exception as e:
             logger.error("Actor:%s/%s ActivateAsync Fail, Exception:%s, StackTrace:%s" %
@@ -72,16 +72,16 @@ async def _dispatch_actor_message_in_loop(actor: ActorBase):
             context.loop_id = 0
             return
         while True:
+            # 让出CPU给其他协程, 防止某些协程等待时间过长
             await asyncio.sleep(0)
-            o = await context.pop_message()
+            o = cast(Tuple[weakref.ReferenceType[SocketSession], object], await context.pop_message())
             if o is None:
                 logger.info("Actor:%s/%s exit message loop" % (actor.type_name, actor.uid))
                 break
-            proxy = o[0]()
-            msg = o[1]
+            session, msg = o[0](), o[1]
             if isinstance(msg, RpcRequest):
                 context.reentrant_id = msg.reentrant_id
-                await _dispatch_actor_rpc_request(actor, proxy, msg)
+                await _dispatch_actor_rpc_request(actor, session, msg)
             else:
                 await actor.dispatch_user_message(msg)
     except Exception as e:
@@ -91,7 +91,7 @@ async def _dispatch_actor_message_in_loop(actor: ActorBase):
 
     try:
         if loaded:
-            await actor._deactivate_async()
+            await actor.deactivate_async()
     except Exception as e:
         logger.error("Actor:%s/%s DeactivateAsync Fail, Exception:%s, StaceTrace:%s" %
                      (actor.type_name, actor.uid, e, traceback.format_exc()))
@@ -108,12 +108,12 @@ def run_actor_message_loop(actor: ActorBase):
     pass
 
 
-async def dispatch_actor_message(actor: ActorBase, proxy: SocketSession, msg: object):
+async def dispatch_actor_message(actor: ActorBase, session: SocketSession, msg: object):
     if isinstance(msg, RpcRequest):
         req = cast(RpcRequest, msg)
         if actor.context.reentrant_id == req.reentrant_id:
             # 这边要直接派发
-            asyncio.create_task(_dispatch_actor_rpc_request(actor, proxy, req))
+            asyncio.create_task(_dispatch_actor_rpc_request(actor, session, req))
             return
-    weak_proxy = weakref.ref(proxy)
-    await actor.context.push_message((weak_proxy, msg))
+    weak_session = weakref.ref(session)
+    await actor.context.push_message((weak_session, msg))

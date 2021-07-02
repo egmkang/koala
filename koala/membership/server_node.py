@@ -1,7 +1,6 @@
-import time
+import weakref
 from pydantic import BaseModel, PrivateAttr
 from koala.typing import *
-import weakref
 from koala.network.socket_session import SocketSession
 
 
@@ -12,8 +11,8 @@ class ServerNode(BaseModel):
     port: str = ""
     service_type: Dict[str, str] = {}
     # 下面两个成员不是元数据
-    # _proxy是一个弱引用, 减少一次查询
-    _session: Optional[Any] = PrivateAttr(default=None)
+    # _session是一个弱引用, 减少一次查询
+    _session: Optional[weakref.ReferenceType[SocketSession]] = PrivateAttr(default=None)
     _session_id: int = PrivateAttr(default=0)
 
     @property

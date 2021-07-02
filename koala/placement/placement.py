@@ -56,7 +56,7 @@ class Placement(ABC):
                          (node.server_uid, e, traceback.format_exc()))
             pass
 
-    """该函数需要去主动连接服务器, 然后将proxy和服务器关联上, 连接断开的话, 也需要去重试
+    """该函数需要去主动连接服务器, 然后将session和服务器关联上, 连接断开的话, 也需要去重试
     """
     @abstractmethod
     def _on_add_server(self, node: ServerNode):

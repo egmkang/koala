@@ -10,11 +10,11 @@ from koala.network.socket_session import SocketSession
 finished = 0
 
 
-async def echo_handler(proxy: SocketSession, msg: object):
+async def echo_handler(session: SocketSession, msg: object):
     global finished
     finished += 1
-    proxy.heart_beat(time.time())
-    await proxy.send_message(msg)
+    session.heart_beat(time.time())
+    await session.send_message(msg)
     pass
 
 

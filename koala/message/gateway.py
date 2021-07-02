@@ -4,43 +4,49 @@ from dataclasses import dataclass
 
 
 @dataclass
-class NotifyConnectionComing(JsonMessage):
-    service_type: str = ""
+class RequestAccountLogin(JsonMessage):
+    open_id: str = ""
+    server_id: int = 0
+    session_id: int = 0
+
+
+@dataclass
+class ResponseAccountLogin(JsonMessage):
+    session_id: int = 0
+    actor_type: str = ""
+    actor_id: str = ""
+
+
+@dataclass
+class NotifyNewActorSession(JsonMessage):
+    open_id: str = ""
+    server_id: int = 0
+    actor_type: str = ""
     actor_id: str = ""
     session_id: int = 0
-    token: bytes = b""
 
 
 @dataclass
-class NotifyConnectionAborted(JsonMessage):
+class NotifyActorSessionAborted(JsonMessage):
     session_id: int = 0
-    service_type: str = ""
+    actor_type: str = ""
     actor_id: str = ""
 
 
 @dataclass
-class RequestCloseConnection(JsonMessage):
+class RequestCloseSession(JsonMessage):
     session_id: int = 0
-    service_type: str = ""
+    actor_type: str = ""
 
 
 @dataclass
-class NotifyNewMessage(JsonMessage):
+class NotifyNewActorMessage(JsonMessage):
     session_id: int = 0
-    service_type: str = ""
+    actor_type: str = ""
     actor_id: str = ""
-    message: bytes = b""
 
 
 @dataclass
-class RequestSendMessageToPlayer(JsonMessage):
+class RequestSendMessageToSession(JsonMessage):
     session_ids: Optional[List[int]] = None
     session_id: int = 0
-    message: bytes = b""
-
-
-@dataclass
-class RequestChangeMessageDestination(JsonMessage):
-    session_id: int = 0
-    new_service_type: str = ""
-    new_actor_id: str = ""
