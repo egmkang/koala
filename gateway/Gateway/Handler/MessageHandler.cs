@@ -166,7 +166,7 @@ namespace Gateway.Handler
             sessionInfo.GameServerID = ServerID;
 
             var body = new byte[size];
-            memory.CopyTo(body);
+            memory.Span.Slice(0, size).CopyTo(body);
             sessionInfo.Token = body;
 
             //这边需要通过账号信息, 查找目标Actor的位置

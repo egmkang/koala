@@ -1,19 +1,22 @@
 TODO:
 
+
 v0.3 Koala
 
-* [ ] naming
+* [x] naming
 * [x] using PD
   * [x] PD Impl
   * [x] Single Node Cluster Impl
      * [x] Interfaces and Services
-* [x] asyncio rewrite
 * [x] Koala Framework
+  * [x] asyncio rewrite
+  * [ ] tcp client pool
   * [x] Gateway
 * [x] Gateway Protocol 
   * [x] using RPC Protocol
 * [ ] Sample
-
+    * [ ] simple client
+    * [ ] client reconnect
 
 
 v0.2 Flash prototype
