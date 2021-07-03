@@ -9,6 +9,7 @@ class ServerNode(BaseModel):
     server_name: str = ""
     host: str = ""
     port: str = ""
+    desc: str = ""
     service_type: Dict[str, str] = {}
     # 下面两个成员不是元数据
     # _session是一个弱引用, 减少一次查询

@@ -18,7 +18,7 @@ console_config = {
 def init_logger(file_name_prefix: Optional[str], level: Optional[str]):
     if file_name_prefix is not None:
         file_name_pattern = "%s_{time}.log" % file_name_prefix
-        file_config = copy.deepcopy(console_config)
+        file_config = copy.copy(console_config)
         file_config["handlers"].clear()
         file_config["handlers"].append(dict(sink=file_name_pattern, format=FILE_FORMAT, rotation="1000 MB"))
         pass

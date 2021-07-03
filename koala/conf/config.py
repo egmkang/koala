@@ -13,8 +13,6 @@ def _get_registered_services() -> Dict[str, str]:
 class Config(Singleton):
     def __init__(self):
         super(Config, self).__init__()
-        self._gateway_ip = ""
-        self._gateway_port = 0
         self._ip = ""
         self._port = 0
         self._services: Dict[str, str] = dict()
@@ -25,13 +23,6 @@ class Config(Singleton):
         self._log_level = "DEBUG"
         self._pd_address = ""
         pass
-
-    def set_gateway_port(self, port: int):
-        self._gateway_port = port
-
-    @property
-    def gateway_port(self) -> int:
-        return self._gateway_port
 
     def set_port(self, port: int):
         self._port = port
@@ -79,21 +70,11 @@ class Config(Singleton):
         if ip is not None and len(ip) > 0:
             self._ip = ip
 
-    def set_gateway_address(self, ip: str):
-        if ip is not None and len(ip) > 0:
-            self._gateway_ip = ip
-
     @property
     def address(self) -> str:
         if len(self._ip) > 0:
             return "%s:%d" % (self._ip, self._port)
         return "%s:%d" % (get_host_ip(), self._port)
-
-    @property
-    def gateway_address(self) -> str:
-        if len(self._gateway_ip) > 0:
-            return "%s:%d" % (self._gateway_ip, self._gateway_port)
-        return "%s:%d" % (get_host_ip(), self._gateway_port)
 
     @property
     def log_level(self):

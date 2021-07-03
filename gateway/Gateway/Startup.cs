@@ -90,7 +90,7 @@ namespace Gateway
                     Address = address,
                     StartTime = Platform.GetMilliSeconds(),
                     TTL = interval * 3,
-                    Desc = $"GatewayID:{ServerID}",
+                    Desc = $"Gateway_{ServerID}",
                     Services = new Dictionary<string, string>() { { "IGateway", "GatewayImpl" } },
                 });
                 this.logger.LogInformation("RegisterServer Success, LeaseID:{0}", LeaseID);

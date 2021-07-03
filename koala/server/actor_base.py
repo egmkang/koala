@@ -20,7 +20,7 @@ async def _send_message(session_id: int, msg: object):
 
 class ActorBase(ABC):
     def __init__(self):
-        self.__session_id = 0
+        self.__gateway_session_id = 0
         self.__uid = 0
         self.__context = None
         self.__socket_session: Optional[weakref.ReferenceType[SocketSession]] = None
@@ -43,14 +43,20 @@ class ActorBase(ABC):
     def context(self) -> ActorContext:
         return self.__context
 
+    def get_server_session_id(self) -> Optional[int]:
+        pass
+
     def set_session_id(self, session_id: int):
-        self.__session_id = session_id
-        socket_session = _session_manager.get_session(self.__session_id)
-        self.__socket_session = weakref.ref(socket_session)
+        self.__gateway_session_id = session_id
+        if not self.get_server_session_id():
+            return
+        socket_session = _session_manager.get_session(self.get_server_session_id())
+        if socket_session:
+            self.__socket_session = weakref.ref(socket_session)
 
     @property
     def session_id(self) -> int:
-        return self.__session_id
+        return self.__gateway_session_id
 
     @property
     def _socket(self) -> Optional[SocketSession]:
