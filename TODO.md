@@ -1,6 +1,14 @@
 TODO:
 
 
+v0.4 
+
+* [ ] PD
+  * [ ] support host restart, remove specified server
+* [ ] storage
+* [ ] misc
+
+
 v0.3 Koala
 
 * [x] naming
@@ -20,6 +28,7 @@ v0.3 Koala
 
 
 v0.2 Flash prototype
+
 v0.1 Flash prototype
 
 * [x] RPC
