@@ -83,7 +83,7 @@ async def _dispatch_actor_message_in_loop(actor: ActorBase):
                 context.reentrant_id = msg.reentrant_id
                 await _dispatch_actor_rpc_request(actor, session, msg)
             else:
-                await actor.dispatch_user_message(msg)
+                await actor.dispatch_message(msg)
     except Exception as e:
         logger.error("_dispatch_actor_message_loop, Exception:%s, StackTrace:%s" %
                      (e, traceback.format_exc()))

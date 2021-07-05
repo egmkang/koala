@@ -212,6 +212,8 @@ namespace Gateway.Handler
         {
             try
             {
+                if (!session.IsActive)
+                    return;
                 var sessionInfo = session.UserData;
                 var position = await this.FindActorPositionAsync(sessionInfo.ActorType, sessionInfo.ActorID).ConfigureAwait(false);
 

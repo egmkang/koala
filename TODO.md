@@ -20,7 +20,6 @@ v0.3 Koala
      * [x] Interfaces and Services
 * [x] Koala Framework
   * [x] asyncio rewrite
-  * [ ] tcp client pool
   * [x] Gateway
 * [x] Gateway Protocol 
   * [x] using RPC Protocol
