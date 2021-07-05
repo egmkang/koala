@@ -1,22 +1,35 @@
 TODO:
 
+
+v0.4 
+
+* [ ] PD
+  * [ ] support host restart, remove specified server
+* [ ] storage
+* [ ] misc
+* [ ] Actor
+  * [ ] Timer
+* [ ] client reconnect
+
+
 v0.3 Koala
 
-* [ ] naming
+* [x] naming
 * [x] using PD
   * [x] PD Impl
   * [x] Single Node Cluster Impl
      * [x] Interfaces and Services
-* [x] asyncio rewrite
 * [x] Koala Framework
+  * [x] asyncio rewrite
   * [x] Gateway
 * [x] Gateway Protocol 
   * [x] using RPC Protocol
-* [ ] Sample
-
+* [x] Sample
+    * [x] simple client
 
 
 v0.2 Flash prototype
+
 v0.1 Flash prototype
 
 * [x] RPC

@@ -19,12 +19,8 @@ def load_config():
     else:
         print("需要配置port, 监听的端口")
         return
-    if "gateway_port" in server_config:
-        _config.set_gateway_port(int(server_config["gateway_port"]))
     if "ip" in server_config:
         _config.set_address(server_config["ip"])
-    if "gateway_ip" in server_config:
-        _config.set_gateway_address(server_config["gateway_ip"])
     if "ttl" in server_config:
         _config.set_ttl(int(server_config["ttl"]))
     if "services" in server_config:

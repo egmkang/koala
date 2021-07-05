@@ -31,6 +31,7 @@ namespace Gateway
         private ILogger logger;
         private IPlacement placement;
         private ClientConnectionPool clientConnectionPool;
+        private SessionUniqueSequence sessionUniqueSequence;
 
         public Startup(IConfiguration configuration)
         {
@@ -55,6 +56,7 @@ namespace Gateway
             this.messageCenter = serviceProvider.GetRequiredService<IMessageCenter>();
             this.clientConnectionPool = serviceProvider.GetRequiredService<ClientConnectionPool>();
             this.placement = serviceProvider.GetRequiredService<IPlacement>();
+            this.sessionUniqueSequence = serviceProvider.GetRequiredService<SessionUniqueSequence>();
             this.clientConnectionPool.MessageCenter = messageCenter;
             serviceProvider.GetRequiredService<MessageHandler>();
 
@@ -70,15 +72,16 @@ namespace Gateway
             var placementAddress = "http://10.1.1.192:2379";
 
             this.PrepareGateway(serviceProvider);
-            this.ListenWebSocket(app, serviceProvider, wsPath);
-
             this.placement.SetPlacementServerInfo(placementAddress);
+
+            _ = this.ListenSocketAsync(serviceProvider, port);
+            this.ListenWebSocket(app, serviceProvider, wsPath);
 
             try
             {
-                _ = this.ListenSocketAsync(serviceProvider, port);
-
                 ServerID = await this.placement.GenerateServerIDAsync();
+                this.sessionUniqueSequence.SetServerID(ServerID);
+
                 this.logger.LogInformation("GetServerID, ServerID:{0}, Address:{1}", ServerID, address);
 
                 LeaseID = await this.placement.RegisterServerAsync(new PlacementActorHostInfo()
@@ -87,7 +90,7 @@ namespace Gateway
                     Address = address,
                     StartTime = Platform.GetMilliSeconds(),
                     TTL = interval * 3,
-                    Desc = $"GatewayID:{ServerID}",
+                    Desc = $"Gateway_{ServerID}",
                     Services = new Dictionary<string, string>() { { "IGateway", "GatewayImpl" } },
                 });
                 this.logger.LogInformation("RegisterServer Success, LeaseID:{0}", LeaseID);
@@ -154,7 +157,7 @@ namespace Gateway
                 while (true)
                 {
                     var context = await this.connectionListener.AcceptAsync().ConfigureAwait(false);
-                    var sessionInfo = new DefaultSessionInfo(this.sessionManager.NewSessionID, 0);
+                    var sessionInfo = new DefaultSessionInfo(this.sessionUniqueSequence.NewSessionID, 0);
                     var tcpSession = new TcpSocketSession(context, sessionInfo, logger, this.messageCenter);
                     this.logger.LogInformation("TcpSocketSession Accept, SessionID:{0}, RemoteAddress:{1}", 
                                                 tcpSession.SessionID, tcpSession.RemoteAddress);
@@ -191,7 +194,7 @@ namespace Gateway
                     var address = context.Connection.RemoteIpAddress.ToString();
                     using (var websocket = await context.WebSockets.AcceptWebSocketAsync().ConfigureAwait(false))
                     {
-                        var sessionInfo = new DefaultSessionInfo(this.sessionManager.NewSessionID, 0);
+                        var sessionInfo = new DefaultSessionInfo(this.sessionUniqueSequence.NewSessionID, 0);
                         var session = new WebSocketSession(websocket, address, logger, this.messageCenter, sessionInfo);
                         try
                         {

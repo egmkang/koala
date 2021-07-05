@@ -2,7 +2,7 @@ import dataclasses
 from koala.typing import *
 
 
-JsonVar = TypeVar("JsonVar", bound='SimpleMessage')
+JsonVar = TypeVar("JsonVar", bound='JsonMessage')
 __json_mapper: Dict[str, Any] = dict()
 
 

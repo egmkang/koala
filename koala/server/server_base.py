@@ -77,7 +77,11 @@ async def _run_placement():
         logger.error("Placement module not initialized")
         return
 
-    await impl.register_server()
+    try:
+        await impl.register_server()
+    except Exception as e:
+        logger.error("register server fail, Exception:%s" % e)
+
     while True:
         try:
             await impl.placement_loop()

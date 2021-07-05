@@ -51,7 +51,7 @@ class PDPlacementImpl(Placement):
                                          _config.ttl,
                                          _config.address,
                                          _config.services,
-                                         _config.desc)
+                                         _config.desc if _config.desc else "host_%s" % self.server_id())
         if resp.error_code == 0:
             self._lease_id = resp.lease_id
             logger.info("ServerID:%d, LeaseID:%d" % (self._server_id, self._lease_id))
@@ -107,6 +107,7 @@ class PDPlacementImpl(Placement):
                           server_name="",
                           host=array[0],
                           port=array[1],
+                          desc=info.desc,
                           service_type=info.services)
 
     def _rebuild_recent_removed(self, events: List[api.HostNodeAddRemoveEvent]):

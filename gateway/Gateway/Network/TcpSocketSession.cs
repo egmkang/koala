@@ -55,7 +55,7 @@ namespace Gateway.Network
             {
                 this.logger.LogInformation("TcpSocketSession Close, SessionID:{0}, RemoteAddress:{1}", this.SessionID, this.RemoteAddress);
                 this.cancellationTokenSource.Cancel();
-                await this.messageCenter.OnWebSocketClose(this).ConfigureAwait(false);
+                await this.messageCenter.OnSocketClose(this).ConfigureAwait(false);
             }
             finally 
             {

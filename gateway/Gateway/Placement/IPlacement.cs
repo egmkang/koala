@@ -51,7 +51,7 @@ namespace Gateway.Placement
         /// 服务的描述信息
         /// </summary>
         [JsonPropertyName("desc")]
-        public string Desc = "";
+        public string Desc { get; set; }
         /// <summary>
         /// 服务器的额外属性, 用来表示网关等信息
         /// </summary>

@@ -11,17 +11,12 @@ namespace Gateway.Network
     public class SessionManager
     {
         private readonly ILogger logger;
-        private readonly SessionUniqueSequence sessionSequence;
         private readonly ConcurrentDictionary<long, ISession> sessions = new ConcurrentDictionary<long, ISession>(4, 10 * 1024);
 
-        public SessionManager(ILoggerFactory loggerFactory, SessionUniqueSequence sessionSequence) 
+        public SessionManager(ILoggerFactory loggerFactory) 
         {
             this.logger = loggerFactory.CreateLogger("SessionManager");
-            this.sessionSequence = sessionSequence;
         }
-
-        public long NewSessionID => sessionSequence.NewSessionID;
-
 
         public long Count => this.sessions.Count;
 

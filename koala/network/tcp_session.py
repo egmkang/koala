@@ -92,7 +92,7 @@ class TcpSocketSession(SocketSession):
                 await _process_socket_message(self, self.get_real_type(msg), msg)
         except Exception as e:
             logger.error("TcpSocketSession.recv_message, SessionID:%d Exception:%s, StackTrace:%s" % (self.session_id, e, traceback.format_exc()))
-            pass
+            self.close()
         finally:
             _process_close_socket(session_id=self.session_id)
 

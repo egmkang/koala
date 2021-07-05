@@ -15,6 +15,7 @@ namespace Gateway.Network
         private readonly ILogger logger;
         private readonly IConnectionFactory connectionFactory;
         private readonly SessionManager sessionManager;
+        private readonly SessionUniqueSequence sessionUniqueSequence;
         private readonly ConcurrentDictionary<long, WeakReference<ISession>> clients = new ConcurrentDictionary<long, WeakReference<ISession>>(4, 1024);
         private readonly LRU<long, object> recentRemoveServer = new LRU<long, object>(1024);
 
@@ -25,11 +26,13 @@ namespace Gateway.Network
 
         public ClientConnectionPool(ILoggerFactory loggerFactory, 
                                     IConnectionFactory connectionFactory,
-                                    SessionManager sessionManager)
+                                    SessionManager sessionManager,
+                                    SessionUniqueSequence sessionUniqueSequence)
         {
             this.logger = loggerFactory.CreateLogger("Network");
             this.connectionFactory = connectionFactory;
             this.sessionManager = sessionManager;
+            this.sessionUniqueSequence = sessionUniqueSequence;
         }
 
         public IMessageCenter MessageCenter { get; set; }
@@ -136,7 +139,7 @@ namespace Gateway.Network
 
         private TcpSocketSession NewTcpClientSession(ConnectionContext connection, long serverID) 
         {
-            var sessionInfo = new DefaultSessionInfo(this.sessionManager.NewSessionID, serverID);
+            var sessionInfo = new DefaultSessionInfo(this.sessionUniqueSequence.NewSessionID, serverID);
             sessionInfo.IsClient = true;
             var session = new TcpSocketSession(connection, sessionInfo, this.logger, this.MessageCenter);
 

@@ -40,7 +40,8 @@ class Placement(ABC):
         _membership_manager.add_member(server)
         try:
             self._on_add_server(server)
-            logger.info("PD AddServer, ServerID:%d, Address:%s:%s" % (server.server_uid, server.host, server.port))
+            logger.info("PD AddServer, ServerID:%d, Address:%s:%s, Desc:%s" %
+                        (server.server_uid, server.host, server.port, server.desc))
         except Exception as e:
             logger.error("Placement.AddServer, ServerUID:%d, Exception:%s, StackTrace:%s" %
                          (node.server_uid, e, traceback.format_exc()))

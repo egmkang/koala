@@ -297,7 +297,7 @@ namespace Gateway.Placement
                 if (this.host.ContainsKey(serverID)) continue;
                 if (this.addedServer.TryAdd(serverID, EmptyObject))
                 {
-                    this.logger.LogInformation("PD Add Server, ServerID:{0}", serverID);
+                    this.logger.LogInformation("PD Add Server, ServerID:{0}, Desc:{1}", serverID, info.Desc);
                     try
                     {
                         this.onAddServer(info);
