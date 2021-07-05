@@ -9,6 +9,7 @@ v0.4
 * [ ] misc
 * [ ] Actor
   * [ ] Timer
+* [ ] client reconnect
 
 
 v0.3 Koala
@@ -23,9 +24,8 @@ v0.3 Koala
   * [x] Gateway
 * [x] Gateway Protocol 
   * [x] using RPC Protocol
-* [ ] Sample
-    * [ ] simple client
-    * [ ] client reconnect
+* [x] Sample
+    * [x] simple client
 
 
 v0.2 Flash prototype
