@@ -18,8 +18,8 @@ def init_server():
     init_logger(_config.log_name, _config.log_level)
     set_placement_impl(_pd_impl)
 
-    server_base.register_user_handler(RequestAccountLogin, process_gateway_account_login)
     server_base.init_server()
+    server_base.register_user_handler(RequestAccountLogin, process_gateway_account_login)
 
 
 def run_server():

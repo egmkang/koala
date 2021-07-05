@@ -70,14 +70,15 @@ namespace Gateway.Handler
             sessionInfo.ActorType = response.ActorType;
             sessionInfo.ActorID = response.ActorID;
             this.logger.LogInformation("ProcessResponseQueryAccount, SessionID:{0}, OpenID:{1}, Actor:{2}/{3}",
-                                        sessionInfo.SessionID, sessionInfo.ActorType, sessionInfo.ActorID);
+                                        sessionInfo.SessionID, sessionInfo.OpenID, sessionInfo.ActorType, sessionInfo.ActorID);
 
             var position = await this.FindActorPositionAsync(sessionInfo.ActorType, sessionInfo.ActorID).ConfigureAwait(false);
             if (sessionInfo.DestServerID != position.ServerID) 
             {
                 sessionInfo.DestServerID = position.ServerID;
                 this.logger.LogInformation("ProcessResponseQueryAccount, SessionID:{0}, Actor:{1}/{2}, Dest ServerID:{3}",
-                                            sessionInfo.SessionID, sessionInfo.ActorType, sessionInfo.ActorID, sessionInfo.DestServerID);
+                                            sessionInfo.SessionID, sessionInfo.ActorType,
+                                            sessionInfo.ActorID, sessionInfo.DestServerID);
             }
 
             await this.messageCenter.SendMessageToServer(sessionInfo.DestServerID, new RpcMessage(new NotifyNewActorSession()
@@ -199,7 +200,7 @@ namespace Gateway.Handler
             }
 
             var body = new byte[size];
-            memory.CopyTo(body);
+            memory.Span.Slice(0, size).CopyTo(body);
             await this.messageCenter.SendMessageToServer(sessionInfo.DestServerID, new RpcMessage(new NotifyNewActorMessage()
             {
                 ActorType = sessionInfo.ActorType,

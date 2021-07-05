@@ -7,6 +7,8 @@ v0.4
   * [ ] support host restart, remove specified server
 * [ ] storage
 * [ ] misc
+* [ ] Actor
+  * [ ] Timer
 
 
 v0.3 Koala
