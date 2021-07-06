@@ -47,6 +47,15 @@ class RegisterNewServerResponse(PDResponse):
     lease_id: int
 
 
+class DeleteServerRequest(BaseModel):
+    server_id: int = 0
+    address: str = ""
+
+
+class DeleteServerResponse(PDResponse):
+    server_id: int = 0
+
+
 class KeepAliveServerRequest(BaseModel):
     server_id: int = 0
     lease_id: int = 0
@@ -139,6 +148,14 @@ async def register_server(server_id: int, start_time: int, ttl: int, address: st
     PD_MEMBERSHIP_REGISTER_URL = f"{__PD_ADDRESS}/pd/api/v1/membership/register"
     code, body = await __request(PD_MEMBERSHIP_REGISTER_URL, req.dict())
     return __format_result(code, body, RegisterNewServerResponse)
+
+
+async def delete_server(server_id: int, address: str) -> DeleteServerResponse:
+    req = DeleteServerRequest(server_id=server_id, address=address)
+
+    PD_MEMBERSHIP_DELETE_URL = f"{__PD_ADDRESS}/pd/api/v1/membership/delete"
+    code, body = await __request(PD_MEMBERSHIP_DELETE_URL, req.dict())
+    return __format_result(code, body, DeleteServerResponse)
 
 
 async def keep_alive(server_id: int, lease_id: int, load: int) -> KeepAliveServerResponse:

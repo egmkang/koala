@@ -3,13 +3,13 @@ TODO:
 
 v0.4 
 
-* [ ] PD
-  * [ ] support host restart, remove specified server
 * [ ] storage
 * [ ] misc
 * [ ] Actor
   * [ ] Timer
 * [ ] client reconnect
+* [x] PD support host restart, remove specified server
+* [x] cluster client reconnect
 
 
 v0.3 Koala

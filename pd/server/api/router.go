@@ -28,6 +28,7 @@ func createRouter(prefix string, server *server.APIServer) *mux.Router {
 	subRouter.HandleFunc("/api/v1/membership/register", membershipHandler.RegisterNewServer).Methods("POST")
 	subRouter.HandleFunc("/api/v1/membership/keep_alive", membershipHandler.KeepAliveServer).Methods("POST")
 	subRouter.HandleFunc("/api/v1/membership/fetch_all", membershipHandler.FetchAllServer).Methods("POST")
+	subRouter.HandleFunc("/api/v1/membership/delete", membershipHandler.DeleteServer).Methods("POST")
 
 	placementHandler := newPlacementHandler(server, render)
 	subRouter.HandleFunc(FindPositionUrl, placementHandler.FindPosition).Methods("POST")

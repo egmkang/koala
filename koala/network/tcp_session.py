@@ -13,7 +13,6 @@ from koala.network.session_id_gen import new_session_id
 from koala.network.constant import SOCKET_HEART_BEAT, WINDOW_SIZE
 from koala.network.event_handler import _process_socket_message, _process_income_socket, _process_close_socket
 
-
 _codec_manager: CodecManager = CodecManager()
 
 
@@ -52,7 +51,11 @@ class TcpSocketSession(SocketSession):
         self._last_update_time = time_now
 
     def is_dead(self, current_time: float) -> bool:
-        return current_time - self._last_update_time >= SOCKET_HEART_BEAT
+        return self._stop or (current_time - self._last_update_time >= SOCKET_HEART_BEAT)
+
+    @property
+    def is_closed(self) -> bool:
+        return self._stop
 
     @property
     def is_client(self) -> bool:
@@ -74,8 +77,11 @@ class TcpSocketSession(SocketSession):
 
     def close(self):
         logger.info("TcpSession.close, SessionID:%d Address:%s" % (self.session_id, self._address))
-        self._writer.close()
         self._stop = True
+        try:
+            self._writer.close()
+        except:
+            pass
 
     @classmethod
     def get_real_type(cls, o: object):
@@ -91,7 +97,8 @@ class TcpSocketSession(SocketSession):
                     break
                 await _process_socket_message(self, self.get_real_type(msg), msg)
         except Exception as e:
-            logger.error("TcpSocketSession.recv_message, SessionID:%d Exception:%s, StackTrace:%s" % (self.session_id, e, traceback.format_exc()))
+            logger.error("TcpSocketSession.recv_message, SessionID:%d Exception:%s, StackTrace:%s" % (
+            self.session_id, e, traceback.format_exc()))
             self.close()
         finally:
             _process_close_socket(session_id=self.session_id)
