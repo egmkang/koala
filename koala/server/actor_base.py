@@ -8,24 +8,20 @@ from koala.logger import logger
 from koala.network.socket_session import SocketSession, SocketSessionManager
 from koala.server.actor_context import ActorContext
 from koala.server.rpc_proxy import get_rpc_proxy
+from koala.server.actor_timer import ActorTimerManager, ActorTimer
 
 
 _session_manager = SocketSessionManager()
 _membership = MembershipManager()
 
 
-async def _send_message(session_id: int, msg: object):
-    session = _session_manager.get_session(session_id)
-    if session:
-        await session.send_message(msg)
-
-
 class ActorBase(ABC):
     def __init__(self):
         self.__gateway_session_id = 0
         self.__uid = 0
-        self.__context = None
+        self.__context: Optional[ActorContext] = None
         self.__socket_session: Optional[weakref.ReferenceType[SocketSession]] = None
+        self.__timer_manager = ActorTimerManager(self)
         pass
 
     def _init_actor(self, uid: object, context: ActorContext):
@@ -46,6 +42,7 @@ class ActorBase(ABC):
         return self.__context
 
     def gateway_server_id(self, gateway_session_id: int) -> int:
+        _ = self
         return gateway_session_id // 10_000_000_000
 
     def set_session_id(self, session_id: int):
@@ -113,6 +110,8 @@ class ActorBase(ABC):
                     await self.on_new_session(rpc_message.meta, rpc_message.body)
                 elif isinstance(rpc_message.meta, NotifyActorSessionAborted):
                     await self.on_session_aborted(rpc_message.meta)
+            elif isinstance(msg, ActorTimer):
+                msg.tick()
             else:
                 await self.dispatch_user_message(msg)
         except Exception as e:
@@ -133,14 +132,22 @@ class ActorBase(ABC):
         pass
 
     async def on_new_session(self, msg: NotifyNewActorSession, body: bytes):
+        _ = body
         logger.info("Actor:%s/%s NewSessionID:%s" % (self.type_name, self.uid, msg.session_id))
         self.set_session_id(msg.session_id)
         pass
 
     async def on_session_aborted(self, msg: NotifyActorSessionAborted):
+        _ = msg
         logger.info("Actor:%s/%s SessionID:%s aborted" % (self.type_name, self.uid, self.session_id))
         self.set_session_id(0)
 
     def get_proxy(self, actor_type: Type[T], uid: object) -> T:
         o = get_rpc_proxy(actor_type, uid, self.context)
         return cast(T, o)
+
+    def register_timer(self, interval: int, fn: Callable[[ActorTimer], None]) -> ActorTimer:
+        return self.__timer_manager.register_timer(interval, fn)
+
+    def unregister_timer(self, timer_id: int):
+        return self.__timer_manager.unregister_timer(timer_id)

@@ -7,8 +7,7 @@ v0.4
   * [ ] support host restart, remove specified server
 * [ ] storage
 * [ ] misc
-* [ ] Actor
-  * [ ] Timer
+* [x] Actor Timer
 * [ ] client reconnect
 
 

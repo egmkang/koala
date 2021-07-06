@@ -80,7 +80,10 @@ async def process_rpc_response(session: SocketSession, response: object):
     if resp.error_code != 0:
         future.set_exception(Exception(resp.error_str))
     else:
-        future.set_result(resp.response)
+        if resp:
+            future.set_result(resp.response)
+        else:
+            future.set_result(None)
 
 
 async def process_heartbeat_request(session: SocketSession, request: object):

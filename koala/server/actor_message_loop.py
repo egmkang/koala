@@ -78,7 +78,7 @@ async def _dispatch_actor_message_in_loop(actor: ActorBase):
             if o is None:
                 logger.info("Actor:%s/%s exit message loop" % (actor.type_name, actor.uid))
                 break
-            session, msg = o[0](), o[1]
+            session, msg = o[0]() if o[0] else None, o[1]
             if isinstance(msg, RpcRequest):
                 context.reentrant_id = msg.reentrant_id
                 await _dispatch_actor_rpc_request(actor, session, msg)

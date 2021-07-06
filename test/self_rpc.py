@@ -8,6 +8,7 @@ from koala.network.socket_session import SocketSessionManager
 from koala.placement.placement import get_placement_impl, set_placement_impl
 from koala.pd.simple import SelfHostedPlacement
 from koala.server.rpc_proxy import get_rpc_proxy
+from koala.server.actor_timer import ActorTimer
 from koala.logger import logger
 
 
@@ -68,6 +69,9 @@ class IBench:
     async def echo(self, e: str) -> str:
         pass
 
+    async def run_timer(self, count: int):
+        pass
+
 
 @rpc_impl(IBench)
 class BenchImpl(IBench, ActorBase):
@@ -76,6 +80,13 @@ class BenchImpl(IBench, ActorBase):
 
     async def echo(self, e: str) -> str:
         return e
+
+    async def run_timer(self, count: int):
+        def f(timer: ActorTimer):
+            logger.info("timer, tick:%s" % timer.tick_count)
+            if timer.tick_count >= count:
+                self.unregister_timer(timer.timer_id)
+        self.register_timer(1000, f)
 
 
 finished = 0
@@ -88,6 +99,12 @@ async def bench(index: object):
     while True:
         _ = await proxy.echo("12121212")
         finished += 1
+
+
+async def run_timer(index: object):
+    await asyncio.sleep(3)
+    proxy = get_rpc_proxy(IBench, index)
+    await proxy.run_timer(10)
 
 
 async def qps():
@@ -109,10 +126,11 @@ server_base.init_server()
 server_base.listen(15555, CODEC_RPC)
 server_base.create_task(service_1())
 
-for item in range(16):
-    i = item
-    server_base.create_task(bench(i))
+# for item in range(16):
+#     i = item
+#     server_base.create_task(bench(i))
 
+server_base.create_task(run_timer(1))
 server_base.create_task(qps())
 
 server_base.run_server()
