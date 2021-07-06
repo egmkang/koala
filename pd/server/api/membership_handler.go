@@ -27,6 +27,15 @@ type RegisterNewServerResp struct {
 	LeaseID int64 `json:"lease_id"`
 }
 
+type DeleteServerRequest struct {
+	ServerID int64  `json:"server_id"`
+	Address  string `json:"address"` //服务器地址
+}
+
+type DeleteServerResponse struct {
+	ServerID int64 `json:"server_id"`
+}
+
 type KeepAliveServerRequest struct {
 	ServerID int64 `json:"server_id"`
 	LeaseID  int64 `json:"lease_id"`
@@ -104,6 +113,22 @@ func (this *membershipHandler) RegisterNewServer(w http.ResponseWriter, r *http.
 
 	data := &RegisterNewServerResp{LeaseID: int64(lease.ID)}
 	this.render.JSON(w, http.StatusOK, data)
+}
+
+func (this *membershipHandler) DeleteServer(w http.ResponseWriter, r *http.Request) {
+	req := &DeleteServerRequest{}
+	if err := util.ReadJSONResponseError(this.render, w, r.Body, req); err != nil {
+		return
+	}
+	err := this.server.DeleteHost(req.ServerID, req.Address)
+	if err != nil {
+		this.render.JSON(w, http.StatusBadRequest, err.Error())
+		return
+	}
+	result := &DeleteServerResponse{
+		ServerID: req.ServerID,
+	}
+	this.render.JSON(w, http.StatusOK, result)
 }
 
 func (this *membershipHandler) FetchAllServer(w http.ResponseWriter, r *http.Request) {

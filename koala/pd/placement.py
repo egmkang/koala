@@ -63,6 +63,12 @@ class PDPlacementImpl(Placement):
             exit(ERROR_PD_REGISTER_SERVER.code)
         pass
 
+    async def delete_server(self, server_id: int):
+        try:
+            await api.delete_server(server_id, _config.address)
+        except:
+            pass
+
     async def _pd_keep_alive(self) -> api.KeepAliveServerResponse:
         if time.time() - self._last_heart_beat > _config.ttl:
             logger.error("%s, %s" % (ERROR_PD_KEEP_ALIVE_TIME_OUT.code, ERROR_PD_KEEP_ALIVE_TIME_OUT.message))
@@ -96,9 +102,15 @@ class PDPlacementImpl(Placement):
                 self.remove_server(node)
         for server_id in hosts:
             node = _membership.get_member(server_id)
-            if node is None:
+            if node is None and not self._try_delete_old_server(hosts[server_id]):
                 self.add_server(self._build_node_info(hosts[server_id]))
-        pass
+
+    def _try_delete_old_server(self, node: api.HostNodeInfo) -> bool:
+        if _config.address == node.address and self.server_id() > node.server_id:
+            logger.info("try_delete_old_server, OldServerID:%s Address:%s" % (node.server_id, node.address))
+            asyncio.create_task(api.delete_server(node.server_id, node.address))
+            return True
+        return False
 
     @classmethod
     def _build_node_info(cls, info: api.HostNodeInfo) -> ServerNode:
@@ -119,7 +131,10 @@ class PDPlacementImpl(Placement):
 
     def _on_remove_server(self, node: ServerNode):
         self._recent_added.remove(node.server_uid)
-        pass
+        try:
+            node.session.close()
+        except:
+            pass
 
     def _on_add_server(self, node: ServerNode):
         self._recent_added.add(node.server_uid)
@@ -170,24 +185,29 @@ class PDPlacementImpl(Placement):
         heart_beat = RequestHeartBeat()
         heart_beat.milli_seconds = int(time.time() * 1000)
         for server_id in self._recent_added:
-            host = _membership.get_member(server_id)
-            if host is None:
-                continue
-            if host.session is None:
-                await self._try_connect(host)
-                continue
-            session = host.session
-            await session.send_message(heart_beat)
+            try:
+                host = _membership.get_member(server_id)
+                if host is None:
+                    continue
+                if not host.session or host.session.is_closed:
+                    asyncio.create_task(self._try_connect(host))
+                    continue
+                session = host.session
+                await session.send_message(heart_beat)
+            except Exception as e:
+                logger.error("try_send_heart_beat, Exception:%s" % e)
         pass
 
     @classmethod
     async def _try_connect(cls, node: ServerNode):
+        begin = time.time()
         try:
             session = await TcpSocketSession.connect(node.host, int(node.port), CODEC_RPC)
             if session is not None:
                 node.set_session(session)
                 logger.info("try_connect ServerID:%d, Host:%s:%s success" % (node.server_uid, node.host, node.port))
         except Exception as e:
-            logger.error("try_connect ServerID:%d, Host:%s:%s, Exception:%s" %
-                         (node.server_uid, node.host, node.port, e))
+            end = time.time()
+            logger.error("try_connect ServerID:%d, Host:%s:%s, CostTime:%sms, Exception:%s" %
+                         (node.server_uid, node.host, node.port, int((end-begin) * 1000), e))
         pass

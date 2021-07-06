@@ -29,6 +29,11 @@ class SocketSession:
 
     @property
     @abstractmethod
+    def is_closed(self) -> bool:
+        pass
+
+    @property
+    @abstractmethod
     def is_client(self) -> bool:
         pass
 
@@ -71,7 +76,7 @@ class SocketSessionManager(Singleton):
     async def _gc_loop(self):
         dead_list: List[SocketSession] = list()
         while True:
-            logger.debug("gc_loop")
+            logger.trace("gc_loop")
             current_time = time.time()
             for item in self._session_dict.values():
                 if item.is_dead(current_time):
