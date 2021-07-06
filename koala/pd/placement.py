@@ -119,7 +119,10 @@ class PDPlacementImpl(Placement):
 
     def _on_remove_server(self, node: ServerNode):
         self._recent_added.remove(node.server_uid)
-        pass
+        try:
+            node.session.close()
+        except:
+            pass
 
     def _on_add_server(self, node: ServerNode):
         self._recent_added.add(node.server_uid)
@@ -170,24 +173,29 @@ class PDPlacementImpl(Placement):
         heart_beat = RequestHeartBeat()
         heart_beat.milli_seconds = int(time.time() * 1000)
         for server_id in self._recent_added:
-            host = _membership.get_member(server_id)
-            if host is None:
-                continue
-            if host.session is None:
-                await self._try_connect(host)
-                continue
-            session = host.session
-            await session.send_message(heart_beat)
+            try:
+                host = _membership.get_member(server_id)
+                if host is None:
+                    continue
+                if not host.session or host.session.is_closed:
+                    asyncio.create_task(self._try_connect(host))
+                    continue
+                session = host.session
+                await session.send_message(heart_beat)
+            except Exception as e:
+                logger.error("try_send_heart_beat, Exception:%s" % e)
         pass
 
     @classmethod
     async def _try_connect(cls, node: ServerNode):
+        begin = time.time()
         try:
             session = await TcpSocketSession.connect(node.host, int(node.port), CODEC_RPC)
             if session is not None:
                 node.set_session(session)
                 logger.info("try_connect ServerID:%d, Host:%s:%s success" % (node.server_uid, node.host, node.port))
         except Exception as e:
-            logger.error("try_connect ServerID:%d, Host:%s:%s, Exception:%s" %
-                         (node.server_uid, node.host, node.port, e))
+            end = time.time()
+            logger.error("try_connect ServerID:%d, Host:%s:%s, CostTime:%sms, Exception:%s" %
+                         (node.server_uid, node.host, node.port, int((end-begin) * 1000), e))
         pass
