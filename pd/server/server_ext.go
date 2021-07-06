@@ -69,6 +69,24 @@ func (this *APIServer) SaveHostNodeInfo(serverInfo *HostNodeInfo, leaseID int64)
 	return nil
 }
 
+func (this *APIServer) DeleteHost(serverID int64, address string) error {
+	host := this.GetHostInfoByServerID(serverID)
+	if host != nil && host.Address == address {
+		index := this.membership.GetReadonlyIndex()
+		delete(index.ids, serverID)
+		for k, _ := range host.Services {
+			delete(index.types[k], serverID)
+		}
+		log.Info("DeleteHost", zap.Int64("ServerID", serverID), zap.String("Address", address))
+	}
+	key := GenerateServerKey(serverID)
+	_, err := util.EtcdKVDelete(this.etcdClient, key)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
 func (this *APIServer) GetHostInfoByServerID(serverID int64) *HostNodeInfo {
 	index := this.membership.GetReadonlyIndex()
 	info, ok := index.ids[serverID]

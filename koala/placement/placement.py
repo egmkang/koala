@@ -20,6 +20,10 @@ class Placement(ABC):
         pass
 
     @abstractmethod
+    async def delete_server(self, server_id: int):
+        pass
+
+    @abstractmethod
     def set_load(self, load: int):
         pass
 

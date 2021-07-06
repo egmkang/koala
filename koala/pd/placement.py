@@ -63,6 +63,12 @@ class PDPlacementImpl(Placement):
             exit(ERROR_PD_REGISTER_SERVER.code)
         pass
 
+    async def delete_server(self, server_id: int):
+        try:
+            await api.delete_server(server_id, _config.address)
+        except:
+            pass
+
     async def _pd_keep_alive(self) -> api.KeepAliveServerResponse:
         if time.time() - self._last_heart_beat > _config.ttl:
             logger.error("%s, %s" % (ERROR_PD_KEEP_ALIVE_TIME_OUT.code, ERROR_PD_KEEP_ALIVE_TIME_OUT.message))
@@ -96,9 +102,15 @@ class PDPlacementImpl(Placement):
                 self.remove_server(node)
         for server_id in hosts:
             node = _membership.get_member(server_id)
-            if node is None:
+            if node is None and not self._try_delete_old_server(hosts[server_id]):
                 self.add_server(self._build_node_info(hosts[server_id]))
-        pass
+
+    def _try_delete_old_server(self, node: api.HostNodeInfo) -> bool:
+        if _config.address == node.address and self.server_id() > node.server_id:
+            logger.info("try_delete_old_server, OldServerID:%s Address:%s" % (node.server_id, node.address))
+            asyncio.create_task(api.delete_server(node.server_id, node.address))
+            return True
+        return False
 
     @classmethod
     def _build_node_info(cls, info: api.HostNodeInfo) -> ServerNode:
