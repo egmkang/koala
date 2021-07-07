@@ -82,10 +82,13 @@ class BenchImpl(IBench, ActorBase):
         return e
 
     async def run_timer(self, count: int):
+        weak_actor = self.weak
+
         def f(timer: ActorTimer):
             logger.info("timer, tick:%s" % timer.tick_count)
             if timer.tick_count >= count:
-                self.unregister_timer(timer.timer_id)
+                a = weak_actor()
+                a.unregister_timer(timer.timer_id)
         self.register_timer(1000, f)
 
 

@@ -57,6 +57,9 @@ class SelfHostedPlacement(Placement):
         asyncio.create_task(self._try_connect(node))
         pass
 
+    async def delete_server(self, server_id: int):
+        pass
+
     def find_position_in_cache(self, i_type: str, uid: object) -> Optional[ServerNode]:
         return _membership.get_member(self.server_node.server_uid)
         pass

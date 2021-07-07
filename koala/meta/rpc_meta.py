@@ -32,7 +32,7 @@ def rpc_impl(*interfaces):
     return f
 
 
-def get_impl_type(i_type: Type[T]) -> Optional[T]:
+def get_impl_type(i_type: Type[T]) -> Optional[Type[T]]:
     if i_type in __impl_map:
         return __impl_map[i_type]
 

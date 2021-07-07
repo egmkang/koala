@@ -1,5 +1,8 @@
 import asyncio
+import gc
 import time
+import weakref
+
 from koala.typing import *
 from koala.logger import logger
 
@@ -18,18 +21,24 @@ def _milli_seconds() -> int:
 
 
 class ActorTimer:
-    def __init__(self, actor,
+    def __init__(self, weak_actor: weakref.ReferenceType,
+                 actor_id: str,
                  manager: "ActorTimerManager",
                  fn: Callable[["ActorTimer"], None],
                  interval: int):
         self._timer_id = _gen_timer_id()
-        self._actor = actor
+        self._weak_actor = weak_actor
+        self._actor_id = actor_id
         self._manager = manager
         self._fn = fn
         self._interval = interval
         self._begin_time = _milli_seconds()
         self._tick_count = 0
         self._is_cancel = False
+
+    def __del__(self):
+        logger.debug("ActorTimer:%s GC, ActorID:%s" % (self.timer_id, self._actor_id))
+        pass
 
     @property
     def timer_id(self) -> int:
@@ -45,14 +54,10 @@ class ActorTimer:
 
     @property
     def is_cancel(self) -> bool:
-        return self._is_cancel
+        return self._is_cancel or not self._weak_actor()
 
     def cancel(self):
         self._is_cancel = True
-
-    @property
-    def actor(self):
-        return self._actor
 
     def tick(self):
         if self.is_cancel:
@@ -61,8 +66,8 @@ class ActorTimer:
             self._tick_count += 1
             self._fn(self)
         except Exception as e:
-            logger.error("ActorTimer, Actor:%s/%s, ActorID:%d, Exception:%s" %
-                         (self._actor.type_name, self._actor.uid, self.timer_id, e))
+            logger.error("ActorTimer, Actor:%s, ActorID:%d, Exception:%s" %
+                         (self._actor_id, self.timer_id, e))
             return
         if not self.is_cancel:
             next_wait = self.next_tick_time()
@@ -70,7 +75,11 @@ class ActorTimer:
     pass
 
     def run(self):
-        asyncio.create_task(self.actor.context.push_message((None, self)))
+        actor = self._weak_actor()
+        if actor:
+            asyncio.create_task(actor.context.push_message((None, self)))
+        else:
+            self.cancel()
 
     def next_tick_time(self) -> int:
         current = _milli_seconds()
@@ -80,9 +89,17 @@ class ActorTimer:
 
 
 class ActorTimerManager:
-    def __init__(self, actor):
-        self.actor = actor
+    def __init__(self, weak_actor: weakref.ReferenceType):
+        self._weak_actor = weak_actor
+        self._actor_id = ""
         self._dict: Dict[int, ActorTimer] = dict()
+
+    @property
+    def actor_id(self) -> str:
+        if self._actor_id == "":
+            actor = self._weak_actor()
+            self._actor_id = "%s/%s" % (actor.type_name, actor.uid)
+        return self._actor_id
 
     @classmethod
     async def _run_timer(cls, sleep: int, timer: ActorTimer):
@@ -94,7 +111,7 @@ class ActorTimerManager:
         asyncio.create_task(self._run_timer(next_time, timer))
 
     def register_timer(self, interval: int, fn: Callable[[ActorTimer], None]) -> ActorTimer:
-        timer = ActorTimer(self.actor, self, fn, interval)
+        timer = ActorTimer(self._weak_actor, self.actor_id, self, fn, interval)
         self._dict[timer.timer_id] = timer
 
         next_wait = timer.next_tick_time()
@@ -104,7 +121,15 @@ class ActorTimerManager:
     def unregister_timer(self, timer_id: int):
         if timer_id in self._dict:
             timer = self._dict[timer_id]
+            self._dict.pop(timer_id)
             timer.cancel()
-            del self._dict[timer_id]
 
+    def unregister_all(self):
+        remove_list = []
+        for timer_id in self._dict:
+            remove_list.append(timer_id)
+        for timer_id in remove_list:
+            self.unregister_timer(timer_id)
+        del self._dict
+        self._dict = None
 

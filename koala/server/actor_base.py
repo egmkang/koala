@@ -21,7 +21,7 @@ class ActorBase(ABC):
         self.__uid = 0
         self.__context: Optional[ActorContext] = None
         self.__socket_session: Optional[weakref.ReferenceType[SocketSession]] = None
-        self.__timer_manager = ActorTimerManager(self)
+        self.__timer_manager = ActorTimerManager(self.weak)
         pass
 
     def _init_actor(self, uid: object, context: ActorContext):
@@ -36,6 +36,10 @@ class ActorBase(ABC):
     @property
     def uid(self) -> object:
         return self.__uid
+
+    @property
+    def weak(self) -> weakref.ReferenceType["ActorBase"]:
+        return weakref.ref(self)
 
     @property
     def context(self) -> ActorContext:
@@ -77,6 +81,14 @@ class ActorBase(ABC):
                          (self.type_name, self.uid, e, traceback.format_exc()))
 
     async def deactivate_async(self):
+        try:
+            self.__timer_manager.unregister_all()
+            del self.__timer_manager
+            self.__timer_manager = None
+        except Exception as e:
+            logger.error("Actor.OnDeactivateAsync, Actor:%s/%s, Exception:%s, StackTrace:%s" %
+                         (self.type_name, self.uid, e, traceback.format_exc()))
+            pass
         try:
             await self.on_deactivate_async()
         except Exception as e:
