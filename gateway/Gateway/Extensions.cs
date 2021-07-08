@@ -27,6 +27,12 @@ namespace Gateway
             }
         }
 
+        public static OrderedDictionary DecodeFirstMessage(this Memory<byte> memory, int size) 
+        {
+            ReadOnlySpan<byte> span = memory.Span.Slice(0, size);
+            return span.DecodeFirstMessage();
+        }
+
         public static OrderedDictionary DecodeFirstMessage(this ReadOnlySpan<byte> memory)
         {
             var firstPacket = JsonConvert.DeserializeObject(Encoding.UTF8.GetString(memory)) as JObject;
