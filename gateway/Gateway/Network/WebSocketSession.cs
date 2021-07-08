@@ -27,7 +27,6 @@ namespace Gateway.Network
         private readonly CancellationTokenSource cancellationTokenSource = new CancellationTokenSource();
         private readonly IMessageCenter messageCenter;
         private readonly ISessionInfo sessionInfo;
-        private readonly ClientMessageCodec codec = new ClientMessageCodec();
 
         public WebSocketSession(WebSocket webSocket, 
                                 string address,

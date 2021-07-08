@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using Gateway.Message;
@@ -8,6 +9,8 @@ using Gateway.Network;
 using Gateway.Placement;
 using Gateway.Utils;
 using Microsoft.Extensions.Logging;
+using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
 
 namespace Gateway.Handler
 {
@@ -19,7 +22,6 @@ namespace Gateway.Handler
         private readonly IPlacement placement;
         private readonly ClientConnectionPool clientConnectionPool;
         private readonly IMessageCenter messageCenter;
-        private readonly ClientMessageCodec codec = new ClientMessageCodec();
 
         public MessageHandler(IServiceProvider serviceProvider,
                                 IMessageCenter messageCenter,
@@ -157,29 +159,34 @@ namespace Gateway.Handler
 
         private async Task ProcessWebSocketFirstMessage(ISession session, Memory<byte> memory, int size)
         {
+            // 一个包是一个JSON字符串
+            //1. 包含`open_id`, `server_id`, `timestamp`, `check_sum`
+            //2. 可选包含`actor_type`, `actor_id`
             // TODO
             //这边还要处理断线重来
             var sessionInfo = session.UserData;
-            var (OpenID, ServerID) = this.codec.Decode(memory, size);
-            this.logger.LogInformation("WebSocketSession Login, SessionID:{0}, OpenID:{1}, ServerID:{2}",
-                                        sessionInfo.SessionID, OpenID, ServerID);
-            sessionInfo.OpenID = OpenID;
-            sessionInfo.GameServerID = ServerID;
+            //var firstPacket = JsonConvert.DeserializeObject(Encoding.UTF8.GetString(memory.Span.Slice(0, size))) as JObject;
 
-            var body = new byte[size];
-            memory.Span.Slice(0, size).CopyTo(body);
-            sessionInfo.Token = body;
+            //var (OpenID, ServerID) = this.codec.Decode(memory, size);
+            //this.logger.LogInformation("WebSocketSession Login, SessionID:{0}, OpenID:{1}, ServerID:{2}",
+            //                            sessionInfo.SessionID, OpenID, ServerID);
+            //sessionInfo.OpenID = OpenID;
+            //sessionInfo.GameServerID = ServerID;
 
-            //这边需要通过账号信息, 查找目标Actor的位置
-            var position =  await this.FindActorPositionAsync(AccountService, RandomLoginServer.ToString()).ConfigureAwait(false);
+            //var body = new byte[size];
+            //memory.Span.Slice(0, size).CopyTo(body);
+            //sessionInfo.Token = body;
 
-            var req = new RpcMessage(new RequestAccountLogin()
-            {
-                OpenID = sessionInfo.OpenID,
-                ServerID = sessionInfo.GameServerID,
-                SessionID = session.SessionID,
-            }, body);
-            await this.messageCenter.SendMessageToServer(position.ServerID, req).ConfigureAwait(false);
+            ////这边需要通过账号信息, 查找目标Actor的位置
+            //var position =  await this.FindActorPositionAsync(AccountService, RandomLoginServer.ToString()).ConfigureAwait(false);
+
+            //var req = new RpcMessage(new RequestAccountLogin()
+            //{
+            //    OpenID = sessionInfo.OpenID,
+            //    ServerID = sessionInfo.GameServerID,
+            //    SessionID = session.SessionID,
+            //}, body);
+            //await this.messageCenter.SendMessageToServer(position.ServerID, req).ConfigureAwait(false);
         }
         private async Task ProcessWebSocketCommonMessage(ISession session, Memory<byte> memory, int size) 
         {
