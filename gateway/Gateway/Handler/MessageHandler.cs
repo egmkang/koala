@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using Gateway.Message;
@@ -8,6 +9,8 @@ using Gateway.Network;
 using Gateway.Placement;
 using Gateway.Utils;
 using Microsoft.Extensions.Logging;
+using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
 
 namespace Gateway.Handler
 {
@@ -19,7 +22,6 @@ namespace Gateway.Handler
         private readonly IPlacement placement;
         private readonly ClientConnectionPool clientConnectionPool;
         private readonly IMessageCenter messageCenter;
-        private readonly ClientMessageCodec codec = new ClientMessageCodec();
 
         public MessageHandler(IServiceProvider serviceProvider,
                                 IMessageCenter messageCenter,
@@ -141,8 +143,9 @@ namespace Gateway.Handler
             }
         }
 
+        // 1000这个量级的并发度应该就够用了
         static readonly Random random = new Random();
-        private static int RandomLoginServer => random.Next(0, 1024 * 10);
+        private static int RandomLoginServer => random.Next(0, 1024 * 2);
         public static readonly string AccountService = "IAccount";
         private static ThreadLocal<PlacementFindActorPositionRequest> findActorRequestCache = new ThreadLocal<PlacementFindActorPositionRequest>(() => new PlacementFindActorPositionRequest());
 
@@ -155,31 +158,94 @@ namespace Gateway.Handler
             return position;
         }
 
-        private async Task ProcessWebSocketFirstMessage(ISession session, Memory<byte> memory, int size)
+        private async Task ProcessQuickConnect(ISession session, ISessionInfo sessionInfo, string actorType, string actorID)
         {
-            // TODO
-            //这边还要处理断线重来
-            var sessionInfo = session.UserData;
-            var (OpenID, ServerID) = this.codec.Decode(memory, size);
-            this.logger.LogInformation("WebSocketSession Login, SessionID:{0}, OpenID:{1}, ServerID:{2}",
-                                        sessionInfo.SessionID, OpenID, ServerID);
-            sessionInfo.OpenID = OpenID;
-            sessionInfo.GameServerID = ServerID;
+            sessionInfo.ActorType = actorType;
+            sessionInfo.ActorID = actorID;
 
-            var body = new byte[size];
-            memory.Span.Slice(0, size).CopyTo(body);
-            sessionInfo.Token = body;
-
-            //这边需要通过账号信息, 查找目标Actor的位置
-            var position =  await this.FindActorPositionAsync(AccountService, RandomLoginServer.ToString()).ConfigureAwait(false);
-
-            var req = new RpcMessage(new RequestAccountLogin()
+            var position = await this.FindActorPositionAsync(sessionInfo.ActorType, sessionInfo.ActorID).ConfigureAwait(false);
+            if (sessionInfo.DestServerID != position.ServerID) 
             {
+                sessionInfo.DestServerID = position.ServerID;
+                this.logger.LogInformation("ProcessResponseQueryAccount, SessionID:{0}, Actor:{1}/{2}, Dest ServerID:{3}",
+                                            sessionInfo.SessionID, sessionInfo.ActorType,
+                                            sessionInfo.ActorID, sessionInfo.DestServerID);
+            }
+
+            await this.messageCenter.SendMessageToServer(sessionInfo.DestServerID, new RpcMessage(new NotifyNewActorSession()
+            {
+                SessionID = sessionInfo.SessionID,
                 OpenID = sessionInfo.OpenID,
                 ServerID = sessionInfo.GameServerID,
-                SessionID = session.SessionID,
-            }, body);
-            await this.messageCenter.SendMessageToServer(position.ServerID, req).ConfigureAwait(false);
+                ActorType = sessionInfo.ActorType,
+                ActorID = sessionInfo.ActorID,
+            }, sessionInfo.Token)).ConfigureAwait(false);
+        }
+
+        const int ErrCheckSum = 10001;
+        const int ErrTokenFields = 10002;
+
+        private byte[] GenerateErrorMessage(int code, string msg) 
+        {
+            return Encoding.UTF8.GetBytes(string.Format("{\"error_code\":{0}, \"msg\":\"{1}\"}", code, msg));
+        }
+
+        private async Task ProcessWebSocketFirstMessage(ISession session, Memory<byte> memory, int size)
+        {
+            // 一个包是一个JSON字符串
+            //1. 包含`open_id`, `server_id`, `timestamp`, `check_sum`
+            //2. 可选包含`actor_type`, `actor_id`
+            var sessionInfo = session.UserData;
+            var firstPacket = memory.DecodeFirstMessage(size);
+            if (firstPacket.ComputeHash("1234567890")) 
+            {
+                if (!(firstPacket.ContainsKey("open_id") && firstPacket.ContainsKey("server_id")))
+                {
+                    await session.SendMessage(GenerateErrorMessage(ErrCheckSum, "check sum fail")).ConfigureAwait(false);
+                    await session.CloseAsync().ConfigureAwait(false);
+                    return;
+                }
+
+                var OpenID = firstPacket["open_id"].ToString();
+                var ServerID = Convert.ToInt32(firstPacket["server_id"].ToString());
+
+                sessionInfo.OpenID = OpenID;
+                sessionInfo.GameServerID = ServerID;
+                this.logger.LogInformation("WebSocketSession Login, SessionID:{0}, OpenID:{1}, ServerID:{2}",
+                                            sessionInfo.SessionID, OpenID, ServerID);
+
+                //这边还要处理断线重来
+                if (firstPacket.ContainsKey("actor_type") && firstPacket.ContainsKey("actor_id"))
+                {
+                    await this.ProcessQuickConnect(session,
+                                                   sessionInfo,
+                                                   firstPacket["actor_type"].ToString(),
+                                                   firstPacket["actor_id"].ToString()).ConfigureAwait(false);
+                }
+                else 
+                {
+                    var body = new byte[size];
+                    memory.Span.Slice(0, size).CopyTo(body);
+                    sessionInfo.Token = body;
+
+                    //这边需要通过账号信息, 查找目标Actor的位置
+                    var position =  await this.FindActorPositionAsync(AccountService, RandomLoginServer.ToString()).ConfigureAwait(false);
+
+                    var req = new RpcMessage(new RequestAccountLogin()
+                    {
+                        OpenID = sessionInfo.OpenID,
+                        ServerID = sessionInfo.GameServerID,
+                        SessionID = session.SessionID,
+                    }, body);
+                    await this.messageCenter.SendMessageToServer(position.ServerID, req).ConfigureAwait(false);
+                }
+            }
+            else 
+            {
+                logger.LogInformation("ProcessWebSocketFirstMessage CheckSum Fail, SessionID:{0}", session.SessionID);
+                await session.SendMessage(GenerateErrorMessage(ErrCheckSum, "check sum fail")).ConfigureAwait(false);
+                await session.CloseAsync().ConfigureAwait(false);
+            }
         }
         private async Task ProcessWebSocketCommonMessage(ISession session, Memory<byte> memory, int size) 
         {

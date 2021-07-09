@@ -27,7 +27,6 @@ namespace Gateway.Network
         private readonly CancellationTokenSource cancellationTokenSource = new CancellationTokenSource();
         private readonly IMessageCenter messageCenter;
         private readonly ISessionInfo sessionInfo;
-        private readonly ClientMessageCodec codec = new ClientMessageCodec();
 
         public WebSocketSession(WebSocket webSocket, 
                                 string address,
@@ -49,13 +48,14 @@ namespace Gateway.Network
         {
             try
             {
-                if (this.cancellationTokenSource.IsCancellationRequested) 
+                if (this.cancellationTokenSource.IsCancellationRequested)
                     return;
                 this.cancellationTokenSource.Cancel();
 
                 this.logger.LogInformation("WebSocketSession:{0} Close, RemoteAddress:{1}", this.SessionID, this.RemoteAddress);
                 await this.webSocket.CloseAsync(WebSocketCloseStatus.Empty, "", CancellationToken.None).ConfigureAwait(false);
             }
+            catch { }
             finally
             {
                 await this.messageCenter.OnWebSocketClose(this).ConfigureAwait(false);
@@ -112,7 +112,7 @@ namespace Gateway.Network
                 var memory = buffer.Memory;
                 while (!this.cancellationTokenSource.IsCancellationRequested)
                 {
-                    try 
+                    try
                     {
                         var result = await this.webSocket.ReceiveAsync(memory, this.cancellationTokenSource.Token).ConfigureAwait(false);
                         if (result.MessageType == WebSocketMessageType.Close)
@@ -124,6 +124,12 @@ namespace Gateway.Network
 
                         await this.messageCenter.OnWebSocketMessage(this, memory, result.Count).ConfigureAwait(false);
 
+                    }
+                    catch (WebSocketException e) 
+                    {
+                        this.logger.LogWarning("WebSocketSession RecvLoop, SessionID:{0} WebSocketException:{1}", this.SessionID, e);
+                        await this.CloseAsync().ConfigureAwait(false);
+                        break;
                     }
                     catch (Exception e)
                     {
@@ -137,7 +143,11 @@ namespace Gateway.Network
 
         public async Task MainLoop()
         {
-            await Task.WhenAll(this.RecvLoop(), this.SendLoop());
+            try
+            {
+                await Task.WhenAll(this.RecvLoop(), this.SendLoop()).ConfigureAwait(false);
+            }
+            catch { }
         }
     }
 }

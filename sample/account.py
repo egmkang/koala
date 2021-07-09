@@ -5,6 +5,7 @@ from koala.message import RpcMessage, RequestAccountLogin, RequestSendMessageToS
 from koala.meta.rpc_meta import rpc_impl
 from koala.network.socket_session import SocketSession
 from koala.server.actor_base import ActorBase
+from koala.check_sum import message_check_sum
 from sample.interfaces import IAccount
 
 
@@ -19,14 +20,9 @@ async def process_gateway_account_login(session: SocketSession, msg: object):
     request = cast(RpcMessage, msg)
     req = cast(RequestAccountLogin, request.meta)
     body = request.body
-    body_message: dict = json_loads(body)
-    logger.info("process_gateway_account_login, SessionID:%s, OpenID:%s, ServerUD:%s , %s" %
-                (req.session_id, req.open_id, req.server_id, body_message))
-
-    meta = RequestSendMessageToSession()
-    meta.session_id = req.session_id
-    token = ("token, open_id:%s, server_id:%s" % (req.open_id, req.server_id)).encode()
-    await session.send_message(RpcMessage(meta=meta, body=token))
+    body_message, check_sum = message_check_sum(body, private_key="1234567890")
+    logger.info("process_gateway_account_login, SessionID:%s, OpenID:%s, ServerUD:%s , CheckSum:%s, %s" %
+                (req.session_id, req.open_id, req.server_id, check_sum, body_message))
 
     resp = ResponseAccountLogin()
     resp.session_id = req.session_id

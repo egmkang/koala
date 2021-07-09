@@ -4,8 +4,6 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Text.Json;
-using System.Text.Json.Serialization;
-using System.Threading.Tasks;
 using Gateway.Utils;
 
 namespace Gateway.Message
@@ -105,23 +103,6 @@ namespace Gateway.Message
                 msg = new RpcMessage(meta as RpcMeta, body);
                 return totalLength;
             }
-        }
-    }
-
-    class FirstMessage 
-    {
-        [JsonPropertyName("open_id")]
-        public string OpenID { get; set; }
-        [JsonPropertyName("server_id")]
-        public int ServerID { get; set; }
-    }
-
-    public class ClientMessageCodec 
-    {
-        public (string OpenID, int ServerID) Decode(Memory<byte> memory, int length) 
-        {
-            var message = JsonSerializer.Deserialize<FirstMessage>(memory.Span.Slice(0, length));
-            return (message.OpenID, message.ServerID);
         }
     }
 }
