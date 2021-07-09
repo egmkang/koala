@@ -207,7 +207,7 @@ namespace Gateway.Handler
                 }
 
                 var OpenID = firstPacket["open_id"].ToString();
-                var ServerID = Convert.ToInt32(firstPacket["serfver_id"].ToString());
+                var ServerID = Convert.ToInt32(firstPacket["server_id"].ToString());
 
                 sessionInfo.OpenID = OpenID;
                 sessionInfo.GameServerID = ServerID;
