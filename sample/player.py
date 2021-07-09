@@ -13,6 +13,10 @@ from sample.interfaces import IPlayer
 class Player(IPlayer, ActorBase):
     def __init__(self):
         super(Player, self).__init__()
+        self.__GC_TIME = 30
+
+    def gc_time(self) -> int:
+        return self.__GC_TIME
 
     async def on_new_session(self, msg: NotifyNewActorSession, body: bytes):
         await super(Player, self).on_new_session(msg, body)

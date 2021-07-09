@@ -10,12 +10,12 @@ from koala.server.actor_message_loop import _send_error_resp, \
                                             dispatch_actor_message,\
                                             run_actor_message_loop
 from koala.server.actor_base import *
-from koala.server.entity_manager import EntityManager
+from koala.server.actor_manager import ActorManager
 from koala.server.rpc_exception import RpcException
 from koala.placement.placement import get_placement_impl
 
 
-_entity_manager = EntityManager()
+_entity_manager = ActorManager()
 _last_process_time = time.time()
 
 

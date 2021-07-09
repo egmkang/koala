@@ -1,4 +1,5 @@
 import asyncio
+import time
 import traceback
 import weakref
 from koala.typing import *
@@ -38,6 +39,8 @@ async def _dispatch_actor_rpc_request(actor: ActorBase, session: SocketSession, 
         method = get_rpc_impl_method("%s.%s" % (req.service_name, req.method_name))
         if method is None:
             raise RpcException.method_not_found()
+
+        actor.context.last_message_time = time.time()
 
         result = method.__call__(actor, *req.args, **req.kwargs)
         if asyncio.iscoroutine(result):

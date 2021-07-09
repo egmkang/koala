@@ -1,3 +1,4 @@
+import time
 import traceback
 import weakref
 from abc import ABC
@@ -22,12 +23,16 @@ class ActorBase(ABC):
         self.__context: Optional[ActorContext] = None
         self.__socket_session: Optional[weakref.ReferenceType[SocketSession]] = None
         self.__timer_manager = ActorTimerManager(self.weak)
+        self.__GC_TIME = 30 * 60        # 默认GC超时时间是30分钟
         pass
 
     def _init_actor(self, uid: object, context: ActorContext):
         self.__uid = uid
         self.__context = context
         pass
+
+    def gc_time(self) -> int:
+        return self.__GC_TIME
 
     @property
     def type_name(self):
@@ -126,6 +131,9 @@ class ActorBase(ABC):
                 msg.tick()
             else:
                 await self.dispatch_user_message(msg)
+            # 定时器不能延长Actor的生命周期
+            if not isinstance(msg, ActorTimer):
+                self.context.last_message_time = time.time()
         except Exception as e:
             logger.error("Actor:%s/%s dispatch_message Exception:%s" % (self.type_name, self.uid, e))
 

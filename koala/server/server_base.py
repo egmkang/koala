@@ -14,11 +14,13 @@ from koala.server.rpc_message_dispatch import process_rpc_request, process_rpc_r
 from koala.server.gateway_message_dispatch import process_gateway_actor_session_aborted, \
     process_gateway_new_actor_message, process_gateway_new_actor_session, process_gateway_account_login
 from koala.server.rpc_request_id import set_request_id_seed
+from koala.server.actor_manager import ActorManager
 
 _socket_session_manager: SocketSessionManager = SocketSessionManager()
 _user_message_handler_map: Dict[MessageType, Callable[[SocketSession, object], Coroutine]] = {}
 _user_socket_close_handler_map: Dict[MessageType, Callable[[SocketSession], None]] = {}
 _tcp_server: TcpServer = TcpServer()
+_actor_manager = ActorManager()
 
 
 def register_user_handler(cls: MessageType, handler: Callable[[SocketSession, object], Coroutine]):
@@ -110,4 +112,5 @@ def run_server():
     _tcp_server.create_task(update_process_time())
     _tcp_server.create_task(_socket_session_manager.run())
     _tcp_server.create_task(_run_placement())
+    _tcp_server.create_task(_actor_manager.gc_loop())
     _tcp_server.run()

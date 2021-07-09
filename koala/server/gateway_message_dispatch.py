@@ -5,11 +5,11 @@ from koala.message import RpcMessage
 from koala.message.gateway import *
 from koala.placement.placement import get_placement_impl
 from koala.server.actor_base import *
-from koala.server.entity_manager import EntityManager
+from koala.server.actor_manager import ActorManager
 from koala.server.rpc_exception import RpcException
 from koala.server.actor_message_loop import run_actor_message_loop, dispatch_actor_message
 
-_entity_manager = EntityManager()
+_entity_manager = ActorManager()
 
 
 async def _dispatch_user_message_slow(session: SocketSession, actor_type: str, actor_id: str, msg: object):

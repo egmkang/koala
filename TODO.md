@@ -6,8 +6,8 @@ v0.4
 * [ ] storage
 * [ ] misc
 * [x] Actor Timer
-* [ ] client reconnect
-* [ ] Actor GC  
+* [x] client reconnect
+* [x] Actor GC  
 * [x] PD support host restart, remove specified server
 * [x] cluster client reconnect
 

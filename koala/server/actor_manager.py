@@ -1,4 +1,7 @@
+import asyncio
+import time
 from koala.typing import *
+from koala.logger import logger
 from koala.singleton import Singleton
 from koala.meta.rpc_meta import get_impl_type, get_interface_type
 from koala.server.rpc_exception import RpcException
@@ -18,9 +21,10 @@ def _new_actor(impl_type: ActorType, uid: object) -> ActorBase:
     return actor
 
 
-class EntityManager(Singleton):
+# 逻辑层不允许使用这个类
+class ActorManager(Singleton):
     def __init__(self):
-        super(EntityManager, self).__init__()
+        super(ActorManager, self).__init__()
         self.__dict: EntityDictType = dict()
 
     def get_entity(self, i_type: ActorType, uid: object) -> Optional[ActorBase]:
@@ -60,8 +64,27 @@ class EntityManager(Singleton):
             if not fn(d[key]):
                 break
 
-    # TODO
+    @classmethod
+    async def __gc_actors(cls, actors: Dict[object, ActorBase]):
+        current_time = time.time()
+        need_remove: List[Tuple[object, ActorBase]] = list()
+        for actor_id, actor in actors.items():
+            if current_time >= actor.context.last_message_time + actor.gc_time():
+                need_remove.append((actor_id, actor))
+        for actor_id, actor in need_remove:
+            await actor.context.push_message(None)
+            logger.info("gc_actors, Actor:%s/%s" % (actor.type_name, actor.uid))
+            actors.pop(actor_id)
+
     # 这边需要把很长时间没有活跃的actor给gc掉
-    def entity_gc_loop(self):
+    async def gc_loop(self):
+        while True:
+            await asyncio.sleep(60)
+            logger.trace("actor_gc_loop")
+            for actor_type in self.__dict:
+                try:
+                    await self.__gc_actors(self.__dict[actor_type])
+                except:
+                    pass
         pass
 
