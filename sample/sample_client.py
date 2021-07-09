@@ -5,6 +5,7 @@ import json
 import random
 import io
 import hashlib
+import random
 
 
 PRIVATE_KEY = "1234567890"
@@ -32,15 +33,23 @@ def message_compute_check_sum(message: dict, private_key: str, escape_key: str =
     return check_sum.hexdigest()
 
 
-def generate_token(open_id: str, server_id: int) -> bytes:
+def generate_token(open_id: str, server_id: int, actor_type: str = None, actor_id: str = None) -> bytes:
     d = {"open_id": open_id, "server_id": server_id}
+    if actor_type:
+        d["actor_type"] = actor_type
+    if actor_id:
+        d["actor_id"] = actor_id
     check_sum = message_compute_check_sum(d, private_key=PRIVATE_KEY)
     d["check_sum"] = check_sum
     return json.dumps(d).encode("utf-8")
 
 
 async def echo_client(address: str):
-    token = generate_token("open_id_1", 1)
+    if random.randint(0, 1000) % 2 == 0:
+        token = generate_token("open_id_1", 1)
+    else:
+        token = generate_token("open_id_2", 2, "IPlayer", "2")
+
     async with websockets.connect(address) as client:
         await client.send(token)
         token = await client.recv()

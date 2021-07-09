@@ -27,27 +27,29 @@ namespace Gateway
             }
         }
 
-        public static OrderedDictionary DecodeFirstMessage(this Memory<byte> memory, int size) 
+        public static Dictionary<string, string> DecodeFirstMessage(this Memory<byte> memory, int size) 
         {
             ReadOnlySpan<byte> span = memory.Span.Slice(0, size);
             return span.DecodeFirstMessage();
         }
 
-        public static OrderedDictionary DecodeFirstMessage(this ReadOnlySpan<byte> memory)
+        public static Dictionary<string, string> DecodeFirstMessage(this ReadOnlySpan<byte> memory)
         {
             var firstPacket = JsonConvert.DeserializeObject(Encoding.UTF8.GetString(memory)) as JObject;
-            var dict = new OrderedDictionary();
+            var dict = new Dictionary<string, string>();
             foreach (var (k, v) in firstPacket) 
             {
-                dict.Add(k.ToString(), v.ToString());
+                dict[k.ToString()] = v.ToString();
             }
             return dict;
         }
 
-        public static bool ComputeHash(this OrderedDictionary firstMessage, string privateKey, string checkSumKey = "check_sum") 
+        public static bool ComputeHash(this Dictionary<string, string> firstMessage, string privateKey, string checkSumKey = "check_sum") 
         {
             var sb = new StringBuilder(1024);
             var inputCheckSum = "";
+            var list = new List<(string, string)>(firstMessage.Count);
+
 
             foreach (var k in firstMessage.Keys) 
             {
@@ -56,8 +58,15 @@ namespace Gateway
                     inputCheckSum = firstMessage[k].ToString();
                     continue;
                 }
-                sb.Append(k.ToString());
-                sb.Append(firstMessage[k].ToString());
+                list.Add((k, firstMessage[k]));
+            }
+
+            list.Sort((x1, x2) => x1.Item1.CompareTo(x2.Item1));
+
+            foreach (var (k, v) in list) 
+            {
+                sb.Append(k);
+                sb.Append(v);
             }
 
             sb.Append(privateKey);

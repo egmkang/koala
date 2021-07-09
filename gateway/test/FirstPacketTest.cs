@@ -36,5 +36,19 @@ namespace test
 
             Assert.IsTrue(message.ComputeHash(privateKey));
         }
+
+        [TestMethod]
+        public void ComputeHash2() 
+        {
+            string privateKey = "1234567890";
+
+            var token = "{\"open_id\": \"open_id_2\", \"server_id\": 2, \"actor_type\": \"IPlayer\", \"actor_id\": \"2\", \"check_sum\": \"c5ae776e4c9e6aff985b34a77acb4296df2bd0a83fe65316132056353517bf26\"}";
+
+            ReadOnlySpan<byte> firstPacket = Encoding.UTF8.GetBytes(token);
+
+            var message = firstPacket.DecodeFirstMessage();
+
+            Assert.IsTrue(message.ComputeHash(privateKey));
+        }
     }
 }

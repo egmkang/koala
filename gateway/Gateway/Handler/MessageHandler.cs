@@ -199,7 +199,7 @@ namespace Gateway.Handler
             var firstPacket = memory.DecodeFirstMessage(size);
             if (firstPacket.ComputeHash("1234567890")) 
             {
-                if (!(firstPacket.Contains("open_id") && firstPacket.Contains("server_id")))
+                if (!(firstPacket.ContainsKey("open_id") && firstPacket.ContainsKey("server_id")))
                 {
                     await session.SendMessage(GenerateErrorMessage(ErrCheckSum, "check sum fail")).ConfigureAwait(false);
                     await session.CloseAsync().ConfigureAwait(false);
@@ -215,7 +215,7 @@ namespace Gateway.Handler
                                             sessionInfo.SessionID, OpenID, ServerID);
 
                 //这边还要处理断线重来
-                if (firstPacket.Contains("actor_type") && firstPacket.Contains("actor_id"))
+                if (firstPacket.ContainsKey("actor_type") && firstPacket.ContainsKey("actor_id"))
                 {
                     await this.ProcessQuickConnect(session,
                                                    sessionInfo,

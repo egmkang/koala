@@ -24,11 +24,6 @@ async def process_gateway_account_login(session: SocketSession, msg: object):
     logger.info("process_gateway_account_login, SessionID:%s, OpenID:%s, ServerUD:%s , CheckSum:%s, %s" %
                 (req.session_id, req.open_id, req.server_id, check_sum, body_message))
 
-    meta = RequestSendMessageToSession()
-    meta.session_id = req.session_id
-    token = ("token, open_id:%s, server_id:%s" % (req.open_id, req.server_id)).encode()
-    await session.send_message(RpcMessage(meta=meta, body=token))
-
     resp = ResponseAccountLogin()
     resp.session_id = req.session_id
     resp.actor_type = body_message.get("actor_type", "IPlayer")
