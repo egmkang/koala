@@ -41,5 +41,5 @@ class TestJsonMessage:
                 for k1, v1 in v.items():
                     if k1.startswith("_"):
                         assert False
-        pass
+        assert True
 

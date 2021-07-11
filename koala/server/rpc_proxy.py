@@ -1,8 +1,7 @@
 import asyncio
-from asyncio.futures import Future
 from koala.compact_pickle import pickle_dumps
 from koala.message.rpc_message import RpcMessage
-from koala.meta.rpc_meta import *
+from koala.rpc_meta import *
 from koala.message import RpcRequest
 from koala.server.rpc_exception import *
 from koala.server.rpc_future import *

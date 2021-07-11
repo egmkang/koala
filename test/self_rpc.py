@@ -2,9 +2,8 @@ import asyncio
 import random
 from koala.server import server_base
 from koala.server.actor_base import ActorBase
-from koala.meta.rpc_meta import *
+from koala.rpc_meta import *
 from koala.network.constant import CODEC_RPC
-from koala.network.socket_session import SocketSessionManager
 from koala.placement.placement import get_placement_impl, set_placement_impl
 from koala.pd.simple import SelfHostedPlacement
 from koala.server.rpc_proxy import get_rpc_proxy

@@ -3,7 +3,7 @@ import time
 from koala.typing import *
 from koala.logger import logger
 from koala.singleton import Singleton
-from koala.meta.rpc_meta import get_impl_type, get_interface_type
+from koala.rpc_meta import get_impl_type, get_interface_type
 from koala.server.rpc_exception import RpcException
 from koala.server.actor_base import ActorBase
 from koala.server.actor_context import ActorContext

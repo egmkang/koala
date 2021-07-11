@@ -4,4 +4,6 @@ from collections.abc import Coroutine
 
 T = TypeVar("T")
 MessageType = Type
-ActorID = Union[int, str]
+TypeID = Union[int, str]
+ActorID = TypeID
+Coroutine = Coroutine
