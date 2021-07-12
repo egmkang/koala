@@ -1,11 +1,10 @@
-from koala.meta.rpc_meta import rpc_impl
+from koala.rpc_meta import rpc_impl
 from koala.typing import *
 from koala.message import RpcMessage
-from koala.logger import logger
 from koala.message.gateway import NotifyNewActorMessage, RequestSendMessageToSession, NotifyNewActorSession
 from koala.server.actor_base import ActorBase
 from koala.check_sum import message_compute_check_sum
-from koala.json_util import json_loads, json_dumps
+from koala.json_util import json_dumps
 from sample.interfaces import IPlayer
 
 

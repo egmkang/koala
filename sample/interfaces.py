@@ -1,4 +1,4 @@
-from koala.meta.rpc_meta import rpc_interface
+from koala.rpc_meta import rpc_interface
 
 
 @rpc_interface

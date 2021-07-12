@@ -2,7 +2,7 @@ import time
 from typing import List, Dict
 from koala.singleton import Singleton
 from koala.local_ip import get_host_ip
-from koala.meta.rpc_meta import get_all_impl_types
+from koala.rpc_meta import get_all_impl_types
 
 
 def _get_registered_services() -> Dict[str, str]:

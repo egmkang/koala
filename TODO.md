@@ -3,7 +3,7 @@ TODO:
 
 v0.4 
 
-* [ ] storage
+* [x] storage
 * [ ] misc
 * [x] Actor Timer
 * [x] client reconnect

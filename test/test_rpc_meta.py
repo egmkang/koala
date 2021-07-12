@@ -1,5 +1,5 @@
 from abc import ABC, abstractmethod
-from koala.meta.rpc_meta import *
+from koala.rpc_meta import *
 
 
 @rpc_interface

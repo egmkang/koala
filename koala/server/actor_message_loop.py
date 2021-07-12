@@ -6,7 +6,7 @@ from koala.typing import *
 from koala.compact_pickle import pickle_dumps
 from koala.message import RpcResponse, RpcRequest
 from koala.message.rpc_message import RpcMessage
-from koala.meta.rpc_meta import get_rpc_impl_method
+from koala.rpc_meta import get_rpc_impl_method
 from koala.network.socket_session import SocketSession
 from koala.server.actor_base import ActorBase
 from koala.server.rpc_exception import RpcException, RPC_ERROR_UNKNOWN

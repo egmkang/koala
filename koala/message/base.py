@@ -1,6 +1,6 @@
 import dataclasses
 from koala.typing import *
-
+from koala.utils import to_dict
 
 JsonVar = TypeVar("JsonVar", bound='JsonMessage')
 __json_mapper: Dict[str, Any] = dict()
@@ -22,23 +22,6 @@ class JsonMeta(type):
         cls = type.__new__(mcs, class_name, class_parents, class_attr)
         register_model(cls)
         return cls
-
-
-def to_dict(obj):
-    if isinstance(obj, dict):
-        return {k: to_dict(v) for k, v in obj.items()}
-    elif hasattr(obj, "_ast"):
-        return to_dict(obj._ast())
-    elif hasattr(obj, "__dict__"):
-        return {
-            k: to_dict(v)
-            for k, v in obj.__dict__.items()
-            if not callable(v) and not k.startswith('_')
-        }
-    elif not isinstance(obj, str) and hasattr(obj, "__iter__"):
-        return [to_dict(v) for v in obj]
-    else:
-        return obj
 
 
 @dataclasses.dataclass
