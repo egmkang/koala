@@ -31,7 +31,7 @@ class RecordStorage(Generic[RecordType]):
         pass
 
 
-class IStorageEngine(ABC):
+class IStorageFactory:
     @abstractmethod
     def init_storage(self, *args, **kwargs):
         pass

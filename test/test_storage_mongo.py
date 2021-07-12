@@ -1,5 +1,5 @@
 import asyncio
-from koala.storage.storage_mongo import StorageMongo
+from koala.storage.storage_mongo import MongoStorageFactory
 import pytest
 import pytest_asyncio.plugin
 from koala.storage.storage import *
@@ -46,12 +46,6 @@ def test_meta_data():
     assert meta_2.key_info.key_type_2 == str
 
 
-def test_1():
-    a = TestRecord(uid="1", name="123456")
-    # print(a.to_dict())
-    assert True
-
-
 @pytest.mark.run(order=3)
 @pytest.mark.asyncio
 async def test_mongo_find():
@@ -68,7 +62,7 @@ async def test_mongo_find():
 async def test_mongo_upsert():
     _mongo_client = AsyncIOMotorClient(_connection_str)
     collection: AsyncIOMotorCollection = _mongo_client[_db_name]["test_table"]
-    result = await collection.update_one({"uid": 11}, {'$set': {"uid": 11, "name": "121212345678"}}, upsert=True)
+    result = await collection.update_one({"uid": 1}, {'$set': {"uid": 1, "name": "121212345678"}}, upsert=True)
     print(result)
     assert True
 
@@ -92,11 +86,13 @@ def pytest_sessionfinish(session, exitstatus):
     asyncio.get_event_loop().close()
 
 
+@pytest.mark.run(order=1)
+@pytest.mark.asyncio
 async def test_storage_mongo_update():
-    storage = StorageMongo()
-    storage.init_storage(connection_str=_connection_str, db=_db_name)
+    factory = MongoStorageFactory()
+    factory.init_storage(connection_str=_connection_str, db=_db_name)
 
-    record_storage = storage.get_storage(TestRecord)
+    record_storage = factory.get_storage(TestRecord)
 
     record = TestRecord(uid=10, name="1010010")
     result = await record_storage.insert_one(record)
@@ -104,35 +100,42 @@ async def test_storage_mongo_update():
     pass
 
 
+@pytest.mark.run(order=6)
+@pytest.mark.asyncio
 async def test_storage_mongo_delete():
-    await asyncio.sleep(1)
+    factory = MongoStorageFactory()
+    factory.init_storage(connection_str=_connection_str, db=_db_name)
 
-    storage = StorageMongo()
-    storage.init_storage(connection_str=_connection_str, db=_db_name)
-
-    test_record = storage.get_storage(TestRecord)
+    test_record = factory.get_storage(TestRecord)
     result = await test_record.delete_one(10)
     print(result)
     pass
 
 
+@pytest.mark.run(order=5)
+@pytest.mark.asyncio
 async def test_storage_mongo_find():
-    storage = StorageMongo()
-    storage.init_storage(connection_str=_connection_str, db=_db_name)
+    factory = MongoStorageFactory()
+    factory.init_storage(connection_str=_connection_str, db=_db_name)
 
-    test_record = storage.get_storage(TestRecord)
-    result = await test_record.find(1)
+    test_record = factory.get_storage(TestRecord)
+    result = await test_record.find(10)
     print(result)
+    assert len(result) > 0
     pass
+
+
+async def main():
+    await test_mongo_upsert()
+    await test_mongo_find()
+    await test_mongo_delete()
+
+    await test_storage_mongo_update()
+    await test_storage_mongo_find()
+    await test_storage_mongo_delete()
 
 
 if __name__ == "__main__":
     loop = asyncio.get_event_loop()
+    loop.run_until_complete(main())
 
-    loop.run_until_complete(test_mongo_find())
-    loop.run_until_complete(test_mongo_upsert())
-    # loop.run_until_complete(test_mongo_delete())
-
-    loop.run_until_complete(test_storage_mongo_find())
-    loop.run_until_complete(test_storage_mongo_update())
-    loop.run_until_complete(test_storage_mongo_delete())

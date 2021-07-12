@@ -62,7 +62,7 @@ class RecordStorageMongo(RecordStorage[RecordType]):
         return None
 
 
-class StorageMongo(IStorageEngine):
+class MongoStorageFactory(IStorageFactory):
     def __init__(self):
         self.connection_string = ""
         self.db_name = ""
