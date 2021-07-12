@@ -15,11 +15,11 @@ class RecordStorage(Generic[RecordType]):
         pass
 
     @abstractmethod
-    async def insert_one(self, record: Record) -> bool:
+    async def insert_one(self, record: RecordType) -> object:
         pass
 
     @abstractmethod
-    async def delete_one(self, record: Record) -> bool:
+    async def delete_one(self, key: TypeID, key2: Optional[TypeID] = None) -> object:
         pass
 
     @abstractmethod
