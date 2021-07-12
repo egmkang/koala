@@ -132,7 +132,8 @@ class PDPlacementImpl(Placement):
     def _on_remove_server(self, node: ServerNode):
         self._recent_added.remove(node.server_uid)
         try:
-            node.session.close()
+            if node.session:
+                node.session.close()
         except:
             pass
 

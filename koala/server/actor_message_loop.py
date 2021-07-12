@@ -34,12 +34,13 @@ async def _send_error_resp(session: SocketSession, request_id: int, e: Exception
     await session.send_message(resp)
 
 
-async def _dispatch_actor_rpc_request(actor: ActorBase, session: SocketSession, req: RpcRequest):
+async def _dispatch_actor_rpc_request(actor: ActorBase, session: Optional[SocketSession], req: RpcRequest):
     try:
         method = get_rpc_impl_method("%s.%s" % (req.service_name, req.method_name))
         if method is None:
             raise RpcException.method_not_found()
 
+        assert actor.context
         actor.context.last_message_time = time.time()
 
         result = method.__call__(actor, *req.args, **req.kwargs)
@@ -54,12 +55,15 @@ async def _dispatch_actor_rpc_request(actor: ActorBase, session: SocketSession, 
     except Exception as e:
         logger.error("_dispatch_actor_rpc_request, Actor:%s/%s, Exception:%s, StackTrace:%s" %
                      (actor.type_name, actor.uid, e, traceback.format_exc()))
-        await _send_error_resp(session, req.request_id, e)
+        if session:
+            await _send_error_resp(session, req.request_id, e)
 
 
 async def _dispatch_actor_message_in_loop(actor: ActorBase):
     loop_id = _new_loop_id()
     context = actor.context
+    assert context
+
     if context.loop_id != 0:
         return
     context.loop_id = loop_id
@@ -100,18 +104,20 @@ async def _dispatch_actor_message_in_loop(actor: ActorBase):
                      (actor.type_name, actor.uid, e, traceback.format_exc()))
 
     if context.loop_id == loop_id:
-        context.reentrant_id = None
+        context.reentrant_id = -1
         context.loop_id = 0
     logger.info("Actor:%s/%s loop:%d finished" % (actor.type_name, actor.uid, loop_id))
 
 
 def run_actor_message_loop(actor: ActorBase):
+    assert actor.context
     if actor.context.loop_id == 0:
         asyncio.create_task(_dispatch_actor_message_in_loop(actor))
     pass
 
 
 async def dispatch_actor_message(actor: ActorBase, session: SocketSession, msg: object):
+    assert actor.context
     if isinstance(msg, RpcRequest):
         req = cast(RpcRequest, msg)
         if actor.context.reentrant_id == req.reentrant_id:

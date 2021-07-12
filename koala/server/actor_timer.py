@@ -96,8 +96,10 @@ class ActorTimerManager:
 
     @property
     def actor_id(self) -> str:
+        from koala.server.actor_base import ActorBase
+
         if self._actor_id == "":
-            actor = self._weak_actor()
+            actor: ActorBase = cast(ActorBase, self._weak_actor())
             self._actor_id = "%s/%s" % (actor.type_name, actor.uid)
         return self._actor_id
 
@@ -131,5 +133,5 @@ class ActorTimerManager:
         for timer_id in remove_list:
             self.unregister_timer(timer_id)
         del self._dict
-        self._dict = None
+        self._dict = {}
 

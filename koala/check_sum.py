@@ -24,7 +24,7 @@ def message_compute_check_sum(message: dict, private_key: str, escape_key: str =
     return check_sum.hexdigest()
 
 
-def message_check_sum(raw_message: bytes, private_key: str, check_sum_key: str = "check_sum") -> (dict, bool):
+def message_check_sum(raw_message: bytes, private_key: str, check_sum_key: str = "check_sum") -> Tuple[dict, bool]:
     message: dict = json_loads(raw_message)
     input_check_sum = ""
     for (k, v) in message.items():

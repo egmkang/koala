@@ -48,7 +48,7 @@ async def process_gateway_account_login(session: SocketSession, msg: object):
     request = cast(RpcMessage, msg)
     req = cast(RequestAccountLogin, request.meta)
     body = request.body
-    body_message: dict = json_loads(body)
+    body_message: dict = json_loads(body if body else b"{}")
 
     resp = ResponseAccountLogin()
     resp.session_id = req.session_id

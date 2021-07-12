@@ -47,7 +47,7 @@ class ActorBase(ABC):
         return weakref.ref(self)
 
     @property
-    def context(self) -> ActorContext:
+    def context(self) -> Optional[ActorContext]:
         return self.__context
 
     def gateway_server_id(self, gateway_session_id: int) -> int:
@@ -87,9 +87,10 @@ class ActorBase(ABC):
 
     async def deactivate_async(self):
         try:
-            self.__timer_manager.unregister_all()
-            del self.__timer_manager
-            self.__timer_manager = None
+            if self.__timer_manager:
+                self.__timer_manager.unregister_all()
+                del self.__timer_manager
+                self.__timer_manager = None
         except Exception as e:
             logger.error("Actor.OnDeactivateAsync, Actor:%s/%s, Exception:%s, StackTrace:%s" %
                          (self.type_name, self.uid, e, traceback.format_exc()))
@@ -124,7 +125,7 @@ class ActorBase(ABC):
                 if isinstance(rpc_message.meta, NotifyNewActorMessage):
                     await self.dispatch_user_message(msg)
                 elif isinstance(rpc_message.meta, NotifyNewActorSession):
-                    await self.on_new_session(rpc_message.meta, rpc_message.body)
+                    await self.on_new_session(rpc_message.meta, rpc_message.body if rpc_message.body else b"{}")
                 elif isinstance(rpc_message.meta, NotifyActorSessionAborted):
                     await self.on_session_aborted(rpc_message.meta)
             elif isinstance(msg, ActorTimer):
@@ -132,7 +133,7 @@ class ActorBase(ABC):
             else:
                 await self.dispatch_user_message(msg)
             # 定时器不能延长Actor的生命周期
-            if not isinstance(msg, ActorTimer):
+            if not isinstance(msg, ActorTimer) and self.context:
                 self.context.last_message_time = time.time()
         except Exception as e:
             logger.error("Actor:%s/%s dispatch_message Exception:%s" % (self.type_name, self.uid, e))
@@ -162,12 +163,14 @@ class ActorBase(ABC):
         logger.info("Actor:%s/%s SessionID:%s aborted" % (self.type_name, self.uid, self.session_id))
         self.set_session_id(0)
 
-    def get_proxy(self, actor_type: Type[T], uid: object) -> T:
+    def get_proxy(self, actor_type: Type[T], uid: TypeID) -> T:
         o = get_rpc_proxy(actor_type, uid, self.context)
         return cast(T, o)
 
     def register_timer(self, interval: int, fn: Callable[[ActorTimer], None]) -> ActorTimer:
+        assert self.__timer_manager
         return self.__timer_manager.register_timer(interval, fn)
 
     def unregister_timer(self, timer_id: int):
+        assert self.__timer_manager
         return self.__timer_manager.unregister_timer(timer_id)

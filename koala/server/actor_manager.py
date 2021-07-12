@@ -1,5 +1,6 @@
 import asyncio
 import time
+from koala.server import actor_base
 from koala.typing import *
 from koala.logger import logger
 from koala.singleton import Singleton
@@ -9,11 +10,11 @@ from koala.server.actor_base import ActorBase
 from koala.server.actor_context import ActorContext
 
 
-ActorType = Type[ActorBase]
-EntityDictType = Dict[ActorType, Dict[object, ActorBase]]
+ActorType = TypeVar("ActorType", bound=ActorBase)
+EntityDictType = Dict[Type, Dict[object, ActorBase]]
 
 
-def _new_actor(impl_type: ActorType, uid: object) -> ActorBase:
+def _new_actor(impl_type: Type[ActorType], uid: object) -> ActorBase:
     if impl_type is None:
         raise Exception("ImplType is None")
     actor: ActorBase = impl_type()
@@ -27,7 +28,7 @@ class ActorManager(Singleton):
         super(ActorManager, self).__init__()
         self.__dict: EntityDictType = dict()
 
-    def get_entity(self, i_type: ActorType, uid: object) -> Optional[ActorBase]:
+    def get_entity(self, i_type: Type[ActorType], uid: object) -> Optional[ActorBase]:
         impl_type = get_impl_type(i_type)
         if impl_type in self.__dict:
             d = self.__dict[impl_type]
@@ -35,14 +36,14 @@ class ActorManager(Singleton):
                 return d[uid]
         return None
 
-    def get_or_new(self, i_type: ActorType, uid: object) -> ActorBase:
+    def get_or_new(self, i_type: Type[ActorType], uid: object) -> ActorBase:
         impl_type = get_impl_type(i_type)
         if impl_type not in self.__dict:
             self.__dict[impl_type] = dict()
         d = self.__dict[impl_type]
         if uid not in d:
             # create here
-            actor = _new_actor(impl_type, uid)
+            actor = _new_actor(cast(Type[ActorType], impl_type), uid)
             d[uid] = actor
             return actor
         return d[uid]
@@ -69,10 +70,11 @@ class ActorManager(Singleton):
         current_time = time.time()
         need_remove: List[Tuple[object, ActorBase]] = list()
         for actor_id, actor in actors.items():
-            if current_time >= actor.context.last_message_time + actor.gc_time():
+            if not actor.context or current_time >= actor.context.last_message_time + actor.gc_time():
                 need_remove.append((actor_id, actor))
         for actor_id, actor in need_remove:
-            await actor.context.push_message(None)
+            if actor.context:
+                await actor.context.push_message(None)
             logger.info("gc_actors, Actor:%s/%s" % (actor.type_name, actor.uid))
             actors.pop(actor_id)
 

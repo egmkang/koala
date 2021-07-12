@@ -11,6 +11,5 @@ def add_future(unique_id: int, future: Future):
 
 
 def get_future(request_id: int) -> Future:
-    future = __future_dict.pop(request_id, None)
+    future: Future = __future_dict.pop(request_id, None)
     return future
-
