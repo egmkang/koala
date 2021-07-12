@@ -1,10 +1,15 @@
 TODO:
 
+v0.5
+
+* [ ] misc
+* [ ] server config
+* [ ] sample
+
 
 v0.4 
 
 * [x] storage
-* [ ] misc
 * [x] Actor Timer
 * [x] client reconnect
 * [x] Actor GC  
