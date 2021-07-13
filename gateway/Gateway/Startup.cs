@@ -60,7 +60,8 @@ namespace Gateway
             var urls = this.Configuration["Urls"];
             var config = serviceProvider.GetRequiredService<IOptionsMonitor<GatewayConfiguration>>().CurrentValue;
             config.GatewayAddress = urls + config.WebSocketPath;
-            logger.LogInformation("GatewayConfig, PD: {0}", config.PlacementDriverAddress);
+            logger.LogInformation("GatewayConfig, PD: {0}, GatewayAddress: {1}, ListenAddress: {2}", 
+                                    config.PlacementDriverAddress, config.GatewayAddress, config.ListenAddress);
 
             this.PrepareGateway(serviceProvider);
             _ = this.RunGateway(serviceProvider, app, config);

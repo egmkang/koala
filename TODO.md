@@ -2,13 +2,14 @@ TODO:
 
 v0.5
 
-* [ ] http gateway
-* [ ] misc
-  * [x] ReadOnlyObject
+* [ ] Gateway
+  * [ ] http gateway
+  * [ ] WebSocketRateLimit
+  * [x] Gateway Config
 * [ ] doc
-* [ ] server config
-  * [ ] Gateway Config
-  * [ ] Host Config
+* [ ] Python Host
+  * [ ] Config
+  * [x] ReadOnlyObject
 * [ ] sample
   * [ ] message resent
 
