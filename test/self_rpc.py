@@ -1,3 +1,4 @@
+from abc import abstractmethod
 import asyncio
 import random
 from koala.server import server_base
@@ -13,6 +14,7 @@ from koala.logger import logger
 
 @rpc_interface
 class IService1:
+    @abstractmethod
     async def say_hello(self, hello: str) -> str:
         pass
 
@@ -25,6 +27,7 @@ class IService1:
 
 @rpc_interface
 class IService2:
+    @abstractmethod
     async def hello(self, my_id: object, times: int) -> str:
         pass
 
@@ -51,7 +54,7 @@ class Service2Impl(IService2, ActorBase):
     def __init__(self):
         super(Service2Impl, self).__init__()
 
-    async def hello(self, my_id: object, times: int) -> str:
+    async def hello(self, my_id: TypeID, times: int) -> str:
         proxy = self.get_proxy(IService1, my_id)
         return "hello world %d, reentrancy: %s" % (times, await proxy.reentrancy())
 
@@ -65,9 +68,11 @@ async def service_1():
 
 @rpc_interface
 class IBench:
+    @abstractmethod
     async def echo(self, e: str) -> str:
         pass
 
+    @abstractmethod
     async def run_timer(self, count: int):
         pass
 
@@ -86,7 +91,7 @@ class BenchImpl(IBench, ActorBase):
         def f(timer: ActorTimer):
             logger.info("timer, tick:%s" % timer.tick_count)
             if timer.tick_count >= count:
-                a = weak_actor()
+                a: BenchImpl = cast(BenchImpl, weak_actor())
                 a.unregister_timer(timer.timer_id)
         self.register_timer(1000, f)
 
@@ -94,7 +99,7 @@ class BenchImpl(IBench, ActorBase):
 finished = 0
 
 
-async def bench(index: object):
+async def bench(index: TypeID):
     global finished
     await asyncio.sleep(3)
     proxy = get_rpc_proxy(IBench, index)
@@ -103,7 +108,7 @@ async def bench(index: object):
         finished += 1
 
 
-async def run_timer(index: object):
+async def run_timer(index: TypeID):
     await asyncio.sleep(3)
     proxy = get_rpc_proxy(IBench, index)
     await proxy.run_timer(10)

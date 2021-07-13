@@ -6,9 +6,9 @@ from koala.message.base import JsonMessage
 @dataclasses.dataclass
 class RpcMessage:
     meta: JsonMessage
-    body: Optional[bytes] = None
+    body: bytes = b""
 
     @classmethod
-    def from_msg(cls, meta: JsonMessage, body: Optional[bytes] = None) -> 'RpcMessage':
+    def from_msg(cls, meta: JsonMessage, body: bytes = b"") -> 'RpcMessage':
         msg = RpcMessage(meta=meta, body=body)
         return msg

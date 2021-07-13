@@ -2,9 +2,12 @@ TODO:
 
 v0.5
 
+* [ ] http gateway
 * [ ] misc
+* [ ] doc
 * [ ] server config
 * [ ] sample
+  * [ ] message resent
 
 
 v0.4 

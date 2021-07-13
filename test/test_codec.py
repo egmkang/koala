@@ -21,7 +21,7 @@ class TestCodec:
         codec = CodecRpc()
         heart_beat = RequestHeartBeat()
         heart_beat.milli_seconds = 1212123
-        data = codec.encode(RpcMessage.from_msg(heart_beat, None))
+        data = codec.encode(RpcMessage.from_msg(heart_beat))
         decoded_msg = cast(RpcMessage, codec.decode(Buffer.from_bytes(data)))
         msg = cast(RequestHeartBeat, decoded_msg.meta)
         assert heart_beat.milli_seconds == msg.milli_seconds
@@ -37,6 +37,8 @@ class TestCodec:
         manager = CodecManager()
         rpc_input = RpcMessage.from_msg(RequestHeartBeat(), b"11223344556677889900")
         codec = manager.get_codec(CODEC_RPC)
+
+        assert codec
         data = codec.encode(rpc_input)
         msg = cast(RpcMessage, codec.decode(Buffer.from_bytes(data)))
         assert rpc_input.meta == msg.meta
@@ -44,6 +46,8 @@ class TestCodec:
 
         s = "11223344556677889900"
         codec = manager.get_codec(CODEC_ECHO)
+
+        assert codec
         data = codec.encode(s)
         msg = codec.decode(Buffer.from_bytes(data))
         assert s == msg

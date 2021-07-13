@@ -63,7 +63,7 @@ class CodecRpc(Codec):
 
     def encode(self, msg: object) -> bytes:
         if not isinstance(msg, RpcMessage):
-            msg = RpcMessage.from_msg(cast(JsonMessage, msg), None)
+            msg = RpcMessage.from_msg(cast(JsonMessage, msg))
         msg = cast(RpcMessage, msg)
         if msg is None:
             raise Exception("send a None msg")
