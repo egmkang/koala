@@ -9,8 +9,6 @@ using Gateway.Network;
 using Gateway.Placement;
 using Gateway.Utils;
 using Microsoft.Extensions.Logging;
-using Newtonsoft.Json;
-using Newtonsoft.Json.Linq;
 
 namespace Gateway.Handler
 {

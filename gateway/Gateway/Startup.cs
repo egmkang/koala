@@ -19,6 +19,7 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 
 namespace Gateway
 {
@@ -42,16 +43,31 @@ namespace Gateway
         public long ServerID { get; private set; }
         public long LeaseID { get; private set; }
 
+        public void ConfigureServices(IServiceCollection services)
+        {
+            services.Configure<GatewayConfiguration>((config) =>
+            {
+                Configuration.GetSection("Gateway").Bind(config);
+            });
+            services.ConfigureServices();
+        }
+
         public void Configure(IApplicationBuilder app, IWebHostEnvironment env, IServiceProvider serviceProvider)
         {
+            this.loggerFactory = serviceProvider.GetRequiredService<ILoggerFactory>();
+            this.logger = this.loggerFactory.CreateLogger("Gateway");
+
+            var urls = this.Configuration["Urls"];
+            var config = serviceProvider.GetRequiredService<IOptionsMonitor<GatewayConfiguration>>().CurrentValue;
+            config.GatewayAddress = urls + config.WebSocketPath;
+            logger.LogInformation("GatewayConfig, PD: {0}", config.PlacementDriverAddress);
+
             this.PrepareGateway(serviceProvider);
-            _ = this.RunGateway(serviceProvider, app);
+            _ = this.RunGateway(serviceProvider, app, config);
         }
 
         public void PrepareGateway(IServiceProvider serviceProvider) 
         {
-            this.loggerFactory = serviceProvider.GetRequiredService<ILoggerFactory>();
-            this.logger = this.loggerFactory.CreateLogger("Gateway");
             this.sessionManager = serviceProvider.GetRequiredService<SessionManager>();
             this.messageCenter = serviceProvider.GetRequiredService<IMessageCenter>();
             this.clientConnectionPool = serviceProvider.GetRequiredService<ClientConnectionPool>();
@@ -63,35 +79,32 @@ namespace Gateway
             this.placement.RegisterServerChangedEvent(this.OnAddServer, this.OnRemoveServer, this.OnOfflineServer);
         }
 
-        public async Task RunGateway(IServiceProvider serviceProvider, IApplicationBuilder app) 
+        public async Task RunGateway(IServiceProvider serviceProvider, IApplicationBuilder app, GatewayConfiguration config) 
         {
-            var interval = 5;
-            var port = 15000;
-            var address = "127.0.0.1:15000";
-            var wsPath = "/ws";
-            var placementAddress = "http://10.1.1.192:2379";
+            var port = Convert.ToInt32(config.ListenAddress.Split(':').Last());
 
             this.PrepareGateway(serviceProvider);
-            this.placement.SetPlacementServerInfo(placementAddress);
+            this.placement.SetPlacementServerInfo(config.PlacementDriverAddress);
 
             _ = this.ListenSocketAsync(serviceProvider, port);
-            this.ListenWebSocket(app, serviceProvider, wsPath);
+            this.ListenWebSocket(app, serviceProvider, config.WebSocketPath);
 
             try
             {
                 ServerID = await this.placement.GenerateServerIDAsync();
                 this.sessionUniqueSequence.SetServerID(ServerID);
 
-                this.logger.LogInformation("GetServerID, ServerID:{0}, Address:{1}", ServerID, address);
+                this.logger.LogInformation("GetServerID, ServerID:{0}, Address:{1}", ServerID, config.ListenAddress);
 
                 LeaseID = await this.placement.RegisterServerAsync(new PlacementActorHostInfo()
                 {
                     ServerID = ServerID,
-                    Address = address,
+                    Address = config.ListenAddress,
                     StartTime = Platform.GetMilliSeconds(),
-                    TTL = interval * 3,
+                    TTL = config.KeepAliveInterval * 3,
                     Desc = $"Gateway_{ServerID}",
                     Services = new Dictionary<string, string>() { { "IGateway", "GatewayImpl" } },
+                    Labels = new Dictionary<string, string>() { { "GatewayAddress" , config.GatewayAddress} },
                 });
                 this.logger.LogInformation("RegisterServer Success, LeaseID:{0}", LeaseID);
             }

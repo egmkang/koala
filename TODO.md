@@ -4,8 +4,11 @@ v0.5
 
 * [ ] http gateway
 * [ ] misc
+  * [x] ReadOnlyObject
 * [ ] doc
 * [ ] server config
+  * [ ] Gateway Config
+  * [ ] Host Config
 * [ ] sample
   * [ ] message resent
 
