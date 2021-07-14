@@ -2,18 +2,17 @@ from koala.conf.config import Config
 import yaml
 
 _config = Config()
-CONFIG_FILE = "./app.yaml"
 
 
-def _load_config() -> dict:
-    with open(CONFIG_FILE, 'r') as file:
+def _load_config(file_name: str) -> dict:
+    with open(file_name, 'r') as file:
         data = file.read()
         yaml_config = yaml.full_load(data)
         return yaml_config
 
 
-def load_config():
-    server_config = _load_config()
+def load_config(file_name: str):
+    server_config = _load_config(file_name)
     if "port" in server_config:
         _config.set_port(int(server_config["port"]))
     else:

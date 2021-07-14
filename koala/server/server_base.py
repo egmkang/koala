@@ -1,4 +1,5 @@
 import asyncio
+from koala.network.constant import CODEC_RPC
 import time
 import traceback
 from koala.typing import *
@@ -67,7 +68,6 @@ def _init_internal_message_handler():
     register_user_handler(NotifyNewActorMessage, process_gateway_new_actor_message)
     # 在这边可以初始化内置的消息处理器
     # 剩下的消息可以交给用户自己去处理
-
     event_handler.register_message_handler(_message_handler)
     event_handler.register_socket_close_handler(_socket_close_handler)
     pass
@@ -95,13 +95,17 @@ async def _run_placement():
 
 def init_server():
     _init_internal_message_handler()
-    _time_offset_of = 1612333986  # 随便找了一个世间戳, 可以减小request id序列化的大小
+    _time_offset_of = 1626245658    # 随便找了一个世间戳, 可以减小request id序列化的大小
     set_request_id_seed(int(time.time() - _time_offset_of))
     init_logger(None, "DEBUG")
 
 
 def listen(port: int, codec_id: int):
     _tcp_server.create_task(_tcp_server.listen(port, codec_id))
+
+
+def listen_rpc(port: int):
+    _tcp_server.create_task(_tcp_server.listen(port, CODEC_RPC))
 
 
 def create_task(co):

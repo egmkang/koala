@@ -2,6 +2,6 @@ port: 15001
 ip: "127.0.0.1"
 ttl: 15
 log_name: "host"
-log_level: "DEBUG"
+log_level: "INFO"
 pd_address: "http://10.1.1.192:2379"
 

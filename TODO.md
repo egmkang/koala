@@ -8,7 +8,7 @@ v0.5
   * [x] Gateway Config
 * [ ] doc
 * [ ] Python Host
-  * [ ] Config
+  * [x] Config
   * [ ] logger
   * [x] ReadOnlyObject
 * [ ] sample
@@ -20,7 +20,7 @@ v0.4
 * [x] storage
 * [x] Actor Timer
 * [x] client reconnect
-* [x] Actor GC  
+* [x] Actor GC
 * [x] PD support host restart, remove specified server
 * [x] cluster client reconnect
 

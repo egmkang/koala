@@ -7,6 +7,7 @@ from koala.logger import init_logger
 import sample.interfaces
 import sample.player
 from sample.account import *
+import os
 
 
 _config = Config()
@@ -23,10 +24,10 @@ def init_server():
 
 
 def run_server():
-    server_base.listen(_config.port, CODEC_RPC)
+    server_base.listen_rpc(_config.port)
     server_base.run_server()
 
 
-load_config()
+load_config(f"{os.getcwd()}/sample/app.yaml")
 init_server()
 run_server()
