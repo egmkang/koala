@@ -18,8 +18,8 @@ def find_model(name: str) -> Optional[Type['JsonMessage']]:
 
 
 class JsonMeta(type):
-    def __new__(mcs, class_name, class_parents, class_attr):
-        cls = type.__new__(mcs, class_name, class_parents, class_attr)
+    def __new__(cls, class_name, class_parents, class_attr):
+        cls = type.__new__(cls, class_name, class_parents, class_attr)
         register_model(cls)
         return cls
 
