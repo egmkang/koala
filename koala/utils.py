@@ -1,6 +1,6 @@
 
 
-def to_dict(obj) -> dict:
+def to_dict(obj):
     if isinstance(obj, dict):
         return {k: to_dict(v) for k, v in obj.items()}
     elif hasattr(obj, "_ast"):

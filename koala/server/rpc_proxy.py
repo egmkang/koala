@@ -66,7 +66,7 @@ class _RpcMethodObject(object):
 
 
 class _RpcProxyObject(object):
-    def __init__(self, i_type: Type[T], uid: TypeID, context: Optional[ActorContext]):
+    def __init__(self, i_type: Type, uid: TypeID, context: Optional[ActorContext]):
         self.service_name = i_type.__qualname__
         self.uid = uid
         self.context = None

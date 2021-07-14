@@ -9,13 +9,13 @@ from motor.motor_asyncio import AsyncIOMotorClient, AsyncIOMotorCollection, Asyn
 
 
 @record_meta("test_table", "uid")
-class TestRecord(Record):
+class RecordTestTable(Record):
     uid: int
     name: str
 
 
 @record_meta("test_table2", "unique_id", "pid")
-class TestRecord2(Record):
+class RecordTestTable2(Record):
     unique_id: str
     pid: str
     name: str
@@ -26,8 +26,8 @@ _db_name = "koala_db"
 
 
 def test_meta_data():
-    meta_1 = get_record_meta(TestRecord)
-    meta_2 = get_record_meta(TestRecord2)
+    meta_1 = get_record_meta(RecordTestTable)
+    meta_2 = get_record_meta(RecordTestTable2)
 
     assert meta_1
 
@@ -92,9 +92,9 @@ async def test_storage_mongo_update():
     factory = MongoStorageFactory()
     factory.init_storage(connection_str=_connection_str, db=_db_name)
 
-    record_storage = factory.get_storage(TestRecord)
+    record_storage = factory.get_storage(RecordTestTable)
 
-    record = TestRecord(uid=10, name="1010010")
+    record = RecordTestTable(uid=10, name="1010010")
     result = await record_storage.insert_one(record)
     print(result)
     pass
@@ -106,7 +106,7 @@ async def test_storage_mongo_delete():
     factory = MongoStorageFactory()
     factory.init_storage(connection_str=_connection_str, db=_db_name)
 
-    test_record = factory.get_storage(TestRecord)
+    test_record = factory.get_storage(RecordTestTable)
     result = await test_record.delete_one(10)
     print(result)
     pass
@@ -118,7 +118,7 @@ async def test_storage_mongo_find():
     factory = MongoStorageFactory()
     factory.init_storage(connection_str=_connection_str, db=_db_name)
 
-    test_record = factory.get_storage(TestRecord)
+    test_record = factory.get_storage(RecordTestTable)
     result = await test_record.find(10)
     print(result)
     assert len(result) > 0

@@ -1,14 +1,14 @@
 from koala.typing import *
 
 
-__interface_set = set()
-__interface_name_map = dict()
-__impl_map = dict()
-__impl_name_map = dict()
-__impl_method = dict()
+__interface_set: Set[Type] = set()
+__interface_name_map: Dict[str, Type] = dict()
+__impl_map: Dict[Type, Type] = dict()
+__impl_name_map: Dict[str, Type] = dict()
+__impl_method: Dict[str, Callable] = dict()
 
 
-def rpc_interface(cls: T) -> T:
+def rpc_interface(cls: Type[T]) -> Type[T]:
     __interface_set.add(cls)
     __interface_name_map[cls.__qualname__] = cls
     return cls
@@ -18,13 +18,13 @@ def is_interface(cls) -> bool:
     return cls in __interface_set
 
 
-def get_interface_type(interface_name: str) -> Optional[T]:
+def get_interface_type(interface_name: str) -> Optional[Type]:
     if interface_name in __interface_name_map:
         return __interface_name_map[interface_name]
 
 
 def rpc_impl(*interfaces):
-    def f(impl: T) -> T:
+    def f(impl: Type[T]) -> Type[T]:
         for interface in interfaces:
             __impl_map[interface] = impl
             __impl_name_map[interface.__qualname__] = impl

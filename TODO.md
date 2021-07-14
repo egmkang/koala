@@ -9,6 +9,7 @@ v0.5
 * [ ] doc
 * [ ] Python Host
   * [ ] Config
+  * [ ] logger
   * [x] ReadOnlyObject
 * [ ] sample
   * [ ] message resent

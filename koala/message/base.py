@@ -31,4 +31,4 @@ class JsonMessage(metaclass=JsonMeta):
         return cls(**kwargs)
 
     def to_dict(self) -> dict:
-        return to_dict(self)
+        return cast(dict, to_dict(self))

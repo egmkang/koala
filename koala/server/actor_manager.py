@@ -57,7 +57,7 @@ class ActorManager(Singleton):
     # (ActorBase) -> Bool
     # true继续遍历
     # false中断
-    def map(self, i_type: Type[T], fn: Callable[[ActorBase], bool]):
+    def map(self, i_type: Type, fn: Callable[[ActorBase], bool]):
         if i_type not in self.__dict:
             return
         d: Dict[object, ActorBase] = self.__dict[i_type]
