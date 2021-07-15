@@ -12,7 +12,7 @@ v0.5
   * [x] logger
   * [x] ReadOnlyObject
   * [x] PrivateKey
-  * [ ] PD Address
+  * [x] PD Address
 * [ ] sample
   * [ ] message resent
 

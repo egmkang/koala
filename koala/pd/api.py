@@ -8,10 +8,20 @@ ResultType = TypeVar("ResultType", bound='PDResponse')
 
 __PD_ADDRESS = "http://127.0.0.1:2379"
 
+PD_VERSION_URL = f"{__PD_ADDRESS}/pd/api/v1/version"
+PD_ID_NEW_SERVER_URL = f"{__PD_ADDRESS}/pd/api/v1/id/new_server_id"
+PD_ID_NEW_SEQUENCE_URL = f"{__PD_ADDRESS}/pd/api/v1/id/new_sequence"
+PD_MEMBERSHIP_REGISTER_URL = f"{__PD_ADDRESS}/pd/api/v1/membership/register"
+PD_MEMBERSHIP_DELETE_URL = f"{__PD_ADDRESS}/pd/api/v1/membership/delete"
+PD_MEMBERSHIP_KEEP_ALIVE_URL = f"{__PD_ADDRESS}/pd/api/v1/membership/keep_alive"
+PD_PLACEMENT_FIND_POSITION_URL = f"{__PD_ADDRESS}/pd/api/v1/placement/find_position"
+
 
 #
 # 请求和返回的定义
 #
+
+
 class PDResponse(BaseModel):
     error_code: int = 0
     error_msg: str = ""
@@ -110,26 +120,41 @@ async def __request(url: str, args: Optional[dict]) -> Tuple[int, bytes]:
 
 def set_pd_address(address: str):
     global __PD_ADDRESS
+    global PD_VERSION_URL, PD_ID_NEW_SERVER_URL, PD_ID_NEW_SEQUENCE_URL, PD_MEMBERSHIP_REGISTER_URL, PD_MEMBERSHIP_DELETE_URL
+    global PD_MEMBERSHIP_KEEP_ALIVE_URL, PD_PLACEMENT_FIND_POSITION_URL
+
+    old_address = __PD_ADDRESS
     if address[-1] == '/':
         address = address[:-1]
     __PD_ADDRESS = address
+
+    PD_VERSION_URL = PD_VERSION_URL.replace(old_address, __PD_ADDRESS)
+    PD_ID_NEW_SERVER_URL = PD_ID_NEW_SERVER_URL.replace(
+        old_address, __PD_ADDRESS)
+    PD_ID_NEW_SEQUENCE_URL = PD_ID_NEW_SEQUENCE_URL.replace(
+        old_address, __PD_ADDRESS)
+    PD_MEMBERSHIP_REGISTER_URL = PD_MEMBERSHIP_REGISTER_URL.replace(
+        old_address, __PD_ADDRESS)
+    PD_MEMBERSHIP_DELETE_URL = PD_MEMBERSHIP_DELETE_URL.replace(
+        old_address, __PD_ADDRESS)
+    PD_MEMBERSHIP_KEEP_ALIVE_URL = PD_MEMBERSHIP_KEEP_ALIVE_URL.replace(
+        old_address, __PD_ADDRESS)
+    PD_PLACEMENT_FIND_POSITION_URL = PD_PLACEMENT_FIND_POSITION_URL.replace(
+        old_address, __PD_ADDRESS)
     pass
 
 
 async def get_version() -> VersionResponse:
-    PD_VERSION_URL = f"{__PD_ADDRESS}/pd/api/v1/version"
     code, body = await __request(PD_VERSION_URL, None)
     return __format_result(code, body, VersionResponse)
 
 
 async def new_server_id() -> NewServerIdResponse:
-    PD_ID_NEW_SERVER_URL = f"{__PD_ADDRESS}/pd/api/v1/id/new_server_id"
     code, body = await __request(PD_ID_NEW_SERVER_URL, None)
     return __format_result(code, body, NewServerIdResponse)
 
 
 async def new_sequence_id(key: str, step: int = 512) -> NewSequenceIdResponse:
-    PD_ID_NEW_SEQUENCE_URL = f"{__PD_ADDRESS}/pd/api/v1/id/new_sequence"
     url = "%s/%s/%d" % (PD_ID_NEW_SEQUENCE_URL, key, step)
     code, body = await __request(url, None)
     return __format_result(code, body, NewSequenceIdResponse)
@@ -145,7 +170,6 @@ async def register_server(server_id: int, start_time: int, ttl: int, address: st
                                    load=load,
                                    services=services)
 
-    PD_MEMBERSHIP_REGISTER_URL = f"{__PD_ADDRESS}/pd/api/v1/membership/register"
     code, body = await __request(PD_MEMBERSHIP_REGISTER_URL, req.dict())
     return __format_result(code, body, RegisterNewServerResponse)
 
@@ -153,24 +177,23 @@ async def register_server(server_id: int, start_time: int, ttl: int, address: st
 async def delete_server(server_id: int, address: str) -> DeleteServerResponse:
     req = DeleteServerRequest(server_id=server_id, address=address)
 
-    PD_MEMBERSHIP_DELETE_URL = f"{__PD_ADDRESS}/pd/api/v1/membership/delete"
     code, body = await __request(PD_MEMBERSHIP_DELETE_URL, req.dict())
     return __format_result(code, body, DeleteServerResponse)
 
 
 async def keep_alive(server_id: int, lease_id: int, load: int) -> KeepAliveServerResponse:
-    req = KeepAliveServerRequest(server_id=server_id, load=load, lease_id=lease_id)
+    req = KeepAliveServerRequest(
+        server_id=server_id, load=load, lease_id=lease_id)
 
-    PD_MEMBERSHIP_KEEP_ALIVE_URL = f"{__PD_ADDRESS}/pd/api/v1/membership/keep_alive"
     code, body = await __request(PD_MEMBERSHIP_KEEP_ALIVE_URL, req.dict())
     result = __format_result(code, body, KeepAliveServerResponse)
     return result
 
 
 async def find_actor_position(actor_type: str, actor_id: str, ttl: int) -> FindActorPositionResponse:
-    req = FindActorPositionRequest(actor_type=actor_type, actor_id=actor_id, ttl=ttl)
+    req = FindActorPositionRequest(
+        actor_type=actor_type, actor_id=actor_id, ttl=ttl)
 
-    PD_PLACEMENT_FIND_POSITION_URL = f"{__PD_ADDRESS}/pd/api/v1/placement/find_position"
     code, body = await __request(PD_PLACEMENT_FIND_POSITION_URL, req.dict())
     return __format_result(code, body, FindActorPositionResponse)
 
@@ -189,6 +212,5 @@ if __name__ == "__main__":
         f1 = await find_actor_position("ITest", "1", 0)
         print(f1.__class__, f1)
         pass
-
 
     asyncio.run(main())
