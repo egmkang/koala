@@ -31,6 +31,10 @@ def load_config(file_name: str):
         return
     if "log_level" in server_config:
         _config.set_log_level(server_config["log_level"])
+    if "console_log" in server_config:
+        enable = bool(server_config["console_log"])
+        if not enable:
+            _config.disable_console_log()
     if "pd_address" in server_config:
         _config.set_pd_address(server_config["pd_address"])
     if "private_key" in server_config:

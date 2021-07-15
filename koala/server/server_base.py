@@ -16,12 +16,17 @@ from koala.server.gateway_message_dispatch import process_gateway_actor_session_
     process_gateway_new_actor_message, process_gateway_new_actor_session, process_gateway_account_login
 from koala.server.rpc_request_id import set_request_id_seed
 from koala.server.actor_manager import ActorManager
+from koala.conf.config import Config
+
 
 _socket_session_manager: SocketSessionManager = SocketSessionManager()
-_user_message_handler_map: Dict[MessageType, Callable[[SocketSession, object], Coroutine]] = {}
-_user_socket_close_handler_map: Dict[MessageType, Callable[[SocketSession], None]] = {}
+_user_message_handler_map: Dict[MessageType,
+                                Callable[[SocketSession, object], Coroutine]] = {}
+_user_socket_close_handler_map: Dict[MessageType,
+                                     Callable[[SocketSession], None]] = {}
 _tcp_server: TcpServer = TcpServer()
 _actor_manager = ActorManager()
+_config = Config()
 
 
 def register_user_handler(cls: MessageType, handler: Callable[[SocketSession, object], Coroutine]):
@@ -33,7 +38,8 @@ def register_user_handler(cls: MessageType, handler: Callable[[SocketSession, ob
 
 def register_user_socket_closed_handler(cls: MessageType, handler: Callable[[SocketSession], None]):
     if cls in _user_socket_close_handler_map:
-        logger.warning("register_user_socket_close_handler, Type:%s exists" % str(cls))
+        logger.warning(
+            "register_user_socket_close_handler, Type:%s exists" % str(cls))
     _user_socket_close_handler_map[cls] = handler
     pass
 
@@ -41,9 +47,11 @@ def register_user_socket_closed_handler(cls: MessageType, handler: Callable[[Soc
 async def _message_handler(session: SocketSession, clz: Type, msg: object):
     t = clz
     if t not in _user_message_handler_map:
-        logger.error("process user message, Type:%s not found a processor" % str(t))
+        logger.error(
+            "process user message, Type:%s not found a processor" % str(t))
         return
-    handler: Callable[[SocketSession, object], Coroutine] = _user_message_handler_map[t]
+    handler: Callable[[SocketSession, object],
+                      Coroutine] = _user_message_handler_map[t]
     await handler(session, msg)
 
 
@@ -63,9 +71,12 @@ def _init_internal_message_handler():
     register_user_handler(ResponseHeartBeat, process_heartbeat_response)
     # 网关消息和集群内的消息
     register_user_handler(RequestAccountLogin, process_gateway_account_login)
-    register_user_handler(NotifyNewActorSession, process_gateway_new_actor_session)
-    register_user_handler(NotifyActorSessionAborted, process_gateway_actor_session_aborted)
-    register_user_handler(NotifyNewActorMessage, process_gateway_new_actor_message)
+    register_user_handler(NotifyNewActorSession,
+                          process_gateway_new_actor_session)
+    register_user_handler(NotifyActorSessionAborted,
+                          process_gateway_actor_session_aborted)
+    register_user_handler(NotifyNewActorMessage,
+                          process_gateway_new_actor_message)
     # 在这边可以初始化内置的消息处理器
     # 剩下的消息可以交给用户自己去处理
     event_handler.register_message_handler(_message_handler)
@@ -89,15 +100,17 @@ async def _run_placement():
             await impl.placement_loop()
         except Exception as e:
             await asyncio.sleep(1.0)
-            logger.error("run placement fail, Exception:%s, StackTrace:%s" % (e, traceback.format_exc()))
+            logger.error("run placement fail, Exception:%s, StackTrace:%s" % (
+                e, traceback.format_exc()))
     pass
 
 
 def init_server():
+    init_logger(_config.log_name, _config.log_level, not _config.console_log)
+
     _init_internal_message_handler()
     _time_offset_of = 1626245658    # 随便找了一个世间戳, 可以减小request id序列化的大小
     set_request_id_seed(int(time.time() - _time_offset_of))
-    init_logger(None, "DEBUG")
 
 
 def listen(port: int, codec_id: int):

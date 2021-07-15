@@ -1,5 +1,5 @@
 FROM ubuntu:latest
-MAINTAINER egmkang "egmkang@outlook.com"
+LABEL koala.authors "egmkang@outlook.com"
 
 ENV TZ=Asia/Shanghai DEBIAN_FRONTEND=noninteractive
 

@@ -9,9 +9,10 @@ v0.5
 * [ ] doc
 * [ ] Python Host
   * [x] Config
-  * [ ] logger
+  * [x] logger
   * [x] ReadOnlyObject
   * [x] PrivateKey
+  * [ ] PD Address
 * [ ] sample
   * [ ] message resent
 

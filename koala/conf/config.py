@@ -19,10 +19,11 @@ class Config(Singleton):
         self._desc = ""
         self._start_time = int(time.time() * 1000)
         self._ttl = 15
-        self._log_file_name = ""
+        self._log_file_name = "HOST"
         self._log_level = "DEBUG"
         self._pd_address = ""
         self._private_key = ""
+        self._console_log = True
         pass
 
     def set_port(self, port: int):
@@ -104,3 +105,10 @@ class Config(Singleton):
     @property
     def private_key(self) -> str:
         return self._private_key
+
+    @property
+    def console_log(self) -> bool:
+        return self._console_log
+
+    def disable_console_log(self):
+        self._console_log = False
