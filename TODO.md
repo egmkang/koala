@@ -7,6 +7,9 @@ v0.5
   * [ ] WebSocketRateLimit
   * [x] Gateway Config
 * [ ] doc
+  * [x] roadmap
+  * [ ] desgin
+  * [ ] protocol
 * [ ] Python Host
   * [x] Config
   * [x] logger
