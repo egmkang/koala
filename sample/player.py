@@ -5,7 +5,11 @@ from koala.message.gateway import NotifyNewActorMessage, RequestSendMessageToSes
 from koala.server.actor_base import ActorBase
 from koala.check_sum import message_compute_check_sum
 from koala.json_util import json_dumps
+from koala.conf.config import Config
 from sample.interfaces import IPlayer
+
+
+_config = Config()
 
 
 @rpc_impl(IPlayer)
@@ -19,8 +23,10 @@ class Player(IPlayer, ActorBase):
 
     async def on_new_session(self, msg: NotifyNewActorSession, body: bytes):
         await super(Player, self).on_new_session(msg, body)
-        token_message = {'open_id': msg.open_id, "server_id": msg.server_id, "actor_type": "IPlayer", "actor_id": self.uid}
-        check_sum = message_compute_check_sum(token_message, private_key="1234567890")
+        token_message = {'open_id': msg.open_id, "server_id": msg.server_id,
+                         "actor_type": "IPlayer", "actor_id": self.uid}
+        check_sum = message_compute_check_sum(
+            token_message, private_key=_config.private_key)
         token_message["check_sum"] = check_sum
 
         meta = RequestSendMessageToSession()
@@ -41,4 +47,3 @@ class Player(IPlayer, ActorBase):
         meta = RequestSendMessageToSession()
         meta.session_id = self.session_id
         await self.send_message(RpcMessage(meta=meta, body=body))
-

@@ -44,6 +44,10 @@ namespace Gateway.Handler
             this.RegisterHandler<RequestHeartBeat>(this.ProcessRequestHeartBeat);
             this.RegisterHandler<ResponseHeartBeat>(this.ProcessResponseHeartBeat);
         }
+
+        public string AuthService { get; set; }
+        public string PrivateKey { get; set; }
+
         private void RegisterHandler<T>(Func<ISession, T, byte[], Task> func) where T : RpcMeta
         {
             MessageCallback f = (session, msg, body) => func(session, msg as T, body);
@@ -144,7 +148,6 @@ namespace Gateway.Handler
         // 1000这个量级的并发度应该就够用了
         static readonly Random random = new Random();
         private static int RandomLoginServer => random.Next(0, 1024 * 2);
-        public static readonly string AccountService = "IAccount";
         private static ThreadLocal<PlacementFindActorPositionRequest> findActorRequestCache = new ThreadLocal<PlacementFindActorPositionRequest>(() => new PlacementFindActorPositionRequest());
 
         private async Task<PlacementFindActorPositionResponse> FindActorPositionAsync(string actorType, string actorID) 
@@ -195,7 +198,7 @@ namespace Gateway.Handler
             //2. 可选包含`actor_type`, `actor_id`
             var sessionInfo = session.UserData;
             var firstPacket = memory.DecodeFirstMessage(size);
-            if (firstPacket.ComputeHash("1234567890")) 
+            if (firstPacket.ComputeHash(this.PrivateKey)) 
             {
                 if (!(firstPacket.ContainsKey("open_id") && firstPacket.ContainsKey("server_id")))
                 {
@@ -227,7 +230,7 @@ namespace Gateway.Handler
                     sessionInfo.Token = body;
 
                     //这边需要通过账号信息, 查找目标Actor的位置
-                    var position =  await this.FindActorPositionAsync(AccountService, RandomLoginServer.ToString()).ConfigureAwait(false);
+                    var position =  await this.FindActorPositionAsync(this.AuthService, RandomLoginServer.ToString()).ConfigureAwait(false);
 
                     var req = new RpcMessage(new RequestAccountLogin()
                     {

@@ -63,11 +63,11 @@ namespace Gateway
             logger.LogInformation("GatewayConfig, PD: {0}, GatewayAddress: {1}, ListenAddress: {2}", 
                                     config.PlacementDriverAddress, config.GatewayAddress, config.ListenAddress);
 
-            this.PrepareGateway(serviceProvider);
+            this.PrepareGateway(serviceProvider, config);
             _ = this.RunGateway(serviceProvider, app, config);
         }
 
-        public void PrepareGateway(IServiceProvider serviceProvider) 
+        public void PrepareGateway(IServiceProvider serviceProvider, GatewayConfiguration config) 
         {
             this.sessionManager = serviceProvider.GetRequiredService<SessionManager>();
             this.messageCenter = serviceProvider.GetRequiredService<IMessageCenter>();
@@ -75,7 +75,10 @@ namespace Gateway
             this.placement = serviceProvider.GetRequiredService<IPlacement>();
             this.sessionUniqueSequence = serviceProvider.GetRequiredService<SessionUniqueSequence>();
             this.clientConnectionPool.MessageCenter = messageCenter;
-            serviceProvider.GetRequiredService<MessageHandler>();
+
+            var messageHandler = serviceProvider.GetRequiredService<MessageHandler>();
+            messageHandler.PrivateKey = config.PrivateKey;
+            messageHandler.AuthService = config.AuthService;
 
             this.placement.RegisterServerChangedEvent(this.OnAddServer, this.OnRemoveServer, this.OnOfflineServer);
         }
@@ -84,7 +87,6 @@ namespace Gateway
         {
             var port = Convert.ToInt32(config.ListenAddress.Split(':').Last());
 
-            this.PrepareGateway(serviceProvider);
             this.placement.SetPlacementServerInfo(config.PlacementDriverAddress);
 
             _ = this.ListenSocketAsync(serviceProvider, port);

@@ -4,4 +4,5 @@ ttl: 15
 log_name: "host"
 log_level: "INFO"
 pd_address: "http://10.1.1.192:2379"
+private_key: "1234567890"
 

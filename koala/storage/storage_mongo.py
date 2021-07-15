@@ -29,7 +29,8 @@ class RecordStorageMongo(RecordStorage[RecordType]):
 
         if key_info.key_name_2:
             name_2 = key_info.key_name
-            mongo_filter[name_2] = {'$eq': record.get(name_2) if record else key}
+            mongo_filter[name_2] = {
+                '$eq': record.get(name_2) if record else key}
             assert mongo_filter[name_2]
         return mongo_filter
 
@@ -69,7 +70,7 @@ class MongoStorageFactory(IStorageFactory):
         self.mongo: Optional[AsyncIOMotorClient] = None
         pass
 
-    def init_storage(self, *args, **kwargs):
+    def init_factory(self, *args, **kwargs):
         self.connection_string = kwargs.get("connection_str")
         self.db_name = kwargs.get("db")
         self.mongo = AsyncIOMotorClient(self.connection_string)

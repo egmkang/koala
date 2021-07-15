@@ -11,6 +11,7 @@ v0.5
   * [x] Config
   * [ ] logger
   * [x] ReadOnlyObject
+  * [x] PrivateKey
 * [ ] sample
   * [ ] message resent
 

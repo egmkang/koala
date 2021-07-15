@@ -27,5 +27,13 @@ namespace Gateway
         /// 网关的地址
         /// </summary>
         public string GatewayAddress { get; set; }
+        /// <summary>
+        /// 后端实现认证的服务, 默认是IAccount
+        /// </summary>
+        public string AuthService { get; set; }
+        /// <summary>
+        /// 认证的私钥
+        /// </summary>
+        public string PrivateKey { get; set; }
     }
 }

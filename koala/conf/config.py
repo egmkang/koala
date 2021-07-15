@@ -22,6 +22,7 @@ class Config(Singleton):
         self._log_file_name = ""
         self._log_level = "DEBUG"
         self._pd_address = ""
+        self._private_key = ""
         pass
 
     def set_port(self, port: int):
@@ -96,3 +97,10 @@ class Config(Singleton):
 
     def set_pd_address(self, address: str):
         self._pd_address = address
+
+    def set_private_key(self, key: str):
+        self._private_key = key
+
+    @property
+    def private_key(self) -> str:
+        return self._private_key

@@ -86,11 +86,11 @@ def pytest_sessionfinish(session, exitstatus):
     asyncio.get_event_loop().close()
 
 
-@pytest.mark.run(order=1)
+@pytest.mark.run(order=4)
 @pytest.mark.asyncio
 async def test_storage_mongo_update():
     factory = MongoStorageFactory()
-    factory.init_storage(connection_str=_connection_str, db=_db_name)
+    factory.init_factory(connection_str=_connection_str, db=_db_name)
 
     record_storage = factory.get_storage(RecordTestTable)
 
@@ -104,7 +104,7 @@ async def test_storage_mongo_update():
 @pytest.mark.asyncio
 async def test_storage_mongo_delete():
     factory = MongoStorageFactory()
-    factory.init_storage(connection_str=_connection_str, db=_db_name)
+    factory.init_factory(connection_str=_connection_str, db=_db_name)
 
     test_record = factory.get_storage(RecordTestTable)
     result = await test_record.delete_one(10)
@@ -116,7 +116,7 @@ async def test_storage_mongo_delete():
 @pytest.mark.asyncio
 async def test_storage_mongo_find():
     factory = MongoStorageFactory()
-    factory.init_storage(connection_str=_connection_str, db=_db_name)
+    factory.init_factory(connection_str=_connection_str, db=_db_name)
 
     test_record = factory.get_storage(RecordTestTable)
     result = await test_record.find(10)
@@ -138,4 +138,3 @@ async def main():
 if __name__ == "__main__":
     loop = asyncio.get_event_loop()
     loop.run_until_complete(main())
-

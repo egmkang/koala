@@ -30,14 +30,16 @@ class RecordStorage(Generic[RecordType]):
     async def find_one(self, key1: TypeID) -> Optional[RecordType]:
         pass
 
+    def __repr__(self) -> str:
+        return "RecordStorage: %s" % self.table_name
+
 
 class IStorageFactory:
     @abstractmethod
-    def init_storage(self, *args, **kwargs):
+    def init_factory(self, *args, **kwargs):
         pass
 
     @abstractmethod
     def get_storage(self, record_type: Type[RecordType]) -> RecordStorage[RecordType]:
         pass
     pass
-

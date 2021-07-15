@@ -33,5 +33,7 @@ def load_config(file_name: str):
         _config.set_log_level(server_config["log_level"])
     if "pd_address" in server_config:
         _config.set_pd_address(server_config["pd_address"])
+    if "private_key" in server_config:
+        _config.set_private_key(server_config["private_key"])
     print(server_config)
     pass
