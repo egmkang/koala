@@ -8,7 +8,7 @@ v0.5
   * [x] Gateway Config
 * [ ] doc
   * [x] roadmap
-  * [ ] desgin
+  * [x] desgin
   * [ ] protocol
 * [ ] Python Host
   * [x] Config

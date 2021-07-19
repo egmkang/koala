@@ -109,7 +109,7 @@ def init_server():
     init_logger(_config.log_name, _config.log_level, not _config.console_log)
 
     _init_internal_message_handler()
-    _time_offset_of = 1626245658    # 随便找了一个世间戳, 可以减小request id序列化的大小
+    _time_offset_of = 1626245658    # 随便找了一个时间戳, 可以减小request id序列化的大小
     set_request_id_seed(int(time.time() - _time_offset_of))
 
 
