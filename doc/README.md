@@ -1,14 +1,16 @@
 # Koala
 
+## 设计
 `koala`的设计目标是实现:
 
 * virtual actor model
 * persistence storage
 * placement
 * gateway
+* heterogeneous system
 
 
-## Virtual Actor Model
+### Virtual Actor Model
 
 该模式最早出现在[Orleans](https://www.microsoft.com/en-us/research/project/orleans-virtual-actors/)中.
 
@@ -22,9 +24,9 @@ async def hello(self, my_id: TypeID, times: int) -> str:
     return "hello world %d, reentrancy: %s" % (times, await proxy.reentrancy())
 ```
 
-大量使用TypeHints, 上例中`proxy`对象具有`IService1`类型, 提供较好的编程体验.
+大量使用`TypeHints`, 上例中`proxy`对象具有`IService1`类型, 提供较好的编程体验.
 
-## persistence storage
+### persistence storage
 
 `Koala`在持久化方便面的做法和`Orleans`不太一样. Orleans的持久化状态会把所有的状态放到一个对象. 通常游戏服务的状态会比较大, 将整个对象去load/store成本会比较高. 所以`Koala`希望降低这方面的粒度.
 
@@ -46,7 +48,7 @@ record = RecordTestTable(uid=10, name="1010010")
 result = await record_storage.insert_one(record)
 ```
 
-## placement
+### placement
 
 所有的有状态服务, 都会有placement或者类似的概念.
 
@@ -58,10 +60,32 @@ result = await record_storage.insert_one(record)
 
 `Koala` Placement的本质是一个带权重的随机算法(只不过有持久化缓存).
 
-## gateway
+### gateway
 
 `Orleans`缺失这部分功能, 他只是提供了`GrainClient`和`Observers`.
 
 由于`Koala`整个框架都是私有实现, 所以在私有实现上添加一个`Gateway`就会变得非常轻松. 甚至还可以做到消息从Gateway1进来, 到了Host1, 然后Host2, 最后再冲Gateway1里面发给客户端.
 
 `Gateway`和Host通讯的协议, 沿用了RPC协议.
+
+### Heterogeneous System
+
+由于某些方面的原因, pd的实现没有更好的选择, 现在golang在共识算法方面能提供的工业级实现和生态是最好的, 所以`Koala` PD用golang + etcd embed来实现, 所以异构从最开始就是需要解决的问题.
+
+其中PD服务器的通讯协议是HTTP + JSON, 所以跨平台和语言问题不大.
+
+Gateway和Host通讯, 沿用了Host内部的RPC协议. 单单Gateway和Host之间的通讯, 是跨平台和语言的.
+
+Host和Host通讯, 使用了自己实现的RPC协议, 其中Meta部分是跨平台和语言的, 但是参数的序列化不是. 目前Koala RPC的参数序列化用了`pickle`, 所以Python版本的Host只能和Python通讯.
+
+由于还有一个C#版本的, 那个版本的也只能和C#版本的通讯, 但是Gateway和PD是通用的.
+
+总之, 这是一个`有限的异构系统`.
+
+## 使用 
+
+TODO
+
+## 适用场景
+
+TODO
