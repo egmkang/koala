@@ -9,7 +9,7 @@ v0.5
 * [ ] doc
   * [x] roadmap
   * [x] desgin
-  * [ ] protocol
+  * [x] protocol
 * [ ] Python Host
   * [x] Config
   * [x] logger

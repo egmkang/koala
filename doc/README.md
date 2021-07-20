@@ -134,8 +134,8 @@ Gateway和Host通讯, 沿用了Host内部的RPC协议. 单单Gateway和Host之�
 
 Host和Host通讯, 使用了自己实现的RPC协议, 其中Meta部分是跨平台和语言的, 但是参数的序列化不是. 目前Koala RPC的参数序列化用了`pickle`, 所以Python版本的Host只能和Python通讯.
 
-由于还有一个C#版本的, 那个版本的也只能和C#版本的通讯, 但是Gateway和PD是通用的.
+由于还有一个C#版本的, 那个版本的也只能和C#版本的通讯.
 
-总之, 这是一个`有限的异构系统`.
+这是一个`有限的异构系统`.
 
 
