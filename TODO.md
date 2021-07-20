@@ -7,6 +7,7 @@ v0.5
   * [ ] WebSocketRateLimit
   * [x] Gateway Config
 * [ ] doc
+  * [ ] README
   * [x] roadmap
   * [x] desgin
   * [x] protocol
