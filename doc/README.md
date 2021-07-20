@@ -27,7 +27,35 @@ Koala是一个`VirtualActor`模式的框架, `VirtualActor`模式可以帮你解
 
   ![混合模式](pic/hosts_1.png)
 
-  ![单独模式](pic/hosts_2.png)
+* 拥有较高的性能
+  
+  Python3 + asyncio可以提供大概1W/s的吞吐量(test目录下self_rpc).
+
+  考虑到Python3从3.10开始要优化性能, 计划未来四五年内性能提升五倍, 所以未来Koala会有更好的吞吐量, 这方面会做持续性的优化.
+
+
+## 使用 
+
+### 使用整个Koala框架
+
+使用整个框架(包含Gateway, PD和Koala Framework), 可以看sample目录下这个简单的sample.
+
+Gateway上接收到的第一个包是`一个包含校验信息的json`字符串. Actor的宿主进程, 需要实现对`Gateway首包的校验`, 以及返回Gateway后续包需要发给哪个Actor. Sample例子中, 所有的包都会转发给`IPlayer/1`这个对象. 用户可以根据首包自行决定对象如何划分.
+
+`Player`对象的`dispatch_user_message`函数, 就可以处理网关发来的消息.
+
+`IPlayer`接口添加新的接口函数, 或者添加新的接口对象, 就可以处理对象与对象之间的交互.
+
+### 只是使用VirtualActor模式
+
+首先, 添加`接口`, 例如sample中的`IPlayer`; 然后实现这个接口, 例如sample中的`Player`对象. 由于没有网关来输入消息, 只有被动的接受RPC请求, 所以不需要重写`dispatch_user_message`函数.
+
+随后就可以通过`get_rpc_proxy`来获取到proxy来访问该对象了.
+```python
+proxy = get_rpc_proxy(IPlayer, "1")
+await proxty.echo("1212")
+```
+
 ## 设计
 `koala`的设计目标是实现:
 
@@ -110,6 +138,4 @@ Host和Host通讯, 使用了自己实现的RPC协议, 其中Meta部分是跨平�
 
 总之, 这是一个`有限的异构系统`.
 
-## 使用 
 
-TODO
