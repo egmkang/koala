@@ -4,7 +4,7 @@ v0.5
 
 * [ ] Gateway
   * [ ] http gateway
-  * [ ] WebSocketRateLimit
+  * [x] WebSocketRateLimit
   * [x] Gateway Config
 * [x] doc
   * [x] README
@@ -18,7 +18,6 @@ v0.5
   * [x] PrivateKey
   * [x] PD Address
 * [ ] sample
-  * [ ] message resent
 
 
 v0.4 

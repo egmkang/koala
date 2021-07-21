@@ -126,6 +126,8 @@ def create_task(co):
 
 
 def run_server():
+    if _config.port:
+        listen_rpc(_config.port)
     _tcp_server.create_task(update_process_time())
     _tcp_server.create_task(_socket_session_manager.run())
     _tcp_server.create_task(_run_placement())

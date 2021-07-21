@@ -110,6 +110,8 @@ namespace Gateway.Network
             using (var buffer = MemoryPool<byte>.Shared.Rent(RecvBufferSize))
             {
                 var memory = buffer.Memory;
+                var rateLimit = new WebSocketRateLimit();
+
                 while (!this.cancellationTokenSource.IsCancellationRequested)
                 {
                     try
@@ -121,9 +123,14 @@ namespace Gateway.Network
                             await this.CloseAsync().ConfigureAwait(false);
                             break;
                         }
-
+                        if (rateLimit.Inc() > WebSocketRateLimit.Limit) 
+                        {
+                            this.logger.LogError("WebSocketSession RecvLoop, SessionID:{0} WebSocketRateLimit:{1}/{2}", 
+                                                this.SessionID, rateLimit.GetCurrentCount(), WebSocketRateLimit.Limit);
+                            await this.CloseAsync().ConfigureAwait(false);
+                            break;
+                        } 
                         await this.messageCenter.OnWebSocketMessage(this, memory, result.Count).ConfigureAwait(false);
-
                     }
                     catch (WebSocketException e) 
                     {

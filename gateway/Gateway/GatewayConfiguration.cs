@@ -35,5 +35,10 @@ namespace Gateway
         /// 认证的私钥
         /// </summary>
         public string PrivateKey { get; set; }
+        /// <summary>
+        /// WebSocket收包频率限制
+        /// 0表示不限制频率
+        /// </summary>
+        public int WebSocketRateLimit { get; set; }
     }
 }

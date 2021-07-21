@@ -21,7 +21,6 @@ def init_server():
 
 
 def run_server():
-    server_base.listen_rpc(_config.port)
     server_base.run_server()
 
 

@@ -63,6 +63,8 @@ namespace Gateway
             logger.LogInformation("GatewayConfig, PD: {0}, GatewayAddress: {1}, ListenAddress: {2}", 
                                     config.PlacementDriverAddress, config.GatewayAddress, config.ListenAddress);
 
+            WebSocketRateLimit.Limit = config.WebSocketRateLimit;
+
             this.PrepareGateway(serviceProvider, config);
             _ = this.RunGateway(serviceProvider, app, config);
         }
