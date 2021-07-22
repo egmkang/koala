@@ -1,9 +1,16 @@
 TODO:
 
+v0.6
+
+* [ ] http gateway
+* [ ] rpc meta info(去掉装饰器)
+* [ ] build script
+* [ ] sample
+
+
 v0.5
 
-* [ ] Gateway
-  * [ ] http gateway
+* [x] Gateway
   * [x] WebSocketRateLimit
   * [x] Gateway Config
 * [x] doc
@@ -11,13 +18,12 @@ v0.5
   * [x] roadmap
   * [x] desgin
   * [x] protocol
-* [ ] Python Host
+* [x] Python Host
   * [x] Config
   * [x] logger
   * [x] ReadOnlyObject
   * [x] PrivateKey
   * [x] PD Address
-* [ ] sample
 
 
 v0.4 

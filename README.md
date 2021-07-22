@@ -40,13 +40,11 @@ class PlayerImpl(IPlayer, AcrorBase):
 这时候就可以去拿到`IPlayer`的proxy对象, 去异步的执行RPC.
 ```python
 # 1
-
 proxy = get_rpc_proxy(IPlayer, "1")
 echo_response = await proxy.echo("111222")
 print(echo_response)    # 这里就会打印111222
 
 # 2
-
 class XXXActor(XXX, ActorBase):
     ...
     async def func(self):
