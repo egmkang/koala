@@ -1,12 +1,9 @@
-from koala.rpc_meta import rpc_interface
+from koala.server.actor_interface import ActorInterface
 
 
-@rpc_interface
-class IAccount:
+class IAccount(ActorInterface):
     pass
 
 
-@rpc_interface
-class IPlayer:
+class IPlayer(ActorInterface):
     pass
-

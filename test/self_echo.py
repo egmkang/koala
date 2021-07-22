@@ -33,7 +33,7 @@ async def client():
     pass
 
 
-server_base.init_server()
+server_base.init_server(globals())
 server_base.register_user_handler(str, echo_handler)
 server_base.listen(5555, codec_id)
 

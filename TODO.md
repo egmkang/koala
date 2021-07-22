@@ -4,6 +4,7 @@ v0.6
 
 * [ ] http gateway
 * [ ] rpc meta info(去掉装饰器)
+* [ ] pd mongo storage
 * [ ] build script
 * [ ] sample
 
