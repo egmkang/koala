@@ -19,8 +19,7 @@ Actor的生命周期由Runtime控制, 用户不需要手动控制Actor的资源�
 有一个`IPlayer`接口, 有一个`echo`函数.
 
 ```python
-@rpc_interface
-class IPlayer:
+class IPlayer(ActorInterface):
     @abstractmethod
     async def echo(self, hello: str) -> str:
         pass
@@ -28,8 +27,7 @@ class IPlayer:
 
 然后`PlayerImpl`类实现了`IPlayer`接口, 这就是`IPlayer`对象真正执行的逻辑.
 ```python
-@rpc_impl(IPlayer)
-class PlayerImpl(IPlayer, AcrorBase):
+class PlayerImpl(IPlayer, ActorBase):
     def __init__(self):
         super(PlayerImpl, self).__init__()
 
@@ -45,7 +43,7 @@ echo_response = await proxy.echo("111222")
 print(echo_response)    # 这里就会打印111222
 
 # 2
-class XXXActor(XXX, ActorBase):
+class XXXActor(XXXInterface, ActorBase):
     ...
     async def func(self):
         proxy = self.get_proxy(IPlayer, "2")
