@@ -1,9 +1,11 @@
 from abc import ABC, abstractmethod
-from koala.rpc_meta import *
+from koala import server
+from koala.server.rpc_meta import *
+from koala.server.actor_interface import ActorInterface
+from koala.server.actor_base import ActorBase
 
 
-@rpc_interface
-class Interface1(ABC):
+class Interface1(ActorInterface):
     @abstractmethod
     def f1(self):
         pass
@@ -13,8 +15,7 @@ class Interface1(ABC):
         pass
 
 
-@rpc_interface
-class Interface2(ABC):
+class Interface2(ActorInterface):
     @abstractmethod
     def f3(self):
         pass
@@ -24,23 +25,21 @@ class Interface2(ABC):
         pass
 
 
-@rpc_interface
-class Interface3(ABC):
+class Interface3(ActorInterface):
     @abstractmethod
     def f5(self):
         pass
 
 
-@rpc_interface
-class Interface4(ABC):
+class Interface4(ActorInterface):
     @abstractmethod
     def f6(self):
         pass
 
 
-@rpc_impl(Interface1)
-class Impl1(Interface1):
+class Impl1(Interface1, ActorBase):
     def __init__(self):
+        super(Impl1, self).__init__()
         pass
 
     def f1(self):
@@ -50,9 +49,9 @@ class Impl1(Interface1):
         pass
 
 
-@rpc_impl(Interface2)
-class Impl2(Interface2):
+class Impl2(Interface2, ActorBase):
     def __init__(self):
+        super(Impl2, self).__init__()
         pass
 
     def f3(self):
@@ -62,10 +61,9 @@ class Impl2(Interface2):
         pass
 
 
-@rpc_impl(Interface3)
-@rpc_impl(Interface4)
-class ImplMix(Interface3, Interface4):
+class ImplMix(Interface3, Interface4, ActorBase):
     def __init__(self):
+        super(ImplMix, self).__init__()
         pass
 
     def f5(self):
@@ -75,16 +73,19 @@ class ImplMix(Interface3, Interface4):
         pass
 
 
-class TestInterfaceMap(object):
-    def test_interface(self):
-        assert is_interface(Interface1)
-        assert is_interface(Interface2)
-        assert is_interface(Interface3)
-        assert not is_interface(str)
+build_meta_info(globals().copy())
 
-    def test_impl(self):
-        assert get_impl_type(Interface1) == Impl1
-        assert get_impl_type(Interface2) == Impl2
-        assert get_impl_type(Interface3) == ImplMix
-        assert get_impl_type(Interface4) == ImplMix
-        assert get_impl_type(str) is None
+
+def test_interface():
+    assert is_interface(Interface1)
+    assert is_interface(Interface2)
+    assert is_interface(Interface3)
+    # assert not is_interface(str)
+
+
+def test_impl():
+    assert get_impl_type(Interface1) == Impl1
+    assert get_impl_type(Interface2) == Impl2
+    assert get_impl_type(Interface3) == ImplMix
+    assert get_impl_type(Interface4) == ImplMix
+    assert get_impl_type(str) is None

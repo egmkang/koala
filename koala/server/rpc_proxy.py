@@ -1,7 +1,7 @@
 import asyncio
 from koala.compact_pickle import pickle_dumps
 from koala.message.rpc_message import RpcMessage
-from koala.rpc_meta import *
+from koala.server.rpc_meta import *
 from koala.message import RpcRequest
 from koala.server.rpc_exception import *
 from koala.server.rpc_future import *
@@ -37,7 +37,8 @@ class _RpcMethodObject(object):
 
         session = position.session
         if session is None:
-            raise Exception("Target Server Not Valid, ServerUID: %d" % position.server_uid)
+            raise Exception("Target Server Not Valid, ServerUID: %d" %
+                            position.server_uid)
 
         req = RpcRequest()
         req.request_id = new_request_id()
@@ -82,7 +83,8 @@ class _RpcProxyObject(object):
             reentrant_id = ctx.reentrant_id
         else:
             reentrant_id = new_reentrant_id()
-        method = _RpcMethodObject(self.service_name, self.uid, name, reentrant_id)
+        method = _RpcMethodObject(
+            self.service_name, self.uid, name, reentrant_id)
         return method
 
 

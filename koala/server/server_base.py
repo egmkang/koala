@@ -1,4 +1,5 @@
 import asyncio
+from koala.server.rpc_meta import build_meta_info
 from koala.network.constant import CODEC_RPC
 import time
 import traceback
@@ -105,9 +106,10 @@ async def _run_placement():
     pass
 
 
-def init_server():
+def init_server(globals_dict: dict):
     init_logger(_config.log_name, _config.log_level, not _config.console_log)
 
+    build_meta_info(globals_dict)
     _init_internal_message_handler()
     _time_offset_of = 1626245658    # 随便找了一个时间戳, 可以减小request id序列化的大小
     set_request_id_seed(int(time.time() - _time_offset_of))

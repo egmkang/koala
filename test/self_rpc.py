@@ -2,8 +2,9 @@ from abc import abstractmethod
 import asyncio
 import random
 from koala.server import server_base
+from koala.server.actor_interface import ActorInterface
 from koala.server.actor_base import ActorBase
-from koala.rpc_meta import *
+from koala.server.rpc_meta import *
 from koala.network.constant import CODEC_RPC
 from koala.placement.placement import get_placement_impl, set_placement_impl
 from koala.pd.simple import SelfHostedPlacement
@@ -12,8 +13,7 @@ from koala.server.actor_timer import ActorTimer
 from koala.logger import logger
 
 
-@rpc_interface
-class IService1:
+class IService1(ActorInterface):
     @abstractmethod
     async def say_hello(self, hello: str) -> str:
         pass
@@ -25,14 +25,12 @@ class IService1:
         pass
 
 
-@rpc_interface
-class IService2:
+class IService2(ActorInterface):
     @abstractmethod
     async def hello(self, my_id: object, times: int) -> str:
         pass
 
 
-@rpc_impl(IService1)
 class Service1Impl(IService1, ActorBase):
     def __init__(self):
         super(Service1Impl, self).__init__()
@@ -49,7 +47,6 @@ class Service1Impl(IService1, ActorBase):
         return self.uid
 
 
-@rpc_impl(IService2)
 class Service2Impl(IService2, ActorBase):
     def __init__(self):
         super(Service2Impl, self).__init__()
@@ -66,8 +63,7 @@ async def service_1():
     pass
 
 
-@rpc_interface
-class IBench:
+class IBench(ActorInterface):
     @abstractmethod
     async def echo(self, e: str) -> str:
         pass
@@ -77,7 +73,6 @@ class IBench:
         pass
 
 
-@rpc_impl(IBench)
 class BenchImpl(IBench, ActorBase):
     def __init__(self):
         super(BenchImpl, self).__init__()
@@ -129,7 +124,7 @@ set_placement_impl(placement)
 logger.info(get_placement_impl())
 
 
-server_base.init_server()
+server_base.init_server(globals())
 server_base.listen(15555, CODEC_RPC)
 server_base.create_task(service_1())
 

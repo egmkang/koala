@@ -8,7 +8,7 @@ from koala.network.tcp_session import TcpSocketSession
 from koala.network.constant import CODEC_RPC
 from koala.membership.membership_manager import MembershipManager
 from koala.message import RequestHeartBeat
-from koala.rpc_meta import get_all_services
+from koala.server.rpc_meta import get_all_services
 from koala.logger import logger
 
 
@@ -75,7 +75,8 @@ class SelfHostedPlacement(Placement):
             session = await TcpSocketSession.connect(node.host, int(node.port), CODEC_RPC)
             if session is not None:
                 node.set_session(session)
-                logger.info("try_connect ServerID:%d, Host:%s:%s success" % (node.server_uid, node.host, node.port))
+                logger.info("try_connect ServerID:%d, Host:%s:%s success" % (
+                    node.server_uid, node.host, node.port))
                 self.session = session
         except Exception as e:
             logger.error("try_connect ServerID:%d, Host:%s:%s, Exception:%s" %

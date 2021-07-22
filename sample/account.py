@@ -1,7 +1,6 @@
 from koala.typing import *
 from koala.logger import logger
 from koala.message import RpcMessage, RequestAccountLogin, ResponseAccountLogin
-from koala.rpc_meta import rpc_impl
 from koala.network.socket_session import SocketSession
 from koala.server.actor_base import ActorBase
 from koala.check_sum import message_check_sum
@@ -12,7 +11,6 @@ from sample.interfaces import IAccount
 _config = Config()
 
 
-@rpc_impl(IAccount)
 class EmptyAccount(IAccount, ActorBase):
     def __init__(self):
         super(EmptyAccount, self).__init__()

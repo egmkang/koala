@@ -1,4 +1,3 @@
-from koala.rpc_meta import rpc_impl
 from koala.typing import *
 from koala.message import RpcMessage
 from koala.message.gateway import NotifyNewActorMessage, RequestSendMessageToSession, NotifyNewActorSession
@@ -12,7 +11,6 @@ from sample.interfaces import IPlayer
 _config = Config()
 
 
-@rpc_impl(IPlayer)
 class Player(IPlayer, ActorBase):
     def __init__(self):
         super(Player, self).__init__()

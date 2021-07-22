@@ -4,7 +4,7 @@ from koala.server import actor_base
 from koala.typing import *
 from koala.logger import logger
 from koala.singleton import Singleton
-from koala.rpc_meta import get_impl_type, get_interface_type
+from koala.server.rpc_meta import get_impl_type, get_interface_type
 from koala.server.rpc_exception import RpcException
 from koala.server.actor_base import ActorBase
 from koala.server.actor_context import ActorContext
@@ -75,7 +75,8 @@ class ActorManager(Singleton):
         for actor_id, actor in need_remove:
             if actor.context:
                 await actor.context.push_message(None)
-            logger.info("gc_actors, Actor:%s/%s" % (actor.type_name, actor.uid))
+            logger.info("gc_actors, Actor:%s/%s" %
+                        (actor.type_name, actor.uid))
             actors.pop(actor_id)
 
     # 这边需要把很长时间没有活跃的actor给gc掉
@@ -89,4 +90,3 @@ class ActorManager(Singleton):
                 except:
                     pass
         pass
-

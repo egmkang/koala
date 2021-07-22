@@ -2,6 +2,7 @@ import time
 import traceback
 import weakref
 from abc import ABC
+from koala.server.actor_interface import ActorInterface
 from koala.membership.membership_manager import MembershipManager
 from koala.message import RpcMessage, NotifyActorSessionAborted, NotifyNewActorMessage, NotifyNewActorSession
 from koala.typing import *
@@ -16,8 +17,10 @@ _session_manager = SocketSessionManager()
 _membership = MembershipManager()
 
 
-class ActorBase(ABC):
+class ActorBase(ActorInterface, ABC):
     def __init__(self):
+        super(ActorBase, self).__init__()
+
         self.__gateway_session_id = 0
         self.__uid = 0
         self.__context: Optional[ActorContext] = None
@@ -116,7 +119,8 @@ class ActorBase(ABC):
         if socket_session:
             await socket_session.send_message(msg)
         else:
-            logger.warning("Actor.SendMessage, Actor:%s/%s , SocketSession not found" % (self.type_name, self.uid))
+            logger.warning(
+                "Actor.SendMessage, Actor:%s/%s , SocketSession not found" % (self.type_name, self.uid))
 
     async def dispatch_message(self, msg: object) -> None:
         try:
@@ -136,7 +140,8 @@ class ActorBase(ABC):
             if not isinstance(msg, ActorTimer) and self.context:
                 self.context.last_message_time = time.time()
         except Exception as e:
-            logger.error("Actor:%s/%s dispatch_message Exception:%s" % (self.type_name, self.uid, e))
+            logger.error("Actor:%s/%s dispatch_message Exception:%s" %
+                         (self.type_name, self.uid, e))
 
     async def dispatch_user_message(self, msg: object) -> None:
         """
@@ -154,13 +159,15 @@ class ActorBase(ABC):
 
     async def on_new_session(self, msg: NotifyNewActorSession, body: bytes):
         _ = body
-        logger.info("Actor:%s/%s NewSessionID:%s" % (self.type_name, self.uid, msg.session_id))
+        logger.info("Actor:%s/%s NewSessionID:%s" %
+                    (self.type_name, self.uid, msg.session_id))
         self.set_session_id(msg.session_id)
         pass
 
     async def on_session_aborted(self, msg: NotifyActorSessionAborted):
         _ = msg
-        logger.info("Actor:%s/%s SessionID:%s aborted" % (self.type_name, self.uid, self.session_id))
+        logger.info("Actor:%s/%s SessionID:%s aborted" %
+                    (self.type_name, self.uid, self.session_id))
         self.set_session_id(0)
 
     def get_proxy(self, actor_type: Type[T], uid: TypeID) -> T:

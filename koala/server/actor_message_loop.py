@@ -6,7 +6,7 @@ from koala.typing import *
 from koala.compact_pickle import pickle_dumps
 from koala.message import RpcResponse, RpcRequest
 from koala.message.rpc_message import RpcMessage
-from koala.rpc_meta import get_rpc_impl_method
+from koala.server.rpc_meta import get_rpc_impl_method
 from koala.network.socket_session import SocketSession
 from koala.server.actor_base import ActorBase
 from koala.server.rpc_exception import RpcException, RPC_ERROR_UNKNOWN
@@ -36,7 +36,8 @@ async def _send_error_resp(session: SocketSession, request_id: int, e: Exception
 
 async def _dispatch_actor_rpc_request(actor: ActorBase, session: Optional[SocketSession], req: RpcRequest):
     try:
-        method = get_rpc_impl_method("%s.%s" % (req.service_name, req.method_name))
+        method = get_rpc_impl_method(
+            "%s.%s" % (req.service_name, req.method_name))
         if method is None:
             raise RpcException.method_not_found()
 
@@ -83,7 +84,8 @@ async def _dispatch_actor_message_in_loop(actor: ActorBase):
             await asyncio.sleep(0)
             o = cast(Tuple[weakref.ReferenceType[SocketSession], object], await context.pop_message())
             if o is None:
-                logger.info("Actor:%s/%s exit message loop" % (actor.type_name, actor.uid))
+                logger.info("Actor:%s/%s exit message loop" %
+                            (actor.type_name, actor.uid))
                 break
             session, msg = o[0]() if o[0] else None, o[1]
             if isinstance(msg, RpcRequest):
@@ -106,7 +108,8 @@ async def _dispatch_actor_message_in_loop(actor: ActorBase):
     if context.loop_id == loop_id:
         context.reentrant_id = -1
         context.loop_id = 0
-    logger.info("Actor:%s/%s loop:%d finished" % (actor.type_name, actor.uid, loop_id))
+    logger.info("Actor:%s/%s loop:%d finished" %
+                (actor.type_name, actor.uid, loop_id))
 
 
 def run_actor_message_loop(actor: ActorBase):
@@ -122,7 +125,8 @@ async def dispatch_actor_message(actor: ActorBase, session: SocketSession, msg: 
         req = cast(RpcRequest, msg)
         if actor.context.reentrant_id == req.reentrant_id:
             # 这边要直接派发
-            asyncio.create_task(_dispatch_actor_rpc_request(actor, session, req))
+            asyncio.create_task(
+                _dispatch_actor_rpc_request(actor, session, req))
             return
     weak_session = weakref.ref(session)
     await actor.context.push_message((weak_session, msg))
