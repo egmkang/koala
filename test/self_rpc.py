@@ -5,7 +5,6 @@ from koala.server import server_base
 from koala.server.actor_interface import ActorInterface
 from koala.server.actor_base import ActorBase
 from koala.server.rpc_meta import *
-from koala.network.constant import CODEC_RPC
 from koala.placement.placement import get_placement_impl, set_placement_impl
 from koala.pd.simple import SelfHostedPlacement
 from koala.server.rpc_proxy import get_rpc_proxy
@@ -119,18 +118,21 @@ async def qps():
             last = v
 
 
-placement = SelfHostedPlacement(15555)
+PORT = 15555
+
+
+placement = SelfHostedPlacement(PORT)
 set_placement_impl(placement)
 logger.info(get_placement_impl())
 
 
 server_base.init_server(globals())
-server_base.listen(15555, CODEC_RPC)
+server_base.listen_rpc(PORT)
 server_base.create_task(service_1())
 
-# for item in range(16):
-#     i = item
-#     server_base.create_task(bench(i))
+for item in range(16):
+    i = item
+    server_base.create_task(bench(i))
 
 server_base.create_task(run_timer(1))
 server_base.create_task(qps())

@@ -10,22 +10,22 @@ from koala.message.message import RequestHeartBeat
 from koala.network.socket_session import SocketSessionManager
 from koala.network.tcp_session import TcpSocketSession
 from koala.pd import api
-from koala.conf.config import Config
+from koala.koala_config import get_config
 from koala.error_code import *
 from koala.logger import logger
 
 
 PLACEMENT_CACHE_SIZE = 10 * 10000
 
-_config = Config()
 _membership = MembershipManager()
 _session_manager = SocketSessionManager()
 
 
 class PDPlacementImpl(Placement):
-    def __init__(self, pd_address: str):
+    def __init__(self):
         super().__init__()
-        api.set_pd_address(pd_address)
+        self._config = get_config()
+        api.set_pd_address(self._config.pd_address)
         self._lease_id = 0
         self._server_id = 0
         self._load = 0
@@ -50,17 +50,17 @@ class PDPlacementImpl(Placement):
             exit(ERROR_PD_NEW_SERVER.code)
             return
         resp = await api.register_server(self._server_id,
-                                         _config.start_time,
-                                         _config.ttl,
-                                         _config.address,
-                                         _config.services,
-                                         _config.desc if _config.desc else "host_%s" % self.server_id())
+                                         self._config.start_time,
+                                         self._config.ttl,
+                                         self._config.address,
+                                         self._config.services,
+                                         self._config.desc if self._config.desc else "host_%s" % self.server_id())
         if resp.error_code == 0:
             self._lease_id = resp.lease_id
             logger.info("ServerID:%d, LeaseID:%d" %
                         (self._server_id, self._lease_id))
             service_list = ["%s => %s" %
-                            (k, _config.services[k]) for k in _config.services]
+                            (k, self._config.services[k]) for k in self._config.services]
             logger.info("Host Services:%s" % (", ".join(service_list)))
             asyncio.create_task(self._heart_beat_loop())
         else:
@@ -71,12 +71,12 @@ class PDPlacementImpl(Placement):
 
     async def delete_server(self, server_id: int):
         try:
-            await api.delete_server(server_id, _config.address)
+            await api.delete_server(server_id, self._config.address)
         except:
             pass
 
     async def _pd_keep_alive(self) -> api.KeepAliveServerResponse:
-        if time.time() - self._last_heart_beat > _config.ttl:
+        if time.time() - self._last_heart_beat > self._config.ttl:
             logger.error("%s, %s" % (ERROR_PD_KEEP_ALIVE_TIME_OUT.code,
                          ERROR_PD_KEEP_ALIVE_TIME_OUT.message))
             exit(ERROR_PD_KEEP_ALIVE_TIME_OUT.code)
@@ -100,7 +100,7 @@ class PDPlacementImpl(Placement):
         events = resp.events
         self._rebuild_recent_removed(events)
         self._compare_membership(hosts)
-        await asyncio.sleep(_config.ttl / 3)
+        await asyncio.sleep(self._config.ttl / 3)
         pass
 
     def _compare_membership(self, hosts: Dict[int, api.HostNodeInfo]):
@@ -114,7 +114,7 @@ class PDPlacementImpl(Placement):
                 self.add_server(self._build_node_info(hosts[server_id]))
 
     def _try_delete_old_server(self, node: api.HostNodeInfo) -> bool:
-        if _config.address == node.address and self.server_id() > node.server_id:
+        if self._config.address == node.address and self.server_id() > node.server_id:
             logger.info("try_delete_old_server, OldServerID:%s Address:%s" % (
                 node.server_id, node.address))
             asyncio.create_task(api.delete_server(
@@ -187,7 +187,7 @@ class PDPlacementImpl(Placement):
     async def _heart_beat_loop(self):
         while True:
             try:
-                await asyncio.sleep(_config.ttl / 3)
+                await asyncio.sleep(self._config.ttl / 3)
                 await self._try_send_heart_beat()
             except Exception as e:
                 logger.error("Placement.heart_beat_loop, Exception:%s" % e)

@@ -17,7 +17,7 @@ from koala.server.gateway_message_dispatch import process_gateway_actor_session_
     process_gateway_new_actor_message, process_gateway_new_actor_session, process_gateway_account_login
 from koala.server.rpc_request_id import set_request_id_seed
 from koala.server.actor_manager import ActorManager
-from koala.conf.config import Config
+from koala.koala_config import get_config
 
 
 _socket_session_manager: SocketSessionManager = SocketSessionManager()
@@ -27,7 +27,6 @@ _user_socket_close_handler_map: Dict[MessageType,
                                      Callable[[SocketSession], None]] = {}
 _tcp_server: TcpServer = TcpServer()
 _actor_manager = ActorManager()
-_config = Config()
 
 
 def register_user_handler(cls: MessageType, handler: Callable[[SocketSession, object], Coroutine]):
@@ -107,6 +106,7 @@ async def _run_placement():
 
 
 def init_server(globals_dict: dict):
+    _config = get_config()
     init_logger(_config.log_name, _config.log_level, not _config.console_log)
 
     build_meta_info(globals_dict)
@@ -128,6 +128,7 @@ def create_task(co):
 
 
 def run_server():
+    _config = get_config()
     if _config.port:
         listen_rpc(_config.port)
     _tcp_server.create_task(update_process_time())

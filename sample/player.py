@@ -4,11 +4,11 @@ from koala.message.gateway import NotifyNewActorMessage, RequestSendMessageToSes
 from koala.server.actor_base import ActorBase
 from koala.check_sum import message_compute_check_sum
 from koala.json_util import json_dumps
-from koala.conf.config import Config
+from koala.koala_config import get_config, KoalaConfig
 from sample.interfaces import IPlayer
 
 
-_config = Config()
+_config: Optional[KoalaConfig] = None
 
 
 class Player(IPlayer, ActorBase):
@@ -20,6 +20,10 @@ class Player(IPlayer, ActorBase):
         return self.__GC_TIME
 
     async def on_new_session(self, msg: NotifyNewActorSession, body: bytes):
+        global _config
+        if not _config:
+            _config = get_config()
+
         await super(Player, self).on_new_session(msg, body)
         token_message = {'open_id': msg.open_id, "server_id": msg.server_id,
                          "actor_type": "IPlayer", "actor_id": self.uid}

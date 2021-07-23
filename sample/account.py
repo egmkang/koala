@@ -4,11 +4,11 @@ from koala.message import RpcMessage, RequestAccountLogin, ResponseAccountLogin
 from koala.network.socket_session import SocketSession
 from koala.server.actor_base import ActorBase
 from koala.check_sum import message_check_sum
-from koala.conf.config import Config
+from koala.koala_config import KoalaConfig, get_config
 from sample.interfaces import IAccount
 
 
-_config = Config()
+_config: Optional[KoalaConfig] = None
 
 
 class EmptyAccount(IAccount, ActorBase):
@@ -18,6 +18,10 @@ class EmptyAccount(IAccount, ActorBase):
 
 
 async def process_gateway_account_login(session: SocketSession, msg: object):
+    global _config
+    if not _config:
+        _config = get_config()
+
     request = cast(RpcMessage, msg)
     req = cast(RequestAccountLogin, request.meta)
     body = request.body

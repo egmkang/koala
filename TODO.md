@@ -2,9 +2,15 @@ TODO:
 
 v0.6
 
-* [ ] http gateway
-* [x] rpc meta info(去掉装饰器)
-* [ ] pd mongo storage
+* [ ] Gateway
+  * [ ] http gateway
+  * [ ] check sum toggle
+* [ ] Host
+  * [x] rpc meta info(去掉装饰器)
+  * [x] config
+  * [ ] config support json
+* [ ] PD
+  * [ ] pd mongo storage
 * [ ] build script
 * [ ] sample
 

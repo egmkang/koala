@@ -74,7 +74,7 @@ Koala提供了Actor Storage的抽象, 提供了最多两列的存储接口, 即`
 
 ### Actor Timer
 
-Koala没有提供Orleans的reminder, 但是提供编程必须的Timer. Actor的消息派发会执行Timer, 所以Timer和RPC一样也是顺序执行的, 同时Timer会进行补偿, 不会发生明显的时间便宜和误差累加.
+Koala没有提供Orleans的reminder, 但是提供编程必须的Timer. Actor的消息派发会执行Timer, 所以Timer和RPC一样也是顺序执行的, 同时Timer会进行补偿, 不会发生明显的时间偏移和误差累积.
 
 ### 强一致的Placement
 
