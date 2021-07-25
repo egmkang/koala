@@ -1,7 +1,7 @@
 import time
 import traceback
 import weakref
-from abc import ABC, abstractclassmethod
+from abc import ABC, abstractmethod
 from koala.server.actor_interface import ActorInterface
 from koala.membership.membership_manager import MembershipManager
 from koala.message import RpcMessage, NotifyActorSessionAborted, NotifyNewActorMessage, NotifyNewActorSession
@@ -33,11 +33,13 @@ class ActorBase(ActorInterface, ABC):
         self.__context = context
         pass
 
-    @abstractclassmethod
+    @classmethod
+    @abstractmethod
     def gc_time(cls) -> int:
         return 30 * 60      # 默认GC超时时间是30分钟
 
-    @abstractclassmethod
+    @classmethod
+    @abstractmethod
     def actor_weight(cls) -> int:
         return 1            # 默认的权重, 系统会按照负载来分配Actor的位置
 
