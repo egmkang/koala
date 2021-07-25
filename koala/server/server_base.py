@@ -135,7 +135,7 @@ async def _try_update_load_loop():
         try:
             v = _actor_manager.weight
             if last != v:
-                logger.info("ActorWeigth:%d" % v)
+                logger.info("ActorWeight:%d" % v)
                 last = v
             impl.set_load(last)
         except:

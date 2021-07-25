@@ -34,12 +34,10 @@ class ActorBase(ActorInterface, ABC):
         pass
 
     @classmethod
-    @abstractmethod
     def gc_time(cls) -> int:
         return 30 * 60      # 默认GC超时时间是30分钟
 
     @classmethod
-    @abstractmethod
     def actor_weight(cls) -> int:
         return 1            # 默认的权重, 系统会按照负载来分配Actor的位置
 

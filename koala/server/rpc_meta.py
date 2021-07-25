@@ -12,7 +12,7 @@ __interface_set: Set[Type] = set()
 __interface_name_map: Dict[str, Type] = dict()
 __impl_map: Dict[Type, Type] = dict()
 __impl_name_map: Dict[str, Type] = dict()
-__impl_method: Dict[str, Callable] = dict()
+__impl_method: Dict[Tuple[str, str], Callable] = dict()
 
 
 def register_rpc_interface(cls: Type[Interface]):
@@ -58,13 +58,12 @@ def get_all_services() -> Dict[str, str]:
     return services
 
 
-def get_rpc_impl_method(name: str):
+def get_rpc_impl_method(name: Tuple[str, str]):
     if name in __impl_method:
         return __impl_method[name]
-    interface_name, method_name = name.split('.')
-    impl_type = get_impl_type_by_name(interface_name)
-    fn = impl_type.__dict__[method_name]
-    __impl_method["%s.%s" % (impl_type.__qualname__, method_name)] = fn
+    impl_type = get_impl_type_by_name(name[0])
+    fn = impl_type.__dict__[name[1]]
+    __impl_method[name] = fn
     return fn
 
 

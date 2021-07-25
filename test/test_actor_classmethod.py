@@ -1,6 +1,10 @@
 from koala.server.actor_base import ActorBase
 
 
+class SubClass0(ActorBase):
+    pass
+
+
 class SubClass1(ActorBase):
     @classmethod
     def gc_time(cls) -> int:
@@ -22,6 +26,10 @@ class SubClass2(ActorBase):
 
 
 def test_actor_abstractclassmethod():
+    actor0 = SubClass0()
+    assert actor0.gc_time() == 30 * 60
+    assert actor0.actor_weight() == 1
+
     actor1 = SubClass1()
     assert actor1.gc_time() == 30
     assert actor1.actor_weight() == 10

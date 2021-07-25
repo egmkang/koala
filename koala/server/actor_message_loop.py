@@ -36,8 +36,7 @@ async def _send_error_resp(session: SocketSession, request_id: int, e: Exception
 
 async def _dispatch_actor_rpc_request(actor: ActorBase, session: Optional[SocketSession], req: RpcRequest):
     try:
-        method = get_rpc_impl_method(
-            "%s.%s" % (req.service_name, req.method_name))
+        method = get_rpc_impl_method((req.service_name, req.method_name))
         if method is None:
             raise RpcException.method_not_found()
 

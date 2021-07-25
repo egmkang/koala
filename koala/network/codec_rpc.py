@@ -9,13 +9,15 @@ from koala.json_util import json_dumps, json_loads
 
 
 KOLA_MAGIC = "KOLA".encode()
-
+meta_name_length_bytes = bytearray(b"0")
 
 # 4字节magic `KOLA`
 # 4字节小端Meta
 # 4字节小端Body
 # N字节Meta
 # M字节Body
+
+
 class CodecRpc(Codec):
     HEADER_LENGTH = 12
 
@@ -28,8 +30,10 @@ class CodecRpc(Codec):
         # N字节MessageName
         # M字节json
         name: str = o.__class__.__qualname__
-        json_data: bytes = cast(bytes, json_dumps(o.to_dict()))
-        return b"".join((int.to_bytes(len(name), 1, 'little'), name.encode(), json_data))
+        json_data: bytes = cast(bytes, json_dumps(to_dict(o)))
+        global meta_name_length_bytes
+        meta_name_length_bytes[0] = len(name)
+        return b"".join((meta_name_length_bytes, name.encode(), json_data))
 
     @classmethod
     def _decode_meta(cls, array: bytes) -> Optional[JsonMessage]:
