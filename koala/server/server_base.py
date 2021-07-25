@@ -127,6 +127,21 @@ def create_task(co):
     _tcp_server.create_task(co)
 
 
+async def _try_update_load_loop():
+    impl = get_placement_impl()
+    last = 0
+    while True:
+        await asyncio.sleep(10)
+        try:
+            v = _actor_manager.weight
+            if last != v:
+                logger.info("ActorWeigth:%d" % v)
+                last = v
+            impl.set_load(last)
+        except:
+            pass
+
+
 def run_server():
     _config = get_config()
     if _config.port:
@@ -135,4 +150,6 @@ def run_server():
     _tcp_server.create_task(_socket_session_manager.run())
     _tcp_server.create_task(_run_placement())
     _tcp_server.create_task(_actor_manager.gc_loop())
+    _tcp_server.create_task(_actor_manager.calc_weight_loop())
+    _tcp_server.create_task(_try_update_load_loop())
     _tcp_server.run()

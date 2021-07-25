@@ -27,6 +27,11 @@ class ActorManager(Singleton):
     def __init__(self):
         super(ActorManager, self).__init__()
         self.__dict: EntityDictType = dict()
+        self.__weight: int = 0
+
+    @property
+    def weight(self) -> int:
+        return self.__weight
 
     def get_entity(self, i_type: Type[ActorType], uid: object) -> Optional[ActorBase]:
         impl_type = get_impl_type(i_type)
@@ -57,7 +62,7 @@ class ActorManager(Singleton):
     # (ActorBase) -> Bool
     # true继续遍历
     # false中断
-    def map(self, i_type: Type, fn: Callable[[ActorBase], bool]):
+    def for_each(self, i_type: Type, fn: Callable[[ActorBase], bool]):
         if i_type not in self.__dict:
             return
         d: Dict[object, ActorBase] = self.__dict[i_type]
@@ -78,6 +83,18 @@ class ActorManager(Singleton):
             logger.info("gc_actors, Actor:%s/%s" %
                         (actor.type_name, actor.uid))
             actors.pop(actor_id)
+
+    async def calc_weight_loop(self):
+        while True:
+            await asyncio.sleep(10)
+            weight = 0
+            for actor_type in self.__dict:
+                actors = self.__dict[actor_type]
+                for actor_id in actors:
+                    actor = actors[actor_id]
+                    weight += actor.actor_weight() * len(actors)
+                    break
+            self.__weight = weight
 
     # 这边需要把很长时间没有活跃的actor给gc掉
     async def gc_loop(self):

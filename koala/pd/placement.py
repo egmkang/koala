@@ -22,7 +22,7 @@ _session_manager = SocketSessionManager()
 
 
 class PDPlacementImpl(Placement):
-    def __init__(self):
+    def __init__(self, size: int = PLACEMENT_CACHE_SIZE):
         super().__init__()
         self._config = get_config()
         api.set_pd_address(self._config.pd_address)

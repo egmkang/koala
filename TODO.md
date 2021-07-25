@@ -3,12 +3,14 @@ TODO:
 v0.6
 
 * [ ] Gateway
-  * [ ] http gateway
   * [ ] check sum toggle
 * [ ] Host
+  * [ ] fastapi
   * [x] rpc meta info(去掉装饰器)
   * [x] config
   * [ ] config support json
+  * [x] update host Load info
+  * [ ] pd cache size config
 * [ ] PD
   * [ ] pd mongo storage
 * [ ] build script

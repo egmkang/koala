@@ -3,11 +3,9 @@ import types
 import sys
 from koala.typing import *
 from koala.server.actor_interface import ActorInterface
-from koala.server.actor_base import ActorBase
 
 
 Interface = TypeVar("Interface", bound=ActorInterface)
-ActorType = TypeVar("ActorType", bound=ActorBase)
 
 
 __interface_set: Set[Type] = set()
@@ -31,7 +29,7 @@ def get_interface_type(interface_name: str) -> Optional[Type]:
         return __interface_name_map[interface_name]
 
 
-def register_rpc_impl(interface_type: Type[Interface], actor_type: Type[ActorType]):
+def register_rpc_impl(interface_type: Type[Interface], actor_type: Type):
     __impl_map[interface_type] = actor_type
     __impl_name_map[interface_type.__qualname__] = actor_type
 
@@ -76,6 +74,8 @@ def build_meta_info(items: dict):
     ignore_set = set()
 
     def check_actor_meta_info(cls: Type):
+        from koala.server.actor_base import ActorBase
+
         if not inspect.isclass(cls):
             return
         if cls == ActorInterface or cls == ActorBase:

@@ -14,10 +14,10 @@ _config: Optional[KoalaConfig] = None
 class Player(IPlayer, ActorBase):
     def __init__(self):
         super(Player, self).__init__()
-        self.__GC_TIME = 30
 
-    def gc_time(self) -> int:
-        return self.__GC_TIME
+    @classmethod
+    def gc_time(cls) -> int:
+        return 30
 
     async def on_new_session(self, msg: NotifyNewActorSession, body: bytes):
         global _config

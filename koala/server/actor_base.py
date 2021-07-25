@@ -1,7 +1,7 @@
 import time
 import traceback
 import weakref
-from abc import ABC
+from abc import ABC, abstractclassmethod
 from koala.server.actor_interface import ActorInterface
 from koala.membership.membership_manager import MembershipManager
 from koala.message import RpcMessage, NotifyActorSessionAborted, NotifyNewActorMessage, NotifyNewActorSession
@@ -26,7 +26,6 @@ class ActorBase(ActorInterface, ABC):
         self.__context: Optional[ActorContext] = None
         self.__socket_session: Optional[weakref.ReferenceType[SocketSession]] = None
         self.__timer_manager = ActorTimerManager(self.weak)
-        self.__GC_TIME = 30 * 60        # 默认GC超时时间是30分钟
         pass
 
     def _init_actor(self, uid: object, context: ActorContext):
@@ -34,8 +33,13 @@ class ActorBase(ActorInterface, ABC):
         self.__context = context
         pass
 
-    def gc_time(self) -> int:
-        return self.__GC_TIME
+    @abstractclassmethod
+    def gc_time(cls) -> int:
+        return 30 * 60      # 默认GC超时时间是30分钟
+
+    @abstractclassmethod
+    def actor_weight(cls) -> int:
+        return 1            # 默认的权重, 系统会按照负载来分配Actor的位置
 
     @property
     def type_name(self):
