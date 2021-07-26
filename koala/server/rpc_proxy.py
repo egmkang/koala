@@ -44,7 +44,8 @@ class _RpcMethodObject(object):
         req.request_id = new_request_id()
         req.service_name = self.actor_type
         req.method_name = self.method_name
-        req.actor_id = self.actor_id
+        # Actor底层都是string类型的ID, 否则"1"和1会映射到两个Actor上面
+        req.actor_id = "%s" % self.actor_id
         req.reentrant_id = self.reentrant_id
         req.server_id = position.server_uid
 

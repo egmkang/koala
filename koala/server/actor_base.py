@@ -28,7 +28,7 @@ class ActorBase(ActorInterface, ABC):
         self.__timer_manager = ActorTimerManager(self.weak)
         pass
 
-    def _init_actor(self, uid: object, context: ActorContext):
+    def _init_actor(self, uid: TypeID, context: ActorContext):
         self.__uid = uid
         self.__context = context
         pass
@@ -42,11 +42,13 @@ class ActorBase(ActorInterface, ABC):
         return 1            # 默认的权重, 系统会按照负载来分配Actor的位置
 
     @property
-    def type_name(self):
+    def type_name(self) -> str:
         return type(self).__qualname__
 
+    # TODO
+    # 这边的uid在内部都是str类型
     @property
-    def uid(self) -> object:
+    def uid(self) -> TypeID:
         return self.__uid
 
     @property
