@@ -1,4 +1,5 @@
 from abc import ABC, abstractmethod
+from koala import json_util
 import time
 import yaml
 from koala.typing import *
@@ -176,10 +177,19 @@ class KoalaDefaultConfig(KoalaConfig):
 
     @classmethod
     def _load_config(cls, file_name: str) -> dict:
-        with open(file_name, 'r') as file:
+        return cls._load_as_json(file_name)
+
+    @classmethod
+    def _load_as_json(cls, file_name: str) -> dict:
+        with open(file_name) as file:
             data = file.read()
-            yaml_config = yaml.full_load(data)
-            return yaml_config
+            if file_name.endswith(".yaml"):
+                yaml_config = yaml.full_load(data)
+                return yaml_config
+            if file_name.endswith(".json"):
+                json_config = json_util.json_loads(data)
+                return json_config
+        raise Exception("KoalaDefaultConfig only support yaml or json config")
 
     def parse(self, file_name: str):
         server_config = self._load_config(file_name)
