@@ -11,10 +11,10 @@ from koala.server.actor_context import ActorContext
 
 
 ActorType = TypeVar("ActorType", bound=ActorBase)
-EntityDictType = Dict[Type, Dict[TypeID, ActorBase]]
+EntityDictType = Dict[Type, Dict[ActorID, ActorBase]]
 
 
-def _new_actor(impl_type: Type[ActorType], uid: TypeID) -> ActorBase:
+def _new_actor(impl_type: Type[ActorType], uid: ActorID) -> ActorBase:
     if impl_type is None:
         raise Exception("ImplType is None")
     actor: ActorBase = impl_type()
@@ -33,7 +33,7 @@ class ActorManager(Singleton):
     def weight(self) -> int:
         return self.__weight
 
-    def get_entity(self, i_type: Type[ActorType], uid: TypeID) -> Optional[ActorBase]:
+    def get_entity(self, i_type: Type[ActorType], uid: ActorID) -> Optional[ActorBase]:
         impl_type = get_impl_type(i_type)
         if impl_type in self.__dict:
             d = self.__dict[impl_type]
@@ -41,7 +41,7 @@ class ActorManager(Singleton):
                 return d[uid]
         return None
 
-    def get_or_new(self, i_type: Type[ActorType], uid: TypeID) -> ActorBase:
+    def get_or_new(self, i_type: Type[ActorType], uid: ActorID) -> ActorBase:
         impl_type = get_impl_type(i_type)
         if impl_type not in self.__dict:
             self.__dict[impl_type] = dict()
@@ -53,7 +53,7 @@ class ActorManager(Singleton):
             return actor
         return d[uid]
 
-    def get_or_new_by_name(self, actor_type: str, uid: TypeID) -> ActorBase:
+    def get_or_new_by_name(self, actor_type: str, uid: ActorID) -> ActorBase:
         i_type = get_interface_type(actor_type)
         if i_type is None:
             raise RpcException.interface_invalid()
@@ -65,15 +65,15 @@ class ActorManager(Singleton):
     def for_each(self, i_type: Type, fn: Callable[[ActorBase], bool]):
         if i_type not in self.__dict:
             return
-        d: Dict[TypeID, ActorBase] = self.__dict[i_type]
+        d: Dict[ActorID, ActorBase] = self.__dict[i_type]
         for key in d:
             if not fn(d[key]):
                 break
 
     @classmethod
-    async def __gc_actors(cls, actors: Dict[TypeID, ActorBase]):
+    async def __gc_actors(cls, actors: Dict[ActorID, ActorBase]):
         current_time = time.time()
-        need_remove: List[Tuple[TypeID, ActorBase]] = list()
+        need_remove: List[Tuple[ActorID, ActorBase]] = list()
         for actor_id, actor in actors.items():
             if not actor.context or current_time >= actor.context.last_message_time + actor.gc_time():
                 need_remove.append((actor_id, actor))

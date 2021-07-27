@@ -1,4 +1,5 @@
 import asyncio
+from koala.server.actor_interface import ActorInterfaceType
 from koala.compact_pickle import pickle_dumps
 from koala.message.rpc_message import RpcMessage
 from koala.server.rpc_meta import *
@@ -22,7 +23,7 @@ async def _rpc_call(unique_id: int) -> object:
 
 
 class _RpcMethodObject(object):
-    def __init__(self, actor_type: str, actor_id: TypeID, method_name: str, reentrant_id: int):
+    def __init__(self, actor_type: str, actor_id: ActorID, method_name: str, reentrant_id: int):
         self.actor_type = actor_type
         self.actor_id = actor_id
         self.method_name = method_name
@@ -68,7 +69,7 @@ class _RpcMethodObject(object):
 
 
 class _RpcProxyObject(object):
-    def __init__(self, i_type: Type, uid: TypeID, context: Optional[ActorContext]):
+    def __init__(self, i_type: Type, uid: ActorID, context: Optional[ActorContext]):
         self.service_name = i_type.__qualname__
         self.uid = uid
         self.context = None
@@ -89,6 +90,6 @@ class _RpcProxyObject(object):
         return method
 
 
-def get_rpc_proxy(i_type: Type[T], uid: TypeID, context: ActorContext = None) -> T:
+def get_rpc_proxy(i_type: Type[ActorInterfaceType], uid: ActorID, context: ActorContext = None) -> ActorInterfaceType:
     o = _RpcProxyObject(i_type, uid, context)
-    return cast(T, o)
+    return cast(ActorInterfaceType, o)

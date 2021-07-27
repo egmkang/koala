@@ -2,7 +2,7 @@ import time
 import traceback
 import weakref
 from abc import ABC, abstractmethod
-from koala.server.actor_interface import ActorInterface
+from koala.server.actor_interface import ActorInterface, ActorInterfaceType
 from koala.membership.membership_manager import MembershipManager
 from koala.message import RpcMessage, NotifyActorSessionAborted, NotifyNewActorMessage, NotifyNewActorSession
 from koala.typing import *
@@ -28,7 +28,7 @@ class ActorBase(ActorInterface, ABC):
         self.__timer_manager = ActorTimerManager(self.weak)
         pass
 
-    def _init_actor(self, uid: TypeID, context: ActorContext):
+    def _init_actor(self, uid: ActorID, context: ActorContext):
         self.__uid = uid
         self.__context = context
         pass
@@ -48,7 +48,7 @@ class ActorBase(ActorInterface, ABC):
     # TODO
     # 这边的uid在内部都是str类型
     @property
-    def uid(self) -> TypeID:
+    def uid(self) -> ActorID:
         return self.__uid
 
     @property
@@ -176,9 +176,9 @@ class ActorBase(ActorInterface, ABC):
                     (self.type_name, self.uid, self.session_id))
         self.set_session_id(0)
 
-    def get_proxy(self, actor_type: Type[T], uid: TypeID) -> T:
+    def get_proxy(self, actor_type: Type[ActorInterfaceType], uid: ActorID) -> ActorInterfaceType:
         o = get_rpc_proxy(actor_type, uid, self.context)
-        return cast(T, o)
+        return cast(ActorInterfaceType, o)
 
     def register_timer(self, interval: int, fn: Callable[[ActorTimer], None]) -> ActorTimer:
         assert self.__timer_manager

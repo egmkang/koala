@@ -50,7 +50,7 @@ class Service2Impl(IService2, ActorBase):
     def __init__(self):
         super(Service2Impl, self).__init__()
 
-    async def hello(self, my_id: TypeID, times: int) -> str:
+    async def hello(self, my_id: ActorID, times: int) -> str:
         proxy = self.get_proxy(IService1, my_id)
         return "hello world %d, reentrancy: %s" % (times, await proxy.reentrancy())
 
@@ -93,7 +93,7 @@ class BenchImpl(IBench, ActorBase):
 finished = 0
 
 
-async def bench(index: TypeID):
+async def bench(index: ActorID):
     global finished
     await asyncio.sleep(3)
     proxy = get_rpc_proxy(IBench, index)
@@ -102,7 +102,7 @@ async def bench(index: TypeID):
         finished += 1
 
 
-async def run_timer(index: TypeID):
+async def run_timer(index: ActorID):
     await asyncio.sleep(3)
     proxy = get_rpc_proxy(IBench, index)
     await proxy.run_timer(10)
