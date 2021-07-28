@@ -6,11 +6,13 @@ v0.6
   * [ ] check sum toggle
 * [ ] Host
   * [ ] fastapi
+    * [ ] config
+    * [x] http api
+    * [ ] logger
   * [x] rpc meta info(去掉装饰器)
   * [x] config
     * [x] config support json
     * [x] pd cache size config
-    * [ ] fastapi
   * [x] update host Load info
 * [ ] PD
   * [ ] pd mongo storage
