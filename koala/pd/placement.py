@@ -7,7 +7,6 @@ from koala.membership.server_node import ServerNode
 from koala.membership.membership_manager import MembershipManager
 from koala.network.constant import CODEC_RPC
 from koala.message.message import RequestHeartBeat
-from koala.network.socket_session import SocketSessionManager
 from koala.network.tcp_session import TcpSocketSession
 from koala.pd import api
 from koala.koala_config import get_config
@@ -15,14 +14,11 @@ from koala.error_code import *
 from koala.logger import logger
 
 
-PLACEMENT_CACHE_SIZE = 10 * 10000
-
 _membership = MembershipManager()
-_session_manager = SocketSessionManager()
 
 
 class PDPlacementImpl(Placement):
-    def __init__(self, size: int = PLACEMENT_CACHE_SIZE):
+    def __init__(self):
         super().__init__()
         self._config = get_config()
         api.set_pd_address(self._config.pd_address)
@@ -32,7 +28,8 @@ class PDPlacementImpl(Placement):
         self._last_heart_beat = time.time()
         self._recent_removed: Set[int] = set()
         self._recent_added: Set[int] = set()
-        self._lru_cache = pylru.lrucache(PLACEMENT_CACHE_SIZE)
+        cache_size = self._config.pd_cache_size if self._config.pd_cache_size else 10 * 10000
+        self._lru_cache = pylru.lrucache(cache_size)
         pass
 
     def server_id(self) -> int:

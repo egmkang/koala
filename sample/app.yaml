@@ -6,4 +6,5 @@ log_level: "INFO"
 console_log: true
 pd_address: "http://10.1.1.192:2379"
 private_key: "1234567890"
+pd_cache_size: 1000000
 

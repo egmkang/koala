@@ -72,6 +72,11 @@ class KoalaConfig(ABC):
     def desc(self) -> str:
         pass
 
+    @property
+    @abstractmethod
+    def pd_cache_size(self) -> int:
+        pass
+
 
 class KoalaDefaultConfig(KoalaConfig):
     def __init__(self) -> None:
@@ -87,6 +92,7 @@ class KoalaDefaultConfig(KoalaConfig):
         self._pd_address = ""
         self._private_key = ""
         self._console_log = True
+        self._pd_cache_size = 10 * 10000
 
     def set_port(self, port: int):
         self._port = port
@@ -175,6 +181,13 @@ class KoalaDefaultConfig(KoalaConfig):
     def disable_console_log(self):
         self._console_log = False
 
+    @property
+    def pd_cache_size(self) -> int:
+        return self._pd_cache_size
+
+    def set_pd_cache_size(self, size: int):
+        self._pd_cache_size = size
+
     @classmethod
     def _load_config(cls, file_name: str) -> dict:
         return cls._load_as_json(file_name)
@@ -219,6 +232,8 @@ class KoalaDefaultConfig(KoalaConfig):
             self.set_pd_address(server_config["pd_address"])
         if "private_key" in server_config:
             self.set_private_key(server_config["private_key"])
+        if "pd_cache_size" in server_config:
+            self.set_pd_cache_size(int(server_config["pd_cache_size"]))
         print(server_config)
 
 
