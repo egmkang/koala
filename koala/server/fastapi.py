@@ -1,8 +1,11 @@
 import os
 import sys
+import logging
 from fastapi import FastAPI
 from uvicorn import Server, Config
 from uvicorn.supervisors import ChangeReload
+from koala.logger import logger
+from koala.typing import *
 
 
 app = FastAPI()
@@ -13,9 +16,7 @@ async def run_serve(*args, **kwargs):
     server = Server(config=config)
 
     if (config.reload or config.workers > 1) and not isinstance(app, str):
-        # TODO
-        # logger
-        print(
+        logger.error(
             "You must pass the application as an import string to enable 'reload' or "
             "'workers'."
         )

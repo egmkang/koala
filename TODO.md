@@ -8,7 +8,8 @@ v0.6
   * [ ] fastapi
     * [ ] config
     * [x] http api
-    * [ ] logger
+    * [x] logger
+    * [ ] doc
   * [x] rpc meta info(去掉装饰器)
   * [x] config
     * [x] config support json
