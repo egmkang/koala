@@ -1,11 +1,11 @@
 import os
-from koala.server import server_base
+from koala.server import koala_host
 from koala.server.fastapi import *
 from sample.fastapi.http_api import *
 import sample.player
 
 
-server_base.init_server(globals().copy(), f"{os.getcwd()}/sample/app.yaml")
-server_base.use_pd()
-server_base.listen_fastapi()
-server_base.run_server()
+koala_host.init_server(globals().copy(), f"{os.getcwd()}/sample/app.yaml")
+koala_host.use_pd()
+koala_host.listen_fastapi()
+koala_host.run_server()

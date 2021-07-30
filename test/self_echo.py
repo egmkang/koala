@@ -1,6 +1,6 @@
 import asyncio
 
-from koala.server import server_base
+from koala.server import koala_host
 from koala.network.constant import *
 from koala.network.socket_session import SocketSession, SocketSessionManager
 from koala.network.tcp_session import TcpSocketSession
@@ -33,9 +33,8 @@ async def client():
     pass
 
 
-server_base.init_server(globals())
-server_base.register_user_handler(str, echo_handler)
-server_base.listen(5555, codec_id)
-
-server_base.create_task(client())
-server_base.run_server()
+koala_host.init_server(globals())
+koala_host.register_user_handler(str, echo_handler)
+koala_host.listen(5555, codec_id)
+koala_host.create_task(client())
+koala_host.run_server()

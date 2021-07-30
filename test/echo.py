@@ -2,7 +2,7 @@ import asyncio
 import time
 
 from koala.logger import logger
-from koala.server import server_base
+from koala.server import koala_host
 from koala.network.constant import *
 from koala.network.socket_session import SocketSession
 
@@ -28,9 +28,7 @@ async def qps():
             last = v
 
 
-server_base.init_server(globals())
-server_base.register_user_handler(str, echo_handler)
-server_base.listen(5555, CODEC_ECHO)
-
-
-server_base.run_server()
+koala_host.init_server(globals())
+koala_host.register_user_handler(str, echo_handler)
+koala_host.listen(5555, CODEC_ECHO)
+koala_host.run_server()

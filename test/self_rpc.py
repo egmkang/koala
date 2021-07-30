@@ -1,7 +1,7 @@
 from abc import abstractmethod
 import asyncio
 import random
-from koala.server import server_base
+from koala.server import koala_host
 from koala.server.actor_interface import ActorInterface
 from koala.server.actor_base import ActorBase
 from koala.server.rpc_meta import *
@@ -126,15 +126,14 @@ set_placement_impl(placement)
 logger.info(get_placement_impl())
 
 
-server_base.init_server(globals())
-server_base.listen_rpc(PORT)
-server_base.create_task(service_1())
+koala_host.init_server(globals())
+koala_host.listen_rpc(PORT)
+koala_host.create_task(service_1())
 
 for item in range(16):
     i = item
-    server_base.create_task(bench(i))
+    koala_host.create_task(bench(i))
 
-server_base.create_task(run_timer(1))
-server_base.create_task(qps())
-
-server_base.run_server()
+koala_host.create_task(run_timer(1))
+koala_host.create_task(qps())
+koala_host.run_server()
