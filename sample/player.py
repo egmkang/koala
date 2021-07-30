@@ -19,6 +19,9 @@ class Player(IPlayer, ActorBase):
     def gc_time(cls) -> int:
         return 30
 
+    async def echo(self, msg: str) -> str:
+        return msg
+
     async def on_new_session(self, msg: NotifyNewActorSession, body: bytes):
         global _config
         if not _config:

@@ -5,12 +5,15 @@ v0.6
 * [ ] Gateway
   * [ ] check sum toggle
 * [ ] Host
-  * [ ] fastapi
+  * [x] fastapi
+    * [x] config
+    * [x] http api
+    * [x] logger
+    * [x] doc
   * [x] rpc meta info(去掉装饰器)
   * [x] config
     * [x] config support json
     * [x] pd cache size config
-    * [ ] fastapi
   * [x] update host Load info
 * [ ] PD
   * [ ] pd mongo storage

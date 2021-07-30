@@ -77,6 +77,11 @@ class KoalaConfig(ABC):
     def pd_cache_size(self) -> int:
         pass
 
+    @property
+    @abstractmethod
+    def fastapi_port(self) -> int:
+        pass
+
 
 class KoalaDefaultConfig(KoalaConfig):
     def __init__(self) -> None:
@@ -93,6 +98,7 @@ class KoalaDefaultConfig(KoalaConfig):
         self._private_key = ""
         self._console_log = True
         self._pd_cache_size = 10 * 10000
+        self._fastapi_port = 0
 
     def set_port(self, port: int):
         self._port = port
@@ -188,6 +194,13 @@ class KoalaDefaultConfig(KoalaConfig):
     def set_pd_cache_size(self, size: int):
         self._pd_cache_size = size
 
+    @property
+    def fastapi_port(self) -> int:
+        return self._fastapi_port
+
+    def set_fastapi_port(self, port: int):
+        self._fastapi_port = port
+
     @classmethod
     def _load_config(cls, file_name: str) -> dict:
         return cls._load_as_json(file_name)
@@ -234,6 +247,8 @@ class KoalaDefaultConfig(KoalaConfig):
             self.set_private_key(server_config["private_key"])
         if "pd_cache_size" in server_config:
             self.set_pd_cache_size(int(server_config["pd_cache_size"]))
+        if "fastapi" in server_config:
+            self.set_fastapi_port(int(server_config["fastapi"]))
         print(server_config)
 
 
