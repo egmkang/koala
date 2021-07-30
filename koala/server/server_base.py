@@ -1,6 +1,4 @@
 import asyncio
-from koala.server.rpc_meta import build_meta_info
-from koala.network.constant import CODEC_RPC
 import time
 import traceback
 from koala.typing import *
@@ -18,6 +16,11 @@ from koala.server.gateway_message_dispatch import process_gateway_actor_session_
 from koala.server.rpc_request_id import set_request_id_seed
 from koala.server.actor_manager import ActorManager
 from koala.koala_config import get_config
+from koala.server.fastapi import *
+from koala.server.rpc_meta import build_meta_info
+from koala.network.constant import CODEC_RPC
+from koala.placement.placement import *
+from koala.pd.placement import *
 
 
 _socket_session_manager: SocketSessionManager = SocketSessionManager()
@@ -105,8 +108,11 @@ async def _run_placement():
     pass
 
 
-def init_server(globals_dict: dict):
+def init_server(globals_dict: dict, config_file_name: str = ""):
+    # 需要注入config实现, 需要在初始化服务器之前注入
     _config = get_config()
+    if config_file_name:
+        _config.parse(config_file_name)
     init_logger(_config.log_name, _config.log_level, not _config.console_log)
 
     build_meta_info(globals_dict)
@@ -115,12 +121,28 @@ def init_server(globals_dict: dict):
     set_request_id_seed(int(time.time() - _time_offset_of))
 
 
+def use_pd(pd_impl: Optional[Placement] = None):
+    if not pd_impl:
+        pd_impl = PDPlacementImpl()
+    set_placement_impl(pd_impl)
+
+
 def listen(port: int, codec_id: int):
     _tcp_server.create_task(_tcp_server.listen(port, codec_id))
 
 
 def listen_rpc(port: int):
     _tcp_server.create_task(_tcp_server.listen(port, CODEC_RPC))
+
+
+def listen_fastapi(*args, **kwargs):
+    if "host" not in kwargs:
+        kwargs["host"] = "0.0.0.0"
+    if "port" not in kwargs:
+        port = get_config().fastapi_port
+        kwargs["port"] = port
+    
+    _tcp_server.create_task(fastapi_serve(*args, **kwargs))
 
 
 def create_task(co):

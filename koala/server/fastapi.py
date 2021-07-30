@@ -1,6 +1,5 @@
 import os
 import sys
-import logging
 from fastapi import FastAPI
 from uvicorn import Server, Config
 from uvicorn.supervisors import ChangeReload
@@ -11,7 +10,7 @@ from koala.typing import *
 app = FastAPI()
 
 
-async def run_serve(*args, **kwargs):
+async def fastapi_serve(*args, **kwargs):
     config = Config(app, **kwargs)
     server = Server(config=config)
 
