@@ -5,11 +5,11 @@ v0.6
 * [ ] Gateway
   * [ ] check sum toggle
 * [ ] Host
-  * [ ] fastapi
-    * [ ] config
+  * [x] fastapi
+    * [x] config
     * [x] http api
     * [x] logger
-    * [ ] doc
+    * [x] doc
   * [x] rpc meta info(去掉装饰器)
   * [x] config
     * [x] config support json

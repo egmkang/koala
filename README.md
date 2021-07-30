@@ -14,7 +14,13 @@ Koala Framework大量使用`Python TypeHints`, Actor之间的通讯是`强类型
 
 Actor的生命周期由Runtime控制, 用户不需要手动控制Actor的资源释放. Koala提供了额外的控制Actor生命长短, Actor加载和卸载的接口, 方便用户做额外的控制. 一般来讲用户不需要关心Actor是否存在, 只需要通过`Interface`直接调用Actor; 用户也不需要关心Actor在哪个服务器上, PD会找一个负载相对较轻的服务器来放置Actor实例, 同时Placement的维持强一致性.
 
-### 例子
+## FastAPI
+
+Koala Framework通过集成FastAPI来提供HTTP API, 可以无缝的和其他系统集成. 同时FastAPI可以访问`Actor`系统, 来实现有状态服务.
+
+FastAPI也使用asyncio和TypeHints, 可以提供比较一致的编程体验.
+
+### Actor例子
 
 有一个`IPlayer`接口, 有一个`echo`函数.
 
@@ -52,6 +58,34 @@ class XXXActor(XXXInterface, ActorBase):
 ```
 
 `例1`里面, 就可以在一个外部系统直接去调用Koala Actor; `例2`则是在Actor与Actor之间调用, Koala和Orleans一样实现了RPC的`可重入`, 这在Koala里面是默认实现而且不能关闭的(Orleans里面有开关).
+
+
+### HTTP例子
+
+用HTTP API来实现一个Echo, 其中Http只是提供接口, Actor用来响应真正的请求.
+
+```python
+# Actor接口
+class IPlayer(ActorInterface):
+    @abstractmethod
+    async def echo(self, msg: str) -> str:
+        pass
+    pass
+
+# HTTP接口
+@app.get("/")
+def root():
+    return "hello world"
+
+
+@app.get("/echo/{msg}")
+async def echo(msg: str):
+    proxy = get_rpc_proxy(IPlayer, "1")
+    result = await proxy.echo(msg)
+    return result
+```
+
+例子中, echo请求都会发送给`IPlayer/1`这个对象, 实际操作中, 可以选择合适的ID分布, 以满足更高的并发度和分摊服务器压力.
 
 ## Koala Runtime
 
@@ -101,3 +135,4 @@ Koala Framework整体都可以在Windows/Linux/macOS上面`Debug`和`运行`. �
 * [Microsoft Research project home](http://research.microsoft.com/projects/orleans/)
 * [Virtual Actor](https://www.microsoft.com/en-us/research/publication/orleans-distributed-virtual-actors-for-programmability-and-scalability)
 * [TiKV PD](https://github.com/tikv/pd)
+* [FastAPI](https://fastapi.tiangolo.com/)
