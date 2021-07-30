@@ -80,6 +80,7 @@ namespace Gateway
 
             var messageHandler = serviceProvider.GetRequiredService<MessageHandler>();
             messageHandler.PrivateKey = config.PrivateKey;
+            messageHandler.DisableTokenCheck = config.DisableTokenCheck;
             messageHandler.AuthService = config.AuthService;
 
             this.placement.RegisterServerChangedEvent(this.OnAddServer, this.OnRemoveServer, this.OnOfflineServer);

@@ -2,9 +2,9 @@ TODO:
 
 v0.6
 
-* [ ] Gateway
-  * [ ] check sum toggle
-* [ ] Host
+* [x] Gateway
+  * [x] check sum toggle
+* [x] Host
   * [x] fastapi
     * [x] config
     * [x] http api

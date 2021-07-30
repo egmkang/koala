@@ -40,5 +40,9 @@ namespace Gateway
         /// 0表示不限制频率
         /// </summary>
         public int WebSocketRateLimit { get; set; }
+        /// <summary>
+        /// 是否禁用token校验
+        /// </summary>
+        public bool DisableTokenCheck { get; set; }
     }
 }

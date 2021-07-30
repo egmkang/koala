@@ -46,6 +46,7 @@ namespace Gateway.Handler
         }
 
         public string AuthService { get; set; }
+        public bool DisableTokenCheck { get; set; }
         public string PrivateKey { get; set; }
 
         private void RegisterHandler<T>(Func<ISession, T, byte[], Task> func) where T : RpcMeta
@@ -198,11 +199,11 @@ namespace Gateway.Handler
             //2. 可选包含`actor_type`, `actor_id`
             var sessionInfo = session.UserData;
             var firstPacket = memory.DecodeFirstMessage(size);
-            if (firstPacket.ComputeHash(this.PrivateKey)) 
+            if (this.DisableTokenCheck || firstPacket.ComputeHash(this.PrivateKey)) 
             {
                 if (!(firstPacket.ContainsKey("open_id") && firstPacket.ContainsKey("server_id")))
                 {
-                    await session.SendMessage(GenerateErrorMessage(ErrCheckSum, "check sum fail")).ConfigureAwait(false);
+                    await session.SendMessage(GenerateErrorMessage(ErrTokenFields, "token fields error")).ConfigureAwait(false);
                     await session.CloseAsync().ConfigureAwait(false);
                     return;
                 }
