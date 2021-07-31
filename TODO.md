@@ -15,9 +15,9 @@ v0.6
     * [x] config support json
     * [x] pd cache size config
   * [x] update host Load info
-* [ ] PD
+* [x] PD
   * [x] cache TTL
-  * [ ] upgrade etcd embed
+  * [x] upgrade etcd embed
 * [ ] build script
 * [ ] sample
 
