@@ -3,7 +3,7 @@ package util
 import (
 	"github.com/pingcap/errors"
 	"github.com/pingcap/log"
-	"go.etcd.io/etcd/clientv3"
+	clientv3 "go.etcd.io/etcd/client/v3"
 	"go.uber.org/zap"
 	"sync"
 )
