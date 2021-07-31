@@ -18,8 +18,11 @@ v0.6
 * [x] PD
   * [x] cache TTL
   * [x] upgrade etcd embed
-* [ ] build script
-* [ ] sample
+* [x] build script
+  * [x] Windows
+* [x] sample
+  * [x] Actor
+  * [x] HTTP
 
 
 v0.5

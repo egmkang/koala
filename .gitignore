@@ -5,6 +5,7 @@ test/.pytest_cache
 bin
 obj
 .vs
+output
 host*.log
 gateway/Gateway/Gateway.csproj.user
 gateway/Gateway/Properties/
