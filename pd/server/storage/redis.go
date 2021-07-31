@@ -73,6 +73,9 @@ func (this *redisStorageImpl) PutRecord(info *PlacementInfo) error {
 		zap.String("ActorID", fmt.Sprintf("%s_%s", info.ActorType, info.ActorID)),
 		zap.Uint64("RedisPoolIndex", index))
 	_, err = rdb.Set(ctx, id, result, 0).Result()
+	if info.TTL != 0 {
+		_, err = rdb.TTL(ctx, id).Result()
+	}
 	if err != nil {
 		return err
 	}

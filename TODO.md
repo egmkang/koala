@@ -16,7 +16,8 @@ v0.6
     * [x] pd cache size config
   * [x] update host Load info
 * [ ] PD
-  * [ ] pd mongo storage
+  * [x] cache TTL
+  * [ ] upgrade etcd embed
 * [ ] build script
 * [ ] sample
 
