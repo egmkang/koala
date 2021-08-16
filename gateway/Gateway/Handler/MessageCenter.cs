@@ -37,6 +37,7 @@ namespace Gateway.Handler
 
         public Task OnSocketClose(ISession session)
         {
+            this.sessionManager.RemoveSession(session.SessionID);
             this.logger.LogWarning("MessageCenter OnSocketClose, SessionID:{0}", session.SessionID);
             return Task.CompletedTask;
         }
