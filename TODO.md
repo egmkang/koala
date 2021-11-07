@@ -1,5 +1,10 @@
 TODO:
 
+v0.7
+
+* [ ] hotfix
+* [ ] ActorID int/str support
+
 v0.6
 
 * [x] Gateway
