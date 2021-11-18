@@ -1,6 +1,6 @@
 import asyncio
-from typing import *
-import websockets
+from typing import List, Tuple
+from websockets.legacy.client import connect as ws_connect
 import json
 import random
 import io
@@ -50,7 +50,7 @@ async def echo_client(address: str):
     else:
         token = generate_token("open_id_2", 2, "IPlayer", "2")
 
-    async with websockets.connect(address) as client:
+    async with ws_connect(address) as client:
         await client.send(token)
         token = await client.recv()
         print(token)
