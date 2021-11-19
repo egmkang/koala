@@ -2,7 +2,7 @@ from abc import ABC, abstractmethod
 from koala import server
 from koala.server.rpc_meta import *
 from koala.server.actor_interface import ActorInterface
-from koala.server.actor_base import ActorBase
+from koala.server.actor_base import ActorBase, ActorWithIntKey, ActorWithStrKey
 
 
 class Interface1(ActorInterface):
@@ -49,7 +49,7 @@ class Impl1(Interface1, ActorBase):
         pass
 
 
-class Impl2(Interface2, ActorBase):
+class Impl2(Interface2, ActorWithStrKey):
     def __init__(self):
         super(Impl2, self).__init__()
         pass
@@ -61,7 +61,7 @@ class Impl2(Interface2, ActorBase):
         pass
 
 
-class ImplMix(Interface3, Interface4, ActorBase):
+class ImplMix(Interface3, Interface4, ActorWithIntKey):
     def __init__(self):
         super(ImplMix, self).__init__()
         pass

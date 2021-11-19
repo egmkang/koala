@@ -3,7 +3,7 @@ TODO:
 v0.7
 
 * [ ] hotfix
-* [ ] ActorID int/str support
+* [x] ActorID int/str support
 
 v0.6
 

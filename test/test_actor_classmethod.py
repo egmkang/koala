@@ -1,11 +1,11 @@
-from koala.server.actor_base import ActorBase
+from koala.server.actor_base import ActorBase, ActorWithIntKey, ActorWithStrKey
 
 
 class SubClass0(ActorBase):
     pass
 
 
-class SubClass1(ActorBase):
+class SubClass1(ActorWithStrKey):
     @classmethod
     def gc_time(cls) -> int:
         return 30
@@ -15,7 +15,7 @@ class SubClass1(ActorBase):
         return 10
 
 
-class SubClass2(ActorBase):
+class SubClass2(ActorWithIntKey):
     @classmethod
     def gc_time(cls) -> int:
         return 3000

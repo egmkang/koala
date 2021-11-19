@@ -29,7 +29,7 @@ class ActorBase(ActorInterface, ABC):
         pass
 
     def _init_actor(self, uid: ActorID, context: ActorContext):
-        self.__uid = uid
+        self.__uid = self.actor_uid_type()(uid)
         self.__context = context
         pass
 
@@ -45,8 +45,10 @@ class ActorBase(ActorInterface, ABC):
     def type_name(self) -> str:
         return type(self).__qualname__
 
-    # TODO
-    # 这边的uid在内部都是str类型
+    @classmethod
+    def actor_uid_type(cls) -> Type[ActorID]:
+        return str
+
     @property
     def uid(self) -> ActorID:
         return self.__uid
@@ -187,3 +189,21 @@ class ActorBase(ActorInterface, ABC):
     def unregister_timer(self, timer_id: int):
         assert self.__timer_manager
         return self.__timer_manager.unregister_timer(timer_id)
+
+
+class ActorWithIntKey(ActorBase):
+    def __init__(self):
+        super().__init__()
+
+    @classmethod
+    def actor_uid_type(cls) -> Type[ActorID]:
+        return int
+
+
+class ActorWithStrKey(ActorBase):
+    def __init__(self):
+        super().__init__()
+
+    @classmethod
+    def actor_uid_type(cls) -> Type[ActorID]:
+        return str

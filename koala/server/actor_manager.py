@@ -1,6 +1,5 @@
 import asyncio
 import time
-from koala.server import actor_base
 from koala.typing import *
 from koala.logger import logger
 from koala.singleton import Singleton
@@ -43,15 +42,18 @@ class ActorManager(Singleton):
 
     def get_or_new(self, i_type: Type[ActorType], uid: ActorID) -> ActorBase:
         impl_type = get_impl_type(i_type)
+        if not impl_type:
+            raise Exception("interface %s not found an impl" % i_type)
         if impl_type not in self.__dict:
             self.__dict[impl_type] = dict()
-        d = self.__dict[impl_type]
-        if uid not in d:
+        actor_dict = self.__dict[impl_type]
+        uid = impl_type.actor_uid_type()(uid)
+        if uid not in actor_dict:
             # create here
             actor = _new_actor(cast(Type[ActorType], impl_type), uid)
-            d[uid] = actor
+            actor_dict[uid] = actor
             return actor
-        return d[uid]
+        return actor_dict[uid]
 
     def get_or_new_by_name(self, actor_type: str, uid: ActorID) -> ActorBase:
         i_type = get_interface_type(actor_type)
@@ -106,4 +108,3 @@ class ActorManager(Singleton):
                     await self.__gc_actors(self.__dict[actor_type])
                 except:
                     pass
-        pass

@@ -2,7 +2,7 @@ from koala.typing import *
 from koala.logger import logger
 from koala.message import RpcMessage, RequestAccountLogin, ResponseAccountLogin
 from koala.network.socket_session import SocketSession
-from koala.server.actor_base import ActorBase
+from koala.server.actor_base import ActorWithStrKey
 from koala.check_sum import message_check_sum
 from koala.koala_config import KoalaConfig, get_config
 from sample.interfaces import IAccount
@@ -11,7 +11,7 @@ from sample.interfaces import IAccount
 _config: Optional[KoalaConfig] = None
 
 
-class EmptyAccount(IAccount, ActorBase):
+class EmptyAccount(IAccount, ActorWithStrKey):
     def __init__(self):
         super(EmptyAccount, self).__init__()
     pass

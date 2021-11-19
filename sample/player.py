@@ -1,7 +1,7 @@
 from koala.typing import *
 from koala.message import RpcMessage
 from koala.message.gateway import NotifyNewActorMessage, RequestSendMessageToSession, NotifyNewActorSession
-from koala.server.actor_base import ActorBase
+from koala.server.actor_base import ActorWithIntKey
 from koala.check_sum import message_compute_check_sum
 from koala.json_util import json_dumps
 from koala.koala_config import get_config, KoalaConfig
@@ -11,7 +11,7 @@ from sample.interfaces import IPlayer
 _config: Optional[KoalaConfig] = None
 
 
-class Player(IPlayer, ActorBase):
+class Player(IPlayer, ActorWithIntKey):
     def __init__(self):
         super(Player, self).__init__()
 

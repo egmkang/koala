@@ -50,6 +50,14 @@ class ConfigImpl(KoalaConfig):
     def desc(self) -> str:
         return ""
 
+    @property
+    def pd_cache_size(self) -> int:
+        return 10
+
+    @property
+    def fastapi_port(self) -> int:
+        return 8888
+
 
 def test_config_impl():
     set_config_impl(ConfigImpl)

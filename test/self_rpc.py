@@ -3,7 +3,7 @@ import asyncio
 import random
 from koala.server import koala_host
 from koala.server.actor_interface import ActorInterface
-from koala.server.actor_base import ActorBase
+from koala.server.actor_base import ActorWithStrKey
 from koala.server.rpc_meta import *
 from koala.placement.placement import get_placement_impl, set_placement_impl
 from koala.pd.simple import SelfHostedPlacement
@@ -30,7 +30,7 @@ class IService2(ActorInterface):
         pass
 
 
-class Service1Impl(IService1, ActorBase):
+class Service1Impl(IService1, ActorWithStrKey):
     def __init__(self):
         super(Service1Impl, self).__init__()
 
@@ -46,7 +46,7 @@ class Service1Impl(IService1, ActorBase):
         return self.uid
 
 
-class Service2Impl(IService2, ActorBase):
+class Service2Impl(IService2, ActorWithStrKey):
     def __init__(self):
         super(Service2Impl, self).__init__()
 
@@ -72,7 +72,7 @@ class IBench(ActorInterface):
         pass
 
 
-class BenchImpl(IBench, ActorBase):
+class BenchImpl(IBench, ActorWithStrKey):
     def __init__(self):
         super(BenchImpl, self).__init__()
 
