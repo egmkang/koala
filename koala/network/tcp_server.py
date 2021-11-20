@@ -14,6 +14,12 @@ _codec_manager = CodecManager()
 class TcpServer(Singleton):
     def __init__(self):
         super(TcpServer, self).__init__()
+        try:
+            import uvloop
+            uvloop.install()
+            pass
+        except Exception as e:
+            pass
         self._loop = asyncio.get_event_loop()
         pass
 
