@@ -92,7 +92,7 @@ class KoalaDefaultConfig(KoalaConfig):
         self._desc = ""
         self._start_time = int(time.time() * 1000)
         self._ttl = 15
-        self._log_file_name = "HOST"
+        self._log_file_name = "host"
         self._log_level = "DEBUG"
         self._pd_address = ""
         self._private_key = ""
