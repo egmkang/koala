@@ -3,12 +3,12 @@ from koala.compact_pickle import pickle_loads
 from koala.message import RpcRequest, RpcResponse, RequestHeartBeat, ResponseHeartBeat
 from koala.server.rpc_future import *
 from koala.server.actor_message_loop import _send_error_resp, \
-                                            dispatch_actor_message,\
-                                            run_actor_message_loop
+    dispatch_actor_message,\
+    run_actor_message_loop
 from koala.server.actor_base import *
 from koala.server.actor_manager import ActorManager
 from koala.server.rpc_exception import RpcException
-from koala.placement.placement import get_placement_impl
+from koala.placement.placement import Placement
 
 
 _entity_manager = ActorManager()
@@ -23,13 +23,14 @@ async def update_process_time():
 
 
 async def process_rpc_request_slow(session: SocketSession, request: object):
-    placement = get_placement_impl()
+    placement = Placement.instance()
     req, _ = cast(Tuple[RpcRequest, bytes], request)
     placement.remove_position_cache(req.service_name, req.actor_id)
     try:
         node = await placement.find_position(req.service_name, req.actor_id)
         if node is not None and node.server_uid == placement.server_id():
-            actor = _entity_manager.get_or_new_by_name(req.service_name, req.actor_id)
+            actor = _entity_manager.get_or_new_by_name(
+                req.service_name, req.actor_id)
             if actor is None:
                 raise RpcException.entity_not_found()
             run_actor_message_loop(actor)
@@ -37,7 +38,8 @@ async def process_rpc_request_slow(session: SocketSession, request: object):
         else:
             await _send_error_resp(session, req.request_id, RpcException.position_changed())
     except Exception as e:
-        logger.error("process_rpc_request, Exception:%s, StackTrace:%s" % (e, traceback.format_exc()))
+        logger.error("process_rpc_request, Exception:%s, StackTrace:%s" %
+                     (e, traceback.format_exc()))
         await _send_error_resp(session, req.request_id, e)
     pass
 
@@ -48,12 +50,13 @@ async def process_rpc_request(session: SocketSession, request: object):
     req = cast(RpcRequest, req)
     req._args, req._kwargs = pickle_loads(raw_args)
     try:
-        node = get_placement_impl().find_position_in_cache(req.service_name, req.actor_id)
+        node = Placement.instance().find_position_in_cache(req.service_name, req.actor_id)
         # rpc请求方, 和自己的pd缓存一定要是一致的
         # 否则就清掉自己的缓存, 然后重新查找一下定位
-        if node is not None and node.server_uid == get_placement_impl().server_id() \
-                and req.server_id == get_placement_impl().server_id():
-            actor = _entity_manager.get_or_new_by_name(req.service_name, req.actor_id)
+        if node is not None and node.server_uid == Placement.instance().server_id() \
+                and req.server_id == Placement.instance().server_id():
+            actor = _entity_manager.get_or_new_by_name(
+                req.service_name, req.actor_id)
             if actor is None:
                 raise RpcException.entity_not_found()
             run_actor_message_loop(actor)
@@ -61,7 +64,8 @@ async def process_rpc_request(session: SocketSession, request: object):
         else:
             asyncio.create_task(process_rpc_request_slow(session, request))
     except Exception as e:
-        logger.error("process_rpc_request, Exception:%s, StackTrace:%s" % (e, traceback.format_exc()))
+        logger.error("process_rpc_request, Exception:%s, StackTrace:%s" %
+                     (e, traceback.format_exc()))
         await _send_error_resp(session, req.request_id, e)
     pass
 
@@ -89,7 +93,8 @@ async def process_heartbeat_request(session: SocketSession, request: object):
     resp.milli_seconds = req.milli_seconds
     session.heart_beat(_last_process_time)
     await session.send_message(resp)
-    logger.trace("process_rpc_heartbeat_request, SessionID:%d" % session.session_id)
+    logger.trace("process_rpc_heartbeat_request, SessionID:%d" %
+                 session.session_id)
 
 
 async def process_heartbeat_response(session: SocketSession, response: object):

@@ -5,7 +5,7 @@ from koala.server import koala_host
 from koala.server.actor_interface import ActorInterface
 from koala.server.actor_base import ActorWithStrKey
 from koala.server.rpc_meta import *
-from koala.placement.placement import get_placement_impl, set_placement_impl
+from koala.placement.placement import Placement
 from koala.pd.simple import SelfHostedPlacement
 from koala.server.rpc_proxy import get_rpc_proxy
 from koala.server.actor_timer import ActorTimer
@@ -122,8 +122,8 @@ PORT = 15555
 
 
 placement = SelfHostedPlacement(PORT)
-set_placement_impl(placement)
-logger.info(get_placement_impl())
+Placement.set_instance(placement)
+logger.info(Placement.instance())
 
 
 koala_host.init_server(globals())

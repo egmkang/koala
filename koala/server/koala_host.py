@@ -6,7 +6,7 @@ from koala.network.socket_session import SocketSession, SocketSessionManager
 from koala.network.tcp_server import TcpServer
 from koala.network import event_handler
 from koala.logger import logger, init_logger
-from koala.placement.placement import get_placement_impl
+from koala.placement.placement import Placement
 from koala.message import RpcRequest, RpcResponse, RequestHeartBeat, ResponseHeartBeat, NotifyNewActorMessage, \
     NotifyActorSessionAborted, NotifyNewActorSession, RequestAccountLogin
 from koala.server.rpc_message_dispatch import process_rpc_request, process_rpc_response, \
@@ -88,7 +88,7 @@ def _init_internal_message_handler():
 
 
 async def _run_placement():
-    impl = get_placement_impl()
+    impl = Placement.instance()
     if impl is None:
         logger.error("Placement module not initialized")
         return
@@ -124,7 +124,7 @@ def init_server(globals_dict: dict, config_file_name: str = ""):
 def use_pd(pd_impl: Optional[Placement] = None):
     if not pd_impl:
         pd_impl = PDPlacementImpl()
-    set_placement_impl(pd_impl)
+    Placement.set_instance(pd_impl)
 
 
 def listen(port: int, codec_id: int):
@@ -141,7 +141,7 @@ def listen_fastapi(*args, **kwargs):
     if "port" not in kwargs:
         port = get_config().fastapi_port
         kwargs["port"] = port
-    
+
     _tcp_server.create_task(fastapi_serve(*args, **kwargs))
 
 
@@ -150,7 +150,7 @@ def create_task(co):
 
 
 async def _try_update_load_loop():
-    impl = get_placement_impl()
+    impl = Placement.instance()
     last = 0
     while True:
         await asyncio.sleep(10)

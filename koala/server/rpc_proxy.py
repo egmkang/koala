@@ -8,7 +8,7 @@ from koala.server.rpc_exception import *
 from koala.server.rpc_future import *
 from koala.server.actor_context import ActorContext
 from koala.server.rpc_request_id import new_request_id, new_reentrant_id
-from koala.placement.placement import get_placement_impl
+from koala.placement.placement import Placement
 
 
 DEFAULT_RPC_TIMEOUT = 5.0
@@ -32,7 +32,7 @@ class _RpcMethodObject(object):
 
     async def __send_request(self, *arg, **kwargs):
         # position
-        position = await get_placement_impl().find_position(self.actor_type, self.actor_id)
+        position = await Placement.instance().find_position(self.actor_type, self.actor_id)
         if position is None:
             raise Exception("Placement Service Not Valid")
 
@@ -63,7 +63,7 @@ class _RpcMethodObject(object):
                 return await _rpc_call(request_id)
             except RpcException as e:
                 if e.code == RPC_ERROR_POSITION_CHANGED:
-                    get_placement_impl().remove_position_cache(self.actor_type, self.actor_id)
+                    Placement.instance().remove_position_cache(self.actor_type, self.actor_id)
                     continue
                 raise e
 
