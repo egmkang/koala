@@ -3,12 +3,12 @@ from koala import json_util
 import time
 import yaml
 from koala.typing import *
-from koala.local_ip import get_host_ip
-from koala.server.rpc_meta import get_all_impl_types
+from koala import local_ip
+from koala.server import rpc_meta
 
 
 def _get_registered_services() -> Dict[str, str]:
-    all_types = get_all_impl_types()
+    all_types = rpc_meta.get_all_impl_types()
     return {i[0]: i[1].__qualname__ for i in all_types}
 
 
@@ -150,7 +150,7 @@ class KoalaDefaultConfig(KoalaConfig):
     def address(self) -> str:
         if len(self._ip) > 0:
             return "%s:%d" % (self._ip, self._port)
-        return "%s:%d" % (get_host_ip(), self._port)
+        return "%s:%d" % (local_ip.get_host_ip(), self._port)
 
     @property
     def log_level(self):

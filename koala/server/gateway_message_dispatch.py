@@ -7,7 +7,7 @@ from koala.placement.placement import Placement
 from koala.server.actor_base import *
 from koala.server.actor_manager import ActorManager
 from koala.server.rpc_exception import RpcException
-from koala.server.actor_message_loop import run_actor_message_loop, dispatch_actor_message
+from koala.server import actor_message_loop
 
 _entity_manager = ActorManager()
 
@@ -18,8 +18,8 @@ async def _dispatch_user_message_slow(session: SocketSession, actor_type: str, a
         actor = _entity_manager.get_or_new_by_name(actor_type, actor_id)
         if actor is None:
             raise RpcException.entity_not_found()
-        run_actor_message_loop(actor)
-        await dispatch_actor_message(actor, session, msg)
+        actor_message_loop.run_actor_message_loop(actor)
+        await actor_message_loop.dispatch_actor_message(actor, session, msg)
     else:
         if node:
             node_session = node.session
@@ -39,8 +39,8 @@ async def _dispatch_user_message(session: SocketSession, actor_type: str, actor_
         actor = _entity_manager.get_or_new_by_name(actor_type, actor_id)
         if actor is None:
             raise RpcException.entity_not_found()
-        run_actor_message_loop(actor)
-        await dispatch_actor_message(actor, session, msg)
+        actor_message_loop.run_actor_message_loop(actor)
+        await actor_message_loop.dispatch_actor_message(actor, session, msg)
     else:
         asyncio.create_task(_dispatch_user_message_slow(
             session, actor_type, actor_id, msg))

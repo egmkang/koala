@@ -3,7 +3,7 @@ import time
 from koala.typing import *
 from koala.logger import logger
 from koala.singleton import Singleton
-from koala.server.rpc_meta import get_impl_type, get_interface_type
+from koala.server import rpc_meta
 from koala.server.rpc_exception import RpcException
 from koala.server.actor_base import ActorBase
 from koala.server.actor_context import ActorContext
@@ -33,7 +33,7 @@ class ActorManager(Singleton):
         return self.__weight
 
     def get_entity(self, i_type: Type[ActorType], uid: ActorID) -> Optional[ActorBase]:
-        impl_type = get_impl_type(i_type)
+        impl_type = rpc_meta.get_impl_type(i_type)
         if impl_type in self.__dict:
             d = self.__dict[impl_type]
             if uid in d:
@@ -41,7 +41,7 @@ class ActorManager(Singleton):
         return None
 
     def get_or_new(self, i_type: Type[ActorType], uid: ActorID) -> ActorBase:
-        impl_type = get_impl_type(i_type)
+        impl_type = rpc_meta.get_impl_type(i_type)
         if not impl_type:
             raise Exception("interface %s not found an impl" % i_type)
         if impl_type not in self.__dict:
@@ -56,7 +56,7 @@ class ActorManager(Singleton):
         return actor_dict[uid]
 
     def get_or_new_by_name(self, actor_type: str, uid: ActorID) -> ActorBase:
-        i_type = get_interface_type(actor_type)
+        i_type = rpc_meta.get_interface_type(actor_type)
         if i_type is None:
             raise RpcException.interface_invalid()
         return self.get_or_new(i_type, uid)

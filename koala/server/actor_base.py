@@ -9,7 +9,7 @@ from koala.typing import *
 from koala.logger import logger
 from koala.network.socket_session import SocketSession, SocketSessionManager
 from koala.server.actor_context import ActorContext
-from koala.server.rpc_proxy import get_rpc_proxy
+from koala.server import rpc_proxy
 from koala.server.actor_timer import ActorTimerManager, ActorTimer
 
 
@@ -179,7 +179,7 @@ class ActorBase(ActorInterface, ABC):
         self.set_session_id(0)
 
     def get_proxy(self, actor_type: Type[ActorInterfaceType], uid: ActorID) -> ActorInterfaceType:
-        o = get_rpc_proxy(actor_type, uid, self.context)
+        o = rpc_proxy.get_rpc_proxy(actor_type, uid, self.context)
         return cast(ActorInterfaceType, o)
 
     def register_timer(self, interval: int, fn: Callable[[ActorTimer], None]) -> ActorTimer:

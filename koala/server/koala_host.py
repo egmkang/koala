@@ -9,15 +9,10 @@ from koala.logger import logger, init_logger
 from koala.placement.placement import Placement
 from koala.message import RpcRequest, RpcResponse, RequestHeartBeat, ResponseHeartBeat, NotifyNewActorMessage, \
     NotifyActorSessionAborted, NotifyNewActorSession, RequestAccountLogin
-from koala.server.rpc_message_dispatch import process_rpc_request, process_rpc_response, \
-    process_heartbeat_request, process_heartbeat_response, update_process_time
-from koala.server.gateway_message_dispatch import process_gateway_actor_session_aborted, \
-    process_gateway_new_actor_message, process_gateway_new_actor_session, process_gateway_account_login
-from koala.server.rpc_request_id import set_request_id_seed
+from koala.server import rpc_message_dispatch, gateway_message_dispatch, rpc_request_id, rpc_meta
 from koala.server.actor_manager import ActorManager
-from koala.koala_config import get_config
+from koala import koala_config
 from koala.server.fastapi import *
-from koala.server.rpc_meta import build_meta_info
 from koala.network.constant import CODEC_RPC
 from koala.placement.placement import *
 from koala.pd.placement import *
@@ -68,18 +63,22 @@ def _socket_close_handler(session: SocketSession):
 
 
 def _init_internal_message_handler():
-    register_user_handler(RpcRequest, process_rpc_request)
-    register_user_handler(RpcResponse, process_rpc_response)
-    register_user_handler(RequestHeartBeat, process_heartbeat_request)
-    register_user_handler(ResponseHeartBeat, process_heartbeat_response)
+    register_user_handler(RpcRequest, rpc_message_dispatch.process_rpc_request)
+    register_user_handler(
+        RpcResponse, rpc_message_dispatch.process_rpc_response)
+    register_user_handler(
+        RequestHeartBeat, rpc_message_dispatch.process_heartbeat_request)
+    register_user_handler(
+        ResponseHeartBeat, rpc_message_dispatch.process_heartbeat_response)
     # 网关消息和集群内的消息
-    register_user_handler(RequestAccountLogin, process_gateway_account_login)
+    register_user_handler(
+        RequestAccountLogin, gateway_message_dispatch.process_gateway_account_login)
     register_user_handler(NotifyNewActorSession,
-                          process_gateway_new_actor_session)
+                          gateway_message_dispatch.process_gateway_new_actor_session)
     register_user_handler(NotifyActorSessionAborted,
-                          process_gateway_actor_session_aborted)
+                          gateway_message_dispatch.process_gateway_actor_session_aborted)
     register_user_handler(NotifyNewActorMessage,
-                          process_gateway_new_actor_message)
+                          gateway_message_dispatch.process_gateway_new_actor_message)
     # 在这边可以初始化内置的消息处理器
     # 剩下的消息可以交给用户自己去处理
     event_handler.register_message_handler(_message_handler)
@@ -110,15 +109,15 @@ async def _run_placement():
 
 def init_server(globals_dict: dict, config_file_name: str = ""):
     # 需要注入config实现, 需要在初始化服务器之前注入
-    _config = get_config()
+    _config = koala_config.get_config()
     if config_file_name:
         _config.parse(config_file_name)
     init_logger(_config.log_name, _config.log_level, not _config.console_log)
 
-    build_meta_info(globals_dict)
+    rpc_meta.build_meta_info(globals_dict)
     _init_internal_message_handler()
     _time_offset_of = 1626245658    # 随便找了一个时间戳, 可以减小request id序列化的大小
-    set_request_id_seed(int(time.time() - _time_offset_of))
+    rpc_request_id.set_request_id_seed(int(time.time() - _time_offset_of))
 
 
 def use_pd(pd_impl: Optional[Placement] = None):
@@ -139,7 +138,7 @@ def listen_fastapi(*args, **kwargs):
     if "host" not in kwargs:
         kwargs["host"] = "0.0.0.0"
     if "port" not in kwargs:
-        port = get_config().fastapi_port
+        port = koala_config.get_config().fastapi_port
         kwargs["port"] = port
 
     _tcp_server.create_task(fastapi_serve(*args, **kwargs))
@@ -165,10 +164,10 @@ async def _try_update_load_loop():
 
 
 def run_server():
-    _config = get_config()
+    _config = koala_config.get_config()
     if _config.port:
         listen_rpc(_config.port)
-    _tcp_server.create_task(update_process_time())
+    _tcp_server.create_task(rpc_message_dispatch.update_process_time())
     _tcp_server.create_task(_socket_session_manager.run())
     _tcp_server.create_task(_run_placement())
     _tcp_server.create_task(_actor_manager.gc_loop())

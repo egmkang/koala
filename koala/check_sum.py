@@ -1,5 +1,5 @@
 from koala.typing import *
-from koala.json_util import json_loads
+from koala import json_util
 import io
 import hashlib
 
@@ -25,7 +25,7 @@ def message_compute_check_sum(message: dict, private_key: str, escape_key: str =
 
 
 def message_check_sum(raw_message: bytes, private_key: str, check_sum_key: str = "check_sum") -> Tuple[dict, bool]:
-    message: dict = json_loads(raw_message)
+    message: dict = json_util.json_loads(raw_message)
     input_check_sum = ""
     for (k, v) in message.items():
         if k == check_sum_key:

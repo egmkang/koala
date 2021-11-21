@@ -1,8 +1,8 @@
 from koala.typing import *
-from koala.koala_config import KoalaConfig, get_config, set_config_impl
+from koala import koala_config
 
 
-class ConfigImpl(KoalaConfig):
+class ConfigImpl(koala_config.KoalaConfig):
     @property
     def port(self) -> int:
         return 0
@@ -60,6 +60,6 @@ class ConfigImpl(KoalaConfig):
 
 
 def test_config_impl():
-    set_config_impl(ConfigImpl)
-    _config = get_config()
+    koala_config.set_config_impl(ConfigImpl)
+    _config = koala_config.get_config()
     assert _config.__class__ == ConfigImpl

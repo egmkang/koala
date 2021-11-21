@@ -1,10 +1,8 @@
 import asyncio
-from koala.compact_pickle import pickle_loads
+from koala import compact_pickle
 from koala.message import RpcRequest, RpcResponse, RequestHeartBeat, ResponseHeartBeat
 from koala.server.rpc_future import *
-from koala.server.actor_message_loop import _send_error_resp, \
-    dispatch_actor_message,\
-    run_actor_message_loop
+from koala.server import actor_message_loop
 from koala.server.actor_base import *
 from koala.server.actor_manager import ActorManager
 from koala.server.rpc_exception import RpcException
@@ -33,14 +31,14 @@ async def process_rpc_request_slow(session: SocketSession, request: object):
                 req.service_name, req.actor_id)
             if actor is None:
                 raise RpcException.entity_not_found()
-            run_actor_message_loop(actor)
-            await dispatch_actor_message(actor, session, req)
+            actor_message_loop.run_actor_message_loop(actor)
+            await actor_message_loop.dispatch_actor_message(actor, session, req)
         else:
-            await _send_error_resp(session, req.request_id, RpcException.position_changed())
+            await actor_message_loop._send_error_resp(session, req.request_id, RpcException.position_changed())
     except Exception as e:
         logger.error("process_rpc_request, Exception:%s, StackTrace:%s" %
                      (e, traceback.format_exc()))
-        await _send_error_resp(session, req.request_id, e)
+        await actor_message_loop._send_error_resp(session, req.request_id, e)
     pass
 
 
@@ -48,7 +46,7 @@ async def process_rpc_request(session: SocketSession, request: object):
     request = cast(RpcMessage, request)
     req, raw_args = request.meta, request.body if request.body else b""
     req = cast(RpcRequest, req)
-    req._args, req._kwargs = pickle_loads(raw_args)
+    req._args, req._kwargs = compact_pickle.pickle_loads(raw_args)
     try:
         node = Placement.instance().find_position_in_cache(req.service_name, req.actor_id)
         # rpc请求方, 和自己的pd缓存一定要是一致的
@@ -59,14 +57,14 @@ async def process_rpc_request(session: SocketSession, request: object):
                 req.service_name, req.actor_id)
             if actor is None:
                 raise RpcException.entity_not_found()
-            run_actor_message_loop(actor)
-            await dispatch_actor_message(actor, session, req)
+            actor_message_loop.run_actor_message_loop(actor)
+            await actor_message_loop.dispatch_actor_message(actor, session, req)
         else:
             asyncio.create_task(process_rpc_request_slow(session, request))
     except Exception as e:
         logger.error("process_rpc_request, Exception:%s, StackTrace:%s" %
                      (e, traceback.format_exc()))
-        await _send_error_resp(session, req.request_id, e)
+        await actor_message_loop._send_error_resp(session, req.request_id, e)
     pass
 
 
@@ -74,7 +72,7 @@ async def process_rpc_response(session: SocketSession, response: object):
     response = cast(RpcMessage, response)
     resp, raw_response = response.meta, response.body if response.body else b""
     resp = cast(RpcResponse, resp)
-    resp._response = pickle_loads(raw_response)
+    resp._response = compact_pickle.pickle_loads(raw_response)
 
     future: Future = get_future(resp.request_id)
     if resp.error_code != 0:

@@ -7,7 +7,7 @@ from koala.server.actor_base import ActorWithStrKey
 from koala.server.rpc_meta import *
 from koala.placement.placement import Placement
 from koala.pd.simple import SelfHostedPlacement
-from koala.server.rpc_proxy import get_rpc_proxy
+from koala.server import rpc_proxy
 from koala.server.actor_timer import ActorTimer
 from koala.logger import logger
 
@@ -57,7 +57,7 @@ class Service2Impl(IService2, ActorWithStrKey):
 
 async def service_1():
     await asyncio.sleep(3.0)
-    proxy = get_rpc_proxy(IService1, "1")
+    proxy = rpc_proxy.get_rpc_proxy(IService1, "1")
     logger.info(await proxy.say_hello("2"))
     pass
 
@@ -96,7 +96,7 @@ finished = 0
 async def bench(index: ActorID):
     global finished
     await asyncio.sleep(3)
-    proxy = get_rpc_proxy(IBench, index)
+    proxy = rpc_proxy.get_rpc_proxy(IBench, index)
     while True:
         _ = await proxy.echo("12121212")
         finished += 1
@@ -104,7 +104,7 @@ async def bench(index: ActorID):
 
 async def run_timer(index: ActorID):
     await asyncio.sleep(3)
-    proxy = get_rpc_proxy(IBench, index)
+    proxy = rpc_proxy.get_rpc_proxy(IBench, index)
     await proxy.run_timer(10)
 
 

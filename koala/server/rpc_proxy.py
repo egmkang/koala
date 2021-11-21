@@ -1,13 +1,13 @@
 import asyncio
 from koala.server.actor_interface import ActorInterfaceType
-from koala.compact_pickle import pickle_dumps
+from koala import compact_pickle
 from koala.message.rpc_message import RpcMessage
 from koala.server.rpc_meta import *
 from koala.message import RpcRequest
 from koala.server.rpc_exception import *
 from koala.server.rpc_future import *
 from koala.server.actor_context import ActorContext
-from koala.server.rpc_request_id import new_request_id, new_reentrant_id
+from koala.server import rpc_request_id
 from koala.placement.placement import Placement
 
 
@@ -42,7 +42,7 @@ class _RpcMethodObject(object):
                             position.server_uid)
 
         req = RpcRequest()
-        req.request_id = new_request_id()
+        req.request_id = rpc_request_id.new_request_id()
         req.service_name = self.actor_type
         req.method_name = self.method_name
         # Actor底层都是string类型的ID, 否则"1"和1会映射到两个Actor上面
@@ -50,7 +50,7 @@ class _RpcMethodObject(object):
         req.reentrant_id = self.reentrant_id
         req.server_id = position.server_uid
 
-        raw_args = pickle_dumps((arg, kwargs))
+        raw_args = compact_pickle.pickle_dumps((arg, kwargs))
         await session.send_message(RpcMessage.from_msg(req, raw_args))
         return req.request_id
 
@@ -84,7 +84,7 @@ class _RpcProxyObject(object):
         if ctx is not None:
             reentrant_id = ctx.reentrant_id
         else:
-            reentrant_id = new_reentrant_id()
+            reentrant_id = rpc_request_id.new_reentrant_id()
         method = _RpcMethodObject(
             self.service_name, self.uid, name, reentrant_id)
         return method
