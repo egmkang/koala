@@ -1,6 +1,6 @@
 import asyncio
 from koala.server.actor_interface import ActorInterfaceType
-from koala import compact_pickle
+from koala import utils
 from koala.message.rpc_message import RpcMessage
 from koala.server.rpc_meta import *
 from koala.message import RpcRequest
@@ -50,7 +50,7 @@ class _RpcMethodObject(object):
         req.reentrant_id = self.reentrant_id
         req.server_id = position.server_uid
 
-        raw_args = compact_pickle.pickle_dumps((arg, kwargs))
+        raw_args = utils.pickle_dumps((arg, kwargs))
         await session.send_message(RpcMessage.from_msg(req, raw_args))
         return req.request_id
 

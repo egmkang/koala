@@ -3,7 +3,7 @@ import time
 import traceback
 import weakref
 from koala.typing import *
-from koala import compact_pickle
+from koala import utils
 from koala.message import RpcResponse, RpcRequest
 from koala.message.rpc_message import RpcMessage
 from koala.server import rpc_meta
@@ -49,7 +49,7 @@ async def _dispatch_actor_rpc_request(actor: ActorBase, session: Optional[Socket
             result = await result
         resp = RpcResponse()
         resp.request_id = req.request_id
-        raw_response = compact_pickle.pickle_dumps(result)
+        raw_response = utils.pickle_dumps(result)
 
         if session:
             await session.send_message(RpcMessage.from_msg(resp, raw_response))

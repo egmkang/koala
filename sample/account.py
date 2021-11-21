@@ -3,7 +3,7 @@ from koala.logger import logger
 from koala.message import RpcMessage, RequestAccountLogin, ResponseAccountLogin
 from koala.network.socket_session import SocketSession
 from koala.server.actor_base import ActorWithStrKey
-from koala import check_sum, koala_config
+from koala import utils, koala_config
 from sample.interfaces import IAccount
 
 
@@ -24,10 +24,10 @@ async def process_gateway_account_login(session: SocketSession, msg: object):
     request = cast(RpcMessage, msg)
     req = cast(RequestAccountLogin, request.meta)
     body = request.body
-    body_message, check = check_sum.message_check_sum(
+    body_message, check_sum = utils.message_check_sum(
         body, private_key=_config.private_key)
     logger.info("process_gateway_account_login, SessionID:%s, OpenID:%s, ServerUD:%s , CheckSum:%s, %s" %
-                (req.session_id, req.open_id, req.server_id, check, body_message))
+                (req.session_id, req.open_id, req.server_id, check_sum, body_message))
 
     resp = ResponseAccountLogin()
     resp.session_id = req.session_id

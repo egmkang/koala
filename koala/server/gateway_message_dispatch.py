@@ -1,6 +1,6 @@
 import asyncio
 from koala.logger import logger
-from koala.json_util import json_loads
+from koala import utils
 from koala.message import RpcMessage
 from koala.message.gateway import *
 from koala.placement.placement import Placement
@@ -50,7 +50,7 @@ async def process_gateway_account_login(session: SocketSession, msg: object):
     request = cast(RpcMessage, msg)
     req = cast(RequestAccountLogin, request.meta)
     body = request.body
-    body_message: dict = json_loads(body if body else b"{}")
+    body_message: dict = utils.json_loads(body if body else b"{}")
 
     resp = ResponseAccountLogin()
     resp.session_id = req.session_id

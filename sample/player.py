@@ -2,7 +2,7 @@ from koala.typing import *
 from koala.message import RpcMessage
 from koala.message.gateway import NotifyNewActorMessage, RequestSendMessageToSession, NotifyNewActorSession
 from koala.server.actor_base import ActorWithIntKey
-from koala import json_util, koala_config, check_sum
+from koala import utils, koala_config
 from sample.interfaces import IPlayer
 
 
@@ -28,13 +28,13 @@ class Player(IPlayer, ActorWithIntKey):
         await super(Player, self).on_new_session(msg, body)
         token_message = {'open_id': msg.open_id, "server_id": msg.server_id,
                          "actor_type": "IPlayer", "actor_id": self.uid}
-        check = check_sum.message_compute_check_sum(
+        check = utils.message_compute_check_sum(
             token_message, private_key=_config.private_key)
         token_message["check_sum"] = check
 
         meta = RequestSendMessageToSession()
         meta.session_id = msg.session_id
-        token = json_util.json_dumps(token_message)
+        token = utils.json_dumps(token_message)
         await self.send_message(RpcMessage(meta=meta, body=token))
 
     async def dispatch_user_message(self, msg: object) -> None:

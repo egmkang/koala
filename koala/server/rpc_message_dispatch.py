@@ -1,5 +1,5 @@
 import asyncio
-from koala import compact_pickle
+from koala import utils
 from koala.message import RpcRequest, RpcResponse, RequestHeartBeat, ResponseHeartBeat
 from koala.server.rpc_future import *
 from koala.server import actor_message_loop
@@ -46,7 +46,7 @@ async def process_rpc_request(session: SocketSession, request: object):
     request = cast(RpcMessage, request)
     req, raw_args = request.meta, request.body if request.body else b""
     req = cast(RpcRequest, req)
-    req._args, req._kwargs = compact_pickle.pickle_loads(raw_args)
+    req._args, req._kwargs = utils.pickle_loads(raw_args)
     try:
         node = Placement.instance().find_position_in_cache(req.service_name, req.actor_id)
         # rpc请求方, 和自己的pd缓存一定要是一致的
@@ -72,7 +72,7 @@ async def process_rpc_response(session: SocketSession, response: object):
     response = cast(RpcMessage, response)
     resp, raw_response = response.meta, response.body if response.body else b""
     resp = cast(RpcResponse, resp)
-    resp._response = compact_pickle.pickle_loads(raw_response)
+    resp._response = utils.pickle_loads(raw_response)
 
     future: Future = get_future(resp.request_id)
     if resp.error_code != 0:
