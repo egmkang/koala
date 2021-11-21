@@ -1,4 +1,5 @@
 import asyncio
+from koala.membership.server_node import ServerNode
 from koala.server.actor_interface import ActorInterfaceType
 from koala import utils
 from koala.message.rpc_message import RpcMessage
@@ -23,16 +24,21 @@ async def _rpc_call(unique_id: int) -> object:
 
 
 class _RpcMethodObject(object):
-    def __init__(self, actor_type: str, actor_id: ActorID, method_name: str, reentrant_id: int):
+    def __init__(self, actor_type: str, actor_id: ActorID, method_name: str, reentrant_id: int,
+                 server_node: Optional[ServerNode] = None, check_position: bool = True):
         self.actor_type = actor_type
         self.actor_id = actor_id
         self.method_name = method_name
         self.reentrant_id = reentrant_id
+        self.server_node: Optional[ServerNode] = server_node
+        self.check_position = check_position
         pass
 
     async def __send_request(self, *arg, **kwargs):
         # position
         position = await Placement.instance().find_position(self.actor_type, self.actor_id)
+        if self.server_node:
+            position = self.server_node
         if position is None:
             raise Exception("Placement Service Not Valid")
 
@@ -45,10 +51,12 @@ class _RpcMethodObject(object):
         req.request_id = rpc_request_id.new_request_id()
         req.service_name = self.actor_type
         req.method_name = self.method_name
-        # Actor底层都是string类型的ID, 否则"1"和1会映射到两个Actor上面
-        req.actor_id = "%s" % self.actor_id
+        # Actor底层支持str和int两种类型
+        req.actor_id = self.actor_id
         req.reentrant_id = self.reentrant_id
         req.server_id = position.server_uid
+        if not self.check_position:
+            req.server_id = 0
 
         raw_args = utils.pickle_dumps((arg, kwargs))
         await session.send_message(RpcMessage.from_msg(req, raw_args))
@@ -69,12 +77,16 @@ class _RpcMethodObject(object):
 
 
 class _RpcProxyObject(object):
-    def __init__(self, i_type: Type, uid: ActorID, context: Optional[ActorContext]):
+    def __init__(self, i_type: Type, uid: ActorID, context: Optional[ActorContext],
+                 server_node: Optional[ServerNode] = None,
+                 check_position: bool = True):
         self.service_name = i_type.__qualname__
         self.uid = uid
         self.context = None
         if context is not None:
             self.context = weakref.ref(context)
+        self.server_node = server_node
+        self.check_position = check_position
         pass
 
     def __getattr__(self, name: str):
@@ -86,10 +98,15 @@ class _RpcProxyObject(object):
         else:
             reentrant_id = rpc_request_id.new_reentrant_id()
         method = _RpcMethodObject(
-            self.service_name, self.uid, name, reentrant_id)
+            self.service_name, self.uid, name, reentrant_id, self.server_node, self.check_position)
         return method
 
 
-def get_rpc_proxy(i_type: Type[ActorInterfaceType], uid: ActorID, context: ActorContext = None) -> ActorInterfaceType:
-    o = _RpcProxyObject(i_type, uid, context)
+def get_rpc_proxy(i_type: Type[ActorInterfaceType],
+                  uid: ActorID,
+                  context: ActorContext = None,
+                  server_node: Optional[ServerNode] = None,
+                  check_postion: bool = True) -> ActorInterfaceType:
+    o = _RpcProxyObject(i_type, uid, context, server_node,
+                        check_postion)
     return cast(ActorInterfaceType, o)

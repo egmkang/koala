@@ -48,11 +48,14 @@ async def process_rpc_request(session: SocketSession, request: object):
     req = cast(RpcRequest, req)
     req._args, req._kwargs = utils.pickle_loads(raw_args)
     try:
+        current_server_id = Placement.instance().server_id()
         node = Placement.instance().find_position_in_cache(req.service_name, req.actor_id)
+        # server_id是0, 就可以忽略掉服务器ID检查, 可以做一些特殊的任务
+        ignore_check_position = not req.server_id
+        position_is_equal = node is not None and node.server_uid == req.server_id == current_server_id
         # rpc请求方, 和自己的pd缓存一定要是一致的
         # 否则就清掉自己的缓存, 然后重新查找一下定位
-        if node is not None and node.server_uid == Placement.instance().server_id() \
-                and req.server_id == Placement.instance().server_id():
+        if position_is_equal or ignore_check_position:
             actor = _entity_manager.get_or_new_by_name(
                 req.service_name, req.actor_id)
             if actor is None:
