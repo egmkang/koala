@@ -4,6 +4,7 @@ v0.7
 
 * [ ] hotfix
 * [x] ActorID int/str support
+* [ ] Gateway using DotNetty
 
 v0.6
 
