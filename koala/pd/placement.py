@@ -72,6 +72,10 @@ class PDPlacementImpl(Placement):
         except:
             pass
 
+    def get_all_servers(self) -> List[ServerNode]:
+        server_nodes = _membership.get_members()
+        return [node for _, node in server_nodes.items()]
+
     async def _pd_keep_alive(self) -> api.KeepAliveServerResponse:
         if time.time() - self._last_heart_beat > self._config.ttl:
             logger.error("%s, %s" % (ERROR_PD_KEEP_ALIVE_TIME_OUT.code,

@@ -36,6 +36,9 @@ class SelfHostedPlacement(Placement):
     async def register_server(self):
         pass
 
+    def get_all_servers(self) -> List[ServerNode]:
+        return [self.server_node]
+
     def set_load(self, load: int):
         pass
 

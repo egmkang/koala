@@ -1,9 +1,9 @@
 import traceback
 from abc import ABC, abstractmethod
+
 from koala.typing import *
 from koala.membership.server_node import ServerNode
 from koala.membership.membership_manager import MembershipManager
-from koala.singleton import Singleton
 from koala.logger import logger
 
 
@@ -23,6 +23,10 @@ class Placement(ABC):
 
     @abstractmethod
     async def delete_server(self, server_id: int):
+        pass
+
+    @abstractmethod
+    def get_all_servers(self) -> List[ServerNode]:
         pass
 
     @abstractmethod
