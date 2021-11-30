@@ -15,7 +15,7 @@ class TcpServer(Singleton):
     def __init__(self):
         super(TcpServer, self).__init__()
         try:
-            import uvloop
+            import uvloop  # type: ignore
             uvloop.install()
             pass
         except Exception as e:
