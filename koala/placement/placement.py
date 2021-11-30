@@ -1,9 +1,9 @@
 import traceback
 from abc import ABC, abstractmethod
+
 from koala.typing import *
 from koala.membership.server_node import ServerNode
 from koala.membership.membership_manager import MembershipManager
-from koala.singleton import Singleton
 from koala.logger import logger
 
 
@@ -11,6 +11,8 @@ _membership_manager = MembershipManager()
 
 
 class Placement(ABC):
+    __placement_impl: Optional["Placement"] = None
+
     @abstractmethod
     def server_id(self) -> int:
         pass
@@ -21,6 +23,10 @@ class Placement(ABC):
 
     @abstractmethod
     async def delete_server(self, server_id: int):
+        pass
+
+    @abstractmethod
+    def get_all_servers(self) -> List[ServerNode]:
         pass
 
     @abstractmethod
@@ -55,7 +61,8 @@ class Placement(ABC):
         _membership_manager.remove_member(node.server_uid)
         try:
             self._on_remove_server(node)
-            logger.info("PD RemoveServer, ServerID:%d, Address:%s:%s" % (node.server_uid, node.host, node.port))
+            logger.info("PD RemoveServer, ServerID:%d, Address:%s:%s" %
+                        (node.server_uid, node.host, node.port))
         except Exception as e:
             logger.error("Placement.RemoveServer, ServerUID:%d, Exception:%s, StackTrace:%s" %
                          (node.server_uid, e, traceback.format_exc()))
@@ -80,17 +87,12 @@ class Placement(ABC):
     async def placement_loop(self):
         pass
 
+    @classmethod
+    def instance(cls) -> 'Placement':
+        assert cls.__placement_impl
+        return cls.__placement_impl
 
-__placement_impl: Optional[Placement] = None
-
-
-def get_placement_impl() -> Placement:
-    assert __placement_impl
-    return __placement_impl
-
-
-def set_placement_impl(impl: Placement):
-    global __placement_impl
-    __placement_impl = impl
-    logger.info("init placement impl %s" % __placement_impl)
-
+    @classmethod
+    def set_instance(cls, impl: "Placement"):
+        cls.__placement_impl = impl
+        logger.info("init placement impl %s" % cls.__placement_impl)

@@ -3,10 +3,10 @@ import time
 import traceback
 import weakref
 from koala.typing import *
-from koala.compact_pickle import pickle_dumps
+from koala import utils
 from koala.message import RpcResponse, RpcRequest
 from koala.message.rpc_message import RpcMessage
-from koala.server.rpc_meta import get_rpc_impl_method
+from koala.server import rpc_meta
 from koala.network.socket_session import SocketSession
 from koala.server.actor_base import ActorBase
 from koala.server.rpc_exception import RpcException, RPC_ERROR_UNKNOWN
@@ -36,7 +36,8 @@ async def _send_error_resp(session: SocketSession, request_id: int, e: Exception
 
 async def _dispatch_actor_rpc_request(actor: ActorBase, session: Optional[SocketSession], req: RpcRequest):
     try:
-        method = get_rpc_impl_method((req.service_name, req.method_name))
+        method = rpc_meta.get_rpc_impl_method(
+            (req.service_name, req.method_name))
         if method is None:
             raise RpcException.method_not_found()
 
@@ -48,7 +49,7 @@ async def _dispatch_actor_rpc_request(actor: ActorBase, session: Optional[Socket
             result = await result
         resp = RpcResponse()
         resp.request_id = req.request_id
-        raw_response = pickle_dumps(result)
+        raw_response = utils.pickle_dumps(result)
 
         if session:
             await session.send_message(RpcMessage.from_msg(resp, raw_response))

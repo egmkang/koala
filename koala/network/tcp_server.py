@@ -5,7 +5,7 @@ from koala.network.constant import WINDOW_SIZE
 from koala.network.codec import Codec
 from koala.network.codec_manager import CodecManager
 from koala.network.tcp_session import TcpSocketSession
-from koala.network.session_id_gen import *
+from koala.network import session_id_gen
 
 
 _codec_manager = CodecManager()
@@ -27,7 +27,8 @@ class TcpServer(Singleton):
     async def _handle_new_session(cls, codec: Codec,
                                   reader: asyncio.StreamReader,
                                   writer: asyncio.StreamWriter):
-        conn = TcpSocketSession(new_session_id(), codec, reader, writer)
+        conn = TcpSocketSession(
+            session_id_gen.new_session_id(), codec, reader, writer)
         await conn.recv_message()
 
     async def listen(self, port: int, codec_id: int):

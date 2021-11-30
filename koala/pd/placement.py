@@ -9,7 +9,7 @@ from koala.network.constant import CODEC_RPC
 from koala.message.message import RequestHeartBeat
 from koala.network.tcp_session import TcpSocketSession
 from koala.pd import api
-from koala.koala_config import get_config
+from koala import koala_config
 from koala.error_code import *
 from koala.logger import logger
 
@@ -20,7 +20,7 @@ _membership = MembershipManager()
 class PDPlacementImpl(Placement):
     def __init__(self):
         super().__init__()
-        self._config = get_config()
+        self._config = koala_config.get_config()
         api.set_pd_address(self._config.pd_address)
         self._lease_id = 0
         self._server_id = 0
@@ -71,6 +71,10 @@ class PDPlacementImpl(Placement):
             await api.delete_server(server_id, self._config.address)
         except:
             pass
+
+    def get_all_servers(self) -> List[ServerNode]:
+        server_nodes = _membership.get_members()
+        return [node for _, node in server_nodes.items()]
 
     async def _pd_keep_alive(self) -> api.KeepAliveServerResponse:
         if time.time() - self._last_heart_beat > self._config.ttl:

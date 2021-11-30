@@ -10,6 +10,8 @@ class RpcRequest(JsonMessage):
     actor_id: ActorID = ""
     reentrant_id: int = 0
     request_id: int = 0
+    # server_id为0, 那么就不强制校验server_id
+    # 否则会在PD那边重新做一次校验, 防止位置发生变化
     server_id: int = 0
     _args: Optional[list] = None        # 这两个参数, 在RpcMessage的Body里面携带着
     _kwargs: Optional[dict] = None

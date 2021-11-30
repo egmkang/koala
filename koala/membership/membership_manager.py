@@ -14,10 +14,12 @@ class MembershipManager(Singleton):
             return self.__dict[server_uid]
         return None
 
+    def get_members(self) -> Dict[int, ServerNode]:
+        return dict(self.__dict)
+
     def add_member(self, member: ServerNode):
         self.__dict[member.server_uid] = member
 
     def remove_member(self, server_uid: int):
         if server_uid in self.__dict:
             del self.__dict[server_uid]
-

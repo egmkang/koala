@@ -1,14 +1,13 @@
 from abc import ABC, abstractmethod
-from koala import json_util
 import time
 import yaml
 from koala.typing import *
-from koala.local_ip import get_host_ip
-from koala.server.rpc_meta import get_all_impl_types
+from koala import utils
+from koala.server import rpc_meta
 
 
 def _get_registered_services() -> Dict[str, str]:
-    all_types = get_all_impl_types()
+    all_types = rpc_meta.get_all_impl_types()
     return {i[0]: i[1].__qualname__ for i in all_types}
 
 
@@ -150,7 +149,7 @@ class KoalaDefaultConfig(KoalaConfig):
     def address(self) -> str:
         if len(self._ip) > 0:
             return "%s:%d" % (self._ip, self._port)
-        return "%s:%d" % (get_host_ip(), self._port)
+        return "%s:%d" % (utils.get_host_ip(), self._port)
 
     @property
     def log_level(self):
@@ -213,7 +212,7 @@ class KoalaDefaultConfig(KoalaConfig):
                 yaml_config = yaml.full_load(data)
                 return yaml_config
             if file_name.endswith(".json"):
-                json_config = json_util.json_loads(data)
+                json_config = utils.json_loads(data)
                 return json_config
         raise Exception("KoalaDefaultConfig only support yaml or json config")
 
