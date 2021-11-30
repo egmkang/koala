@@ -10,6 +10,7 @@ from koala.pd.simple import SelfHostedPlacement
 from koala.server import rpc_proxy
 from koala.server.actor_timer import ActorTimer
 from koala.logger import logger
+from koala.hotfix import hotfix
 
 
 class IService1(ActorInterface):
@@ -118,6 +119,16 @@ async def qps():
             last = v
 
 
+async def patch_code():
+    await asyncio.sleep(3.0)
+    placement = Placement.instance()
+    servers = placement.get_all_servers()
+    for server in servers:
+        proxy = rpc_proxy.get_rpc_proxy(
+            hotfix.IHotFix, "1", server_node=server, check_postion=False)
+        await proxy.patch_code("print(112233)")
+
+
 PORT = 15555
 
 
@@ -134,6 +145,7 @@ for item in range(16):
     i = item
     koala_host.create_task(bench(i))
 
+koala_host.create_task(patch_code())
 koala_host.create_task(run_timer(1))
 koala_host.create_task(qps())
 koala_host.run_server()

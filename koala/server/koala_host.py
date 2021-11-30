@@ -17,7 +17,6 @@ from koala.network.constant import CODEC_RPC
 from koala.placement.placement import *
 from koala.pd.placement import *
 
-
 _socket_session_manager: SocketSessionManager = SocketSessionManager()
 _user_message_handler_map: Dict[MessageType,
                                 Callable[[SocketSession, object], Coroutine]] = {}
