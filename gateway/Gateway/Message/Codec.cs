@@ -43,7 +43,8 @@ namespace Gateway.Message
 
         public (long length, string typeName, object msg) Decode(IByteBuffer input)
         {
-            if (input.ReadableBytes < HeaderLength) 
+            var readableBytes = input.ReadableBytes;
+            if (readableBytes < HeaderLength) 
             {
                 return (0, null, null);
             }
@@ -54,7 +55,7 @@ namespace Gateway.Message
             var metaLength = input.ReadIntLE();
             var bodyLength = input.ReadIntLE();
             var totalLength = HeaderLength + metaLength + bodyLength;
-            if (input.ReadableBytes < totalLength) 
+            if (readableBytes < totalLength) 
             {
                 input.ResetReaderIndex();
                 return (0, null, null);
@@ -70,9 +71,9 @@ namespace Gateway.Message
             var metaBody = ArrayPool<byte>.Shared.Rent(metaBodyLength);
             try 
             {
-                input.ReadBytes(metaBody);
+                input.ReadBytes(metaBody, 0, metaBodyLength);
 
-                var meta = JsonSerializer.Deserialize(metaBody, messageType);
+                var meta = JsonSerializer.Deserialize(new ReadOnlySpan<byte>(metaBody, 0, metaBodyLength), messageType);
                 var body = Empty;
                 if (bodyLength > 0)
                 {

@@ -3,6 +3,8 @@ using System.Buffers;
 using System.Text;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Gateway.Message;
+using DotNetty.Buffers;
+using DotNetty.Common.Utilities;
 
 namespace test
 {
@@ -30,6 +32,7 @@ namespace test
     public class CodecTest
     {
         readonly RpcMessageCodec rpcCodec = new RpcMessageCodec();
+        readonly RpcMessageCodec2 rpcCodec2 = new RpcMessageCodec2();
 
         class MockBufferWriter : IBufferWriter<byte>
         {
@@ -106,6 +109,68 @@ namespace test
 
             var messageSize2 = rpcCodec.Decode(sequence.Slice(messageSize1), out var decodedMessage2);
             RpcMessageEqual(rpcMessage2, size2, decodedMessage2, messageSize2);
+        }
+
+        readonly IByteBufferAllocator allocator = PooledByteBufferAllocator.Default;
+
+        [TestMethod]
+        public void TestRpcCodec2() 
+        {
+            var req = new RequestHeartBeat() { MilliSeconds = 123 };
+            var rpcMessage = new RpcMessage(req, null);
+
+            var buffer = rpcCodec2.Encode(allocator, rpcMessage);
+            var bufferLength = buffer.ReadableBytes;
+
+            var (length, typeName, msg) = rpcCodec2.Decode(buffer);
+
+            RpcMessageEqual(rpcMessage, bufferLength, msg as RpcMessage, (int)length);
+
+            ReferenceCountUtil.Release(buffer);
+        }
+
+        [TestMethod]
+        public void TestRpcCodec2WithBody() 
+        {
+            var inputBody = new byte[3] { 1, 2, 3 };
+            var req = new RequestHeartBeat() { MilliSeconds = 456 };
+            var rpcMessage = new RpcMessage(req, inputBody);
+
+            var buffer = rpcCodec2.Encode(allocator, rpcMessage);
+            var bufferLength = buffer.ReadableBytes;
+
+            var (length, typeName, msg) = rpcCodec2.Decode(buffer);
+
+            RpcMessageEqual(rpcMessage, bufferLength, msg as RpcMessage, (int)length);
+
+            ReferenceCountUtil.Release(buffer);
+        }
+
+        [TestMethod]
+        public void TestMiltiMessagesRpcCodec2() 
+        {
+            var body1 = new byte[3] { 4, 5, 6 };
+            var reqHeartBeat1 = new RequestHeartBeat() { MilliSeconds = 123 };
+            var rpcMessage1 = new RpcMessage(reqHeartBeat1, body1);
+            var buffer1 = rpcCodec2.Encode(allocator, rpcMessage1);
+            var bufferLength1 = buffer1.ReadableBytes;
+
+            var body2 = new byte[4] { 7, 8, 9, 10 };
+            var reqHeartBeat2 = new RequestHeartBeat() { MilliSeconds = 34234234 };
+            var rpcMessage2 = new RpcMessage(reqHeartBeat2, body2);
+            var buffer2 = rpcCodec2.Encode(allocator, rpcMessage2);
+            var bufferLength2 = buffer2.ReadableBytes;
+
+
+            var buffer = allocator.Buffer();
+            buffer.WriteBytes(buffer1);
+            buffer.WriteBytes(buffer2);
+
+            var (length1, typeName1, msg1) = rpcCodec2.Decode(buffer);
+            RpcMessageEqual(rpcMessage1, bufferLength1, msg1 as RpcMessage, (int)length1);
+
+            var (length2, typeName2, msg2) = rpcCodec2.Decode(buffer);
+            RpcMessageEqual(rpcMessage2, bufferLength2, msg2 as RpcMessage, (int)length2);
         }
     }
 }
