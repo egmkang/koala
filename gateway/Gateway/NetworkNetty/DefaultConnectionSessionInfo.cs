@@ -19,20 +19,17 @@ namespace Gateway.NetworkNetty
         private IPEndPoint address;
         private readonly ConcurrentQueue<OutboundMessage> inboundMessageQueue;
         private readonly ILogger logger;
-        private readonly IMessageCenter messageCenter;
         private readonly IMessageCodec codec;
         private readonly SendingThreads sendingThreads;
         private readonly Dictionary<string, object> states = new Dictionary<string, object>();
 
         public DefaultConnectionSessionInfo(long sessionID,
                                             ILogger logger,
-                                            IMessageCenter messageCenter,
                                             IMessageCodec codec,
                                             SendingThreads sendingThreads)
         {
             this.sessionID = sessionID;
             this.logger = logger;
-            this.messageCenter = messageCenter;
             this.codec = codec;
             this.sendingThreads = sendingThreads;
 
@@ -48,6 +45,10 @@ namespace Gateway.NetworkNetty
         public long ServerID { get; set; }
         public bool IsActive => !this.stop;
         public Dictionary<string, object> States => states;
+        public IMessageCodec Codec => codec;
+        public Action<IChannel> OnClosed { get; set; }
+        public Action<OutboundMessage> OnFail { get; set; }
+        public ConnectionType ConnectionType { get; set; }
 
         public int PutOutboundMessage(OutboundMessage msg)
         {
@@ -82,7 +83,6 @@ namespace Gateway.NetworkNetty
             if (this.stop) return;
 
             var allocator = channel.Allocator;
-            var buffer = channel.Allocator.Buffer(1024);
 
             while (this.inboundMessageQueue.TryDequeue(out var message) && message.Inner != null) 
             {
@@ -90,8 +90,7 @@ namespace Gateway.NetworkNetty
                 {
                     //this.logger.LogTrace("Encoding Msg:{0}", message.Inner.GetType().Name);
                     var msg = this.codec.Encode(allocator, message.Inner);
-                    using var _ = new SafeReleaseByteBuffer(msg);
-                    buffer.WriteBytes(msg);
+                    channel.WriteAsync(msg);
                 }
                 catch (Exception e) 
                 {
@@ -99,7 +98,7 @@ namespace Gateway.NetworkNetty
                         this.sessionID, e);
                 }
             }
-            channel.WriteAndFlushAsync(buffer);
+            channel.Flush();
         }
     }
 }

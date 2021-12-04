@@ -80,6 +80,7 @@ namespace Gateway.NetworkNetty
                     var factory = this.factoryContext[(channel.LocalAddress as IPEndPoint).Port];
 
                     var info = this.channelSessionInfoFactory.NewSessionInfo(factory);
+                    info.ConnectionType = ConnectionType.Socket;
                     channel.GetAttribute(ChannelExt.SESSION_INFO).Set(info);
 
                     var localPort = (channel.LocalAddress as IPEndPoint).Port;

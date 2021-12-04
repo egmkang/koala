@@ -20,7 +20,6 @@ namespace Gateway.Message
         private readonly ILogger logger;
         private readonly IConnectionManager connectionManager;
         private readonly Dictionary<string, Action<InboundMessage>> inboudMessageProc = new Dictionary<string, Action<InboundMessage>>();
-        private Func<string, string, InboundMessage, bool> userMessageCallback;
         private readonly object mutex = new object();
         private readonly AtomicInt64 pendingProcessCounter = new AtomicInt64();
         private readonly ConcurrentQueue<InboundMessage> inboundMessages = new ConcurrentQueue<InboundMessage>();
@@ -28,8 +27,6 @@ namespace Gateway.Message
         private volatile bool stop = false;
         private ClientConnectionPool clientConnectionPool;
 
-        private Action<IChannel> channelClosedProc;
-        private Action<OutboundMessage> failMessageProc;
         private Action<InboundMessage> defaultInboundMessageProc;
 
         public MessageCenter(IServiceProvider serviceProvider,
@@ -44,13 +41,6 @@ namespace Gateway.Message
             this.messageThread = new Thread(this.MessageLoop);
             this.messageThread.Name = "MessageProcess";
             this.messageThread.Start();
-        }
-
-        public void RegsiterEvent(Action<IChannel> channelClosedProc,
-            Action<OutboundMessage> failMessageProc) 
-        {
-            this.channelClosedProc = channelClosedProc;
-            this.failMessageProc = failMessageProc;
         }
 
         private void MessageLoop() 
@@ -97,10 +87,13 @@ namespace Gateway.Message
         public void OnConnectionClosed(IChannel channel)
         {
             var sessionInfo = channel.GetSessionInfo();
-            this.connectionManager.RemoveConnection(channel);
+            this.connectionManager.RemoveConnection(sessionInfo.SessionID);
             try
             {
-                this.channelClosedProc(channel);
+                if (sessionInfo.OnClosed != null) 
+                {
+                    sessionInfo.OnClosed(channel);
+                }
             }
             catch (Exception e)
             {
@@ -113,7 +106,11 @@ namespace Gateway.Message
         {
             try
             {
-                this.failMessageProc(message);
+                var sessionInfo = message.DestConnection.GetSessionInfo();
+                if (sessionInfo.OnFail != null) 
+                {
+                    sessionInfo.OnFail(message);
+                }
             }
             catch (Exception e)
             {
@@ -140,20 +137,6 @@ namespace Gateway.Message
             }
         }
 
-        public void RegisterUserMessageCallback(Func<string, string, InboundMessage, bool> fn) 
-        {
-            this.userMessageCallback = fn;
-        }
-
-        public bool OnReceiveUserMessage(string type, string actorID, InboundMessage message) 
-        {
-            if (this.userMessageCallback != null)
-            {
-                return this.userMessageCallback(type, actorID, message);
-            }
-            return false;
-        }
-
         public bool SendMessageToServer(long serverID, object message) 
         {
             if (this.clientConnectionPool == null) 
@@ -174,6 +157,7 @@ namespace Gateway.Message
 
         public void SendMessage(OutboundMessage message)
         {
+            var session = message.DestConnection;
             var sessionInfo = message.DestConnection.GetSessionInfo();
             var size = 0;
             if ((size = sessionInfo.PutOutboundMessage(message)) > 1000)

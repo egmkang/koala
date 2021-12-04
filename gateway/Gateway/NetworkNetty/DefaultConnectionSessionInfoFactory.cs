@@ -11,17 +11,14 @@ namespace Gateway.NetworkNetty
     public sealed class DefaultConnectionSessionInfoFactory : IConnectionSessionInfoFactory
     {
         private readonly ILogger logger;
-        private readonly IMessageCenter messageCenter;
         private readonly SendingThreads sendingThreads;
         private readonly SessionUniqueSequence sessionUniqueSequence;
 
         public DefaultConnectionSessionInfoFactory(ILoggerFactory loggerFactory, 
-                                                    IMessageCenter messageCenter,
                                                     SendingThreads sendingThreads,
                                                     SessionUniqueSequence sessionUniqueSequence) 
         {
             this.logger = loggerFactory.CreateLogger("SessionInfo");
-            this.messageCenter = messageCenter;
             this.sendingThreads = sendingThreads;
             this.sessionUniqueSequence = sessionUniqueSequence;
 
@@ -31,7 +28,7 @@ namespace Gateway.NetworkNetty
         public IConnectionSessionInfo NewSessionInfo(IMessageHandlerFactory handlerFactory)
         {
             return new DefaultConnectionSessionInfo(this.sessionUniqueSequence.GetNewSequence(),
-                this.logger, this.messageCenter, handlerFactory.Codec, this.sendingThreads);
+                                                    this.logger, handlerFactory.Codec, this.sendingThreads);
         }
     }
 }

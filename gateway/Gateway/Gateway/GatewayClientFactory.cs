@@ -1,11 +1,6 @@
 ﻿using System;
-using System.Collections.Concurrent;
-using System.Collections.Generic;
-using System.Text;
 using System.Net;
-using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
-using DotNetty.Transport.Channels;
 using Abstractions.Network;
 using Abstractions.Placement;
 using Gateway.NetworkNetty;
@@ -34,9 +29,6 @@ namespace Gateway.Gateway
 
             //消息处理
             this.messageCenter.RegisterTypedMessageProc<ResponseHeartBeat>(this.ProcessHeartBeatResponse);
-            this.messageCenter.RegisterTypedMessageProc<NotifyNewActorSession>(this.ProcessNotifyNewActorSession);
-            this.messageCenter.RegisterTypedMessageProc<NotifyActorSessionAborted>(this.ProcessNotifyActorSessionAborted);
-            this.messageCenter.RegisterTypedMessageProc<NotifyNewActorMessage>(this.ProcessNotifyNewActorMessage);
         }
 
         public void OnAddServer(PlacementActorHostInfo server)
@@ -75,62 +67,5 @@ namespace Gateway.Gateway
                     sessionInfo.SessionID, sessionInfo.ServerID, sessionInfo.RemoteAddress, elapsedTime);
             }
         }
-
-        private void ProcessNotifyNewActorSession(InboundMessage message) 
-        {
-            var msg = (message.Inner as RpcMessage).Meta as NotifyNewActorSession;
-            if (msg == null) 
-            {
-                this.logger.LogError("ProcessNotifyConnectionComing input message type:{0}", message.Inner?.GetType());
-                return;
-            }
-            this.messageCenter.OnReceiveUserMessage(msg.ActorType, msg.ActorID, message);
-        }
-
-        private void ProcessNotifyActorSessionAborted(InboundMessage message)
-        {
-            var msg = (message.Inner as RpcMessage).Meta as NotifyActorSessionAborted;
-            if (msg == null)
-            {
-                this.logger.LogError("ProcessNotifyConnectionAborted input message type:{0}", message.Inner?.GetType());
-                return;
-            }
-            var actorID = msg.ActorID;
-            if (string.IsNullOrEmpty(actorID)) 
-            {
-                this.logger.LogWarning("ProcessNotifyConnectionAborted, SessionID:{0}, ActorID not found", msg.SessionID);
-                return;
-            } 
-            this.messageCenter.OnReceiveUserMessage(msg.ActorType, actorID, message);
-
-            Task.Run(async () =>
-            {
-                //1分钟后GC掉SessionInfo
-                await Task.Delay(60 * 1000).ConfigureAwait(false);
-            });
-        }
-
-        private void ProcessNotifyNewActorMessage(InboundMessage message) 
-        {
-            var msg = (message.Inner as RpcMessage).Meta as NotifyNewActorMessage;
-            if (msg == null) 
-            {
-                this.logger.LogError("ProcessNewMessage input message type:{0}", message.Inner?.GetType());
-                return;
-            }
-            var actorID = msg.ActorID;
-            if (string.IsNullOrEmpty(actorID)) 
-            {
-                this.logger.LogWarning("ProcessNewMessage, SessionID:{0}, ActorID not found", msg.SessionId);
-                return;
-            }
-            if (msg.Trace.Length != 0) 
-            {
-                this.logger.LogWarning("PrcessNewMessage, SessionID:{0}, actorID:{1}, Trace:{2}",
-                    msg.SessionId, actorID, msg.Trace);
-            }
-            this.messageCenter.OnReceiveUserMessage(msg.ActorType, actorID, message);
-        }
-
     }
 }

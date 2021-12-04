@@ -67,6 +67,7 @@ namespace Gateway.NetworkNetty
                         .Handler(new ActionChannelInitializer<IChannel>(channel =>
                         {
                             var info = this.channelSessionInfoFactory.NewSessionInfo(factory);
+                            info.ConnectionType = ConnectionType.Socket;
                             channel.GetAttribute(ChannelExt.SESSION_INFO).Set(info);
 
                             IChannelPipeline pipeline = channel.Pipeline;

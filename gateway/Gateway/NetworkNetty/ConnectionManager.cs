@@ -9,7 +9,7 @@ namespace Gateway.NetworkNetty
 {
     public sealed class ConnectionManager : IConnectionManager
     {
-        private readonly ConcurrentDictionary<long, IChannel> channels = new ConcurrentDictionary<long, IChannel>();
+        private readonly ConcurrentDictionary<long, WeakReference<IChannel>> channels = new ConcurrentDictionary<long, WeakReference<IChannel>>();
         private readonly ILogger logger;
 
         public ConnectionManager(ILoggerFactory loggerFactory)
@@ -20,21 +20,27 @@ namespace Gateway.NetworkNetty
         public void AddConnection(IChannel channel)
         {
             var info = channel.GetSessionInfo();
-            if (!channels.TryAdd(info.SessionID, channel)) 
+            if (!channels.TryAdd(info.SessionID, new WeakReference<IChannel>(channel)))
             {
                 logger.LogError("ConnectionManager.AddConnection fail, SessionID:{0}", info.SessionID);
+            }
+            else 
+            {
+                logger.LogInformation("ConnectionManager.AddConnection, SessionID:{0}", info.SessionID);
             }
         }
 
         public IChannel GetConnection(long sessionID)
         {
             channels.TryGetValue(sessionID, out var channel);
-            return channel;
+            channel.TryGetTarget(out var v);
+            return v;
         }
 
-        public void RemoveConnection(IChannel channel)
+        public void RemoveConnection(long sessionID)
         {
-            channels.TryRemove(channel.GetSessionInfo().SessionID, out var _);
+            channels.TryRemove(sessionID, out var _);
+            logger.LogInformation("ConnectionManager.RemoveConnection, SessionID:{0}", sessionID);
         }
     }
 }

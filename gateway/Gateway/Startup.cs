@@ -9,7 +9,7 @@ using System.Threading.Tasks;
 using Abstractions.Placement;
 using Gateway.Handler;
 using Gateway.Message;
-using Gateway.Network;
+using Gateway.NetworkNetty;
 using Gateway.Placement;
 using Gateway.Utils;
 using Microsoft.AspNetCore.Builder;
@@ -26,9 +26,6 @@ namespace Gateway
 {
     public class Startup
     {
-        private IConnectionListener connectionListener;
-        private SessionManager sessionManager;
-        private IMessageCenter messageCenter;
         private ILoggerFactory loggerFactory;
         private ILogger logger;
         private IPlacement placement;
@@ -50,13 +47,13 @@ namespace Gateway
             {
                 Configuration.GetSection("Gateway").Bind(config);
             });
-            services.ConfigureServices();
         }
 
         public void Configure(IApplicationBuilder app, IWebHostEnvironment env, IServiceProvider serviceProvider)
         {
             this.loggerFactory = serviceProvider.GetRequiredService<ILoggerFactory>();
             this.logger = this.loggerFactory.CreateLogger("Gateway");
+            this.clientConnectionPool = serviceProvider.GetRequiredService<ClientConnectionPool>();
 
             var urls = this.Configuration["Urls"];
             var config = serviceProvider.GetRequiredService<IOptionsMonitor<GatewayConfiguration>>().CurrentValue;
@@ -72,12 +69,8 @@ namespace Gateway
 
         public void PrepareGateway(IServiceProvider serviceProvider, GatewayConfiguration config) 
         {
-            this.sessionManager = serviceProvider.GetRequiredService<SessionManager>();
-            this.messageCenter = serviceProvider.GetRequiredService<IMessageCenter>();
-            this.clientConnectionPool = serviceProvider.GetRequiredService<ClientConnectionPool>();
             this.placement = serviceProvider.GetRequiredService<IPlacement>();
             this.sessionUniqueSequence = serviceProvider.GetRequiredService<SessionUniqueSequence>();
-            this.clientConnectionPool.MessageCenter = messageCenter;
 
             var messageHandler = serviceProvider.GetRequiredService<Handler.GatewayMessageHandler>();
             messageHandler.PrivateKey = config.PrivateKey;
@@ -93,7 +86,6 @@ namespace Gateway
 
             this.placement.SetPlacementServerInfo(config.PlacementDriverAddress);
 
-            _ = this.ListenSocketAsync(serviceProvider, port);
             this.ListenWebSocket(app, serviceProvider, config.WebSocketPath);
 
             try
@@ -151,45 +143,6 @@ namespace Gateway
         {
         }
 
-        private async Task RunTcpSession(TcpSocketSession session)
-        {
-            try
-            {
-                this.sessionManager.AddSession(session);
-                await session.MainLoop().ConfigureAwait(false);
-            }
-            catch (Exception e)
-            {
-                logger.LogError("TcpSocket, SessionID:{0} Exception:{1}", session.SessionID, e);
-                await session.CloseAsync();
-            }
-        }
-
-        public async Task ListenSocketAsync(IServiceProvider serviceProvider, int port)
-        {
-            try
-            {
-                var listenerFactory = serviceProvider.GetRequiredService<IConnectionListenerFactory>();
-                this.connectionListener = await listenerFactory.BindAsync(new IPEndPoint(0, port)).ConfigureAwait(false);
-                var logger = this.loggerFactory.CreateLogger("TcpSocket");
-                logger.LogInformation("Listen Port:{0} success", port);
-
-                while (true)
-                {
-                    var context = await this.connectionListener.AcceptAsync().ConfigureAwait(false);
-                    var sessionInfo = new DefaultSessionInfo(this.sessionUniqueSequence.NewSessionID, 0);
-                    var tcpSession = new TcpSocketSession(context, sessionInfo, logger, this.messageCenter);
-                    this.logger.LogInformation("TcpSocketSession Accept, SessionID:{0}, RemoteAddress:{1}", 
-                                                tcpSession.SessionID, tcpSession.RemoteAddress);
-                    _ = this.RunTcpSession(tcpSession);
-                }
-            }
-            catch (Exception e)
-            {
-                this.logger.LogError("Exception:{0}", e);
-            }
-        }
-
         public void ListenWebSocket(IApplicationBuilder app, 
                                             IServiceProvider serviceProvider, 
                                             string path) 
@@ -205,31 +158,6 @@ namespace Gateway
             app.UseWebSockets(new WebSocketOptions()
             {
                 KeepAliveInterval = TimeSpan.FromSeconds(15),
-            });
-
-            app.Use(async (context, next) =>
-            {
-                if (context.Request.Path == path)
-                {
-                    var address = context.Connection.RemoteIpAddress.ToString();
-                    using (var websocket = await context.WebSockets.AcceptWebSocketAsync().ConfigureAwait(false))
-                    {
-                        var sessionInfo = new DefaultSessionInfo(this.sessionUniqueSequence.NewSessionID, 0);
-                        var session = new WebSocketSession(websocket, address, logger, this.messageCenter, sessionInfo);
-                        try
-                        {
-                            this.sessionManager.AddSession(session);
-                            await session.MainLoop().ConfigureAwait(false);
-                        }
-                        catch (Exception e) 
-                        {
-                            logger.LogError("WebSocket, SessionID:{0}, Address:{1}, Exception:{2}",
-                                sessionInfo.SessionID, address, e);
-                            await session.CloseAsync().ConfigureAwait(false);
-                        }
-                    }
-                }
-                await next();
             });
         }
     }

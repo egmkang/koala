@@ -9,7 +9,7 @@ namespace Abstractions.Network
     {
         void AddConnection(IChannel channel);
 
-        void RemoveConnection(IChannel channel);
+        void RemoveConnection(long sessionID);
 
         IChannel GetConnection(long sessionID);
     }

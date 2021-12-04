@@ -9,7 +9,7 @@ namespace Gateway.Message
         [JsonPropertyName("open_id")]
         public string OpenID { get; set; }
         [JsonPropertyName("server_id")]
-        public int ServerID { get; set; }
+        public long ServerID { get; set; }
         [JsonPropertyName("session_id")]
         public long SessionID { get; set; }
     }
@@ -36,7 +36,7 @@ namespace Gateway.Message
         [JsonPropertyName("open_id")]
         public string OpenID { get; set; }
         [JsonPropertyName("server_id")]
-        public int ServerID { get; set; }
+        public long ServerID { get; set; }
     }
 
     public class NotifyActorSessionAborted : RpcMeta
