@@ -13,7 +13,7 @@ using DotNetty.Codecs;
 using DotNetty.Transport.Libuv;
 using DotNetty.Buffers;
 using DotNetty.Handlers.Timeout;
-
+using Abstractions.Network;
 
 namespace Gateway.NetworkNetty
 {

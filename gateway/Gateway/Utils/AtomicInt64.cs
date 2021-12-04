@@ -92,7 +92,9 @@ namespace Gateway.Utils
         }
 
         private Int64 value = 0L;
+#pragma warning disable 0169
         private readonly Int64 _1, _2, _3, _4, _5;
+#pragma warning restore 0169
     }
 
 }

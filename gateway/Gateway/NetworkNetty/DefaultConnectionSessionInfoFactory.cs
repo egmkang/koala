@@ -4,6 +4,7 @@ using System.Text;
 using System.Threading;
 using Microsoft.Extensions.Logging;
 using Gateway.Utils;
+using Abstractions.Network;
 
 namespace Gateway.NetworkNetty
 {

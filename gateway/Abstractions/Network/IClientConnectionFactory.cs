@@ -5,7 +5,7 @@ using System.Text;
 using System.Threading.Tasks;
 using DotNetty.Transport.Channels;
 
-namespace Gateway.NetworkNetty
+namespace Abstractions.Network
 {
     public interface IClientConnectionFactory
     {

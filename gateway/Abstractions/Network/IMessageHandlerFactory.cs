@@ -4,7 +4,7 @@ using System.Text;
 using DotNetty.Buffers;
 using DotNetty.Codecs;
 
-namespace Gateway.NetworkNetty
+namespace Abstractions.Network
 {
     public interface IMessageCodec 
     {

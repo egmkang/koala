@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Net;
 using System.Text;
+using Abstractions.Network;
 using DotNetty.Common.Utilities;
 using DotNetty.Transport.Channels;
 

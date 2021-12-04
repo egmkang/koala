@@ -7,6 +7,7 @@ using Microsoft.Extensions.Logging;
 using DotNetty.Buffers;
 using DotNetty.Transport.Channels;
 using Gateway.Utils;
+using Abstractions.Network;
 
 namespace Gateway.NetworkNetty
 {

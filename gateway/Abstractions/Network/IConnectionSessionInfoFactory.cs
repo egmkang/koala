@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Text;
 using DotNetty.Buffers;
 
-namespace Gateway.NetworkNetty
+namespace Abstractions.Network
 {
     public interface IConnectionSessionInfoFactory
     {

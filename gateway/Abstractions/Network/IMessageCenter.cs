@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Text;
 using DotNetty.Transport.Channels;
 
-namespace Gateway.NetworkNetty
+namespace Abstractions.Network
 {
     public interface IMessageCenter
     {

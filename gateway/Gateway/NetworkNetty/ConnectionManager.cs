@@ -3,6 +3,7 @@ using System.Collections.Concurrent;
 using System.Text;
 using Microsoft.Extensions.Logging;
 using DotNetty.Transport.Channels;
+using Abstractions.Network;
 
 namespace Gateway.NetworkNetty
 {

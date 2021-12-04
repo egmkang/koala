@@ -2,9 +2,8 @@
 using System.Collections.Generic;
 using System.Text;
 using DotNetty.Transport.Channels;
-using Gateway.NetworkNetty;
 
-namespace Gateway.NetworkNetty
+namespace Abstractions.Network
 {
     public struct InboundMessage
     {
@@ -28,9 +27,6 @@ namespace Gateway.NetworkNetty
         public long MilliSeconds => this.milliSecond;
 
         public object Inner => this.innerMessage;
-
-
-        public static readonly InboundMessage Empty = new InboundMessage(null, "", null, -1);
     }
 
     public struct OutboundMessage
