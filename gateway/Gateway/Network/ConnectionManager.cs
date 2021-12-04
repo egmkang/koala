@@ -5,7 +5,7 @@ using Microsoft.Extensions.Logging;
 using DotNetty.Transport.Channels;
 using Abstractions.Network;
 
-namespace Gateway.NetworkNetty
+namespace Gateway.Network
 {
     public sealed class ConnectionManager : IConnectionManager
     {

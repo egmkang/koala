@@ -9,7 +9,7 @@ using DotNetty.Transport.Channels;
 using Gateway.Utils;
 using Abstractions.Network;
 
-namespace Gateway.NetworkNetty
+namespace Gateway.Network
 {
     public sealed class DefaultConnectionSessionInfo : IConnectionSessionInfo
     {

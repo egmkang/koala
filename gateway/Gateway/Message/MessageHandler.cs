@@ -7,7 +7,7 @@ using DotNetty.Transport.Channels;
 using DotNetty.Handlers.Timeout;
 using Abstractions.Network;
 using Gateway.Utils;
-using Gateway.NetworkNetty;
+using Gateway.Network;
 
 namespace Gateway.Message
 {

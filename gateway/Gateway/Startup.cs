@@ -9,7 +9,7 @@ using System.Threading.Tasks;
 using Abstractions.Placement;
 using Gateway.Handler;
 using Gateway.Message;
-using Gateway.NetworkNetty;
+using Gateway.Network;
 using Gateway.Placement;
 using Gateway.Utils;
 using Microsoft.AspNetCore.Builder;

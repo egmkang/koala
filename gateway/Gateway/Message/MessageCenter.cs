@@ -9,7 +9,7 @@ using Microsoft.Extensions.DependencyInjection;
 using DotNetty.Transport.Channels;
 using Abstractions.Network;
 using Gateway.Utils;
-using Gateway.NetworkNetty;
+using Gateway.Network;
 
 namespace Gateway.Message
 {

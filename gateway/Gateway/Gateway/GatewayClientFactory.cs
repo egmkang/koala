@@ -3,7 +3,7 @@ using System.Net;
 using Microsoft.Extensions.Logging;
 using Abstractions.Network;
 using Abstractions.Placement;
-using Gateway.NetworkNetty;
+using Gateway.Network;
 using Gateway.Message;
 using Gateway.Utils;
 

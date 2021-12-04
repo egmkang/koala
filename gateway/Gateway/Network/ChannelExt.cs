@@ -6,7 +6,7 @@ using Abstractions.Network;
 using DotNetty.Common.Utilities;
 using DotNetty.Transport.Channels;
 
-namespace Gateway.NetworkNetty
+namespace Gateway.Network
 {
     public static class ChannelExt
     {

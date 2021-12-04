@@ -5,7 +5,7 @@ using System.Threading;
 using DotNetty.Transport.Channels;
 using Gateway.Utils;
 
-namespace Gateway.NetworkNetty
+namespace Gateway.Network
 {
     internal class SendingMessageThread
     {

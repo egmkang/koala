@@ -6,7 +6,7 @@ using Microsoft.Extensions.Logging;
 using Gateway.Utils;
 using Abstractions.Network;
 
-namespace Gateway.NetworkNetty
+namespace Gateway.Network
 {
     public sealed class DefaultConnectionSessionInfoFactory : IConnectionSessionInfoFactory
     {

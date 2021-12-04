@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.Text;
 
-namespace Gateway.NetworkNetty
+namespace Gateway.Network
 {
     public class NetworkConfiguration
     {

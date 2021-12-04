@@ -6,7 +6,7 @@ using Abstractions.Network;
 using Abstractions.Placement;
 using DotNetty.Transport.Channels;
 using Gateway.Message;
-using Gateway.NetworkNetty;
+using Gateway.Network;
 using Gateway.Placement;
 using Gateway.Utils;
 using Microsoft.Extensions.DependencyInjection;

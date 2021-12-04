@@ -15,7 +15,7 @@ using DotNetty.Buffers;
 using DotNetty.Handlers.Timeout;
 using Abstractions.Network;
 
-namespace Gateway.NetworkNetty
+namespace Gateway.Network
 {
     public sealed class ConnectionListener : IConnectionListener
     {

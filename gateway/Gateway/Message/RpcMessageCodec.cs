@@ -6,7 +6,7 @@ using System.Text;
 using System.Text.Json;
 using Abstractions.Network;
 using DotNetty.Buffers;
-using Gateway.NetworkNetty;
+using Gateway.Network;
 using Gateway.Utils;
 
 namespace Gateway.Message

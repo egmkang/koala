@@ -13,7 +13,7 @@ using DotNetty.Transport.Channels;
 using DotNetty.Transport.Channels.Sockets;
 using Abstractions.Network;
 
-namespace Gateway.NetworkNetty
+namespace Gateway.Network
 {
     public sealed class ClientConnectionFactory : IClientConnectionFactory
     {

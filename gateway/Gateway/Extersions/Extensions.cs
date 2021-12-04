@@ -8,7 +8,7 @@ using NLog.Extensions.Logging;
 using Abstractions;
 using Gateway.Utils;
 using Abstractions.Network;
-using Gateway.NetworkNetty;
+using Gateway.Network;
 using Gateway.Message;
 using Gateway.Gateway;
 using Abstractions.Placement;
