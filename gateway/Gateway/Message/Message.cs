@@ -71,6 +71,8 @@ namespace Gateway.Message
 
         [JsonPropertyName("actor_id")]
         public string ActorID { get; set; }
+        [JsonPropertyName("trace")]
+        public string Trace { get; set; }
     }
 
     // 要发送的消息携带在Body里面

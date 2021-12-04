@@ -6,6 +6,7 @@ using System.Net.WebSockets;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
+using Abstractions.Placement;
 using Gateway.Handler;
 using Gateway.Message;
 using Gateway.Network;
@@ -78,7 +79,7 @@ namespace Gateway
             this.sessionUniqueSequence = serviceProvider.GetRequiredService<SessionUniqueSequence>();
             this.clientConnectionPool.MessageCenter = messageCenter;
 
-            var messageHandler = serviceProvider.GetRequiredService<MessageHandler>();
+            var messageHandler = serviceProvider.GetRequiredService<Handler.GatewayMessageHandler>();
             messageHandler.PrivateKey = config.PrivateKey;
             messageHandler.DisableTokenCheck = config.DisableTokenCheck;
             messageHandler.AuthService = config.AuthService;

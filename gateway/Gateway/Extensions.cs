@@ -13,6 +13,7 @@ using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using NLog.Extensions.Logging;
+using Abstractions.Placement;
 
 namespace Gateway
 {
@@ -111,7 +112,7 @@ namespace Gateway
             services.AddSingleton<SessionUniqueSequence>();
             services.AddSingleton<SessionManager>();
             services.AddSingleton<ClientConnectionPool>();
-            services.AddSingleton<MessageHandler>();
+            services.AddSingleton<GatewayMessageHandler>();
         }
 
         static Type GetSocketConnectionFactory() 

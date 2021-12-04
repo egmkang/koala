@@ -7,6 +7,7 @@ using Microsoft.Extensions.Logging;
 using Gateway.Message;
 using Gateway.Placement;
 using Gateway.Network;
+using Abstractions.Placement;
 
 namespace Gateway.Handler
 {

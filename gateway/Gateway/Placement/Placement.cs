@@ -8,9 +8,9 @@ using System.Text.Json;
 using System.Text.Json.Serialization;
 using System.Threading;
 using System.Threading.Tasks;
+using Abstractions.Placement;
 using Gateway.Utils;
 using Microsoft.Extensions.Logging;
-using static Gateway.Placement.IPlacement;
 
 namespace Gateway.Placement
 {
@@ -40,9 +40,9 @@ namespace Gateway.Placement
         private readonly LRU<long, object> offlineServer = new LRU<long, object>(ServerLRUSize);
         private Dictionary<long, PlacementActorHostInfo> host = new Dictionary<long, PlacementActorHostInfo>(); //readonly
         private PlacementActorHostInfo currentServerInfo = new PlacementActorHostInfo();
-        private OnAddServer onAddServer;
-        private OnRemoveServer onRemoveServer;
-        private OnServerOffline onServerOffline;
+        private Action<PlacementActorHostInfo> onAddServer;
+        private Action<PlacementActorHostInfo> onRemoveServer;
+        private Action<PlacementActorHostInfo> onServerOffline;
         private Action<Exception> onFatalError;
 
         public string PlacementServerAddress { get; private set; }
@@ -250,7 +250,9 @@ namespace Gateway.Placement
             return position;
         }
 
-        public void RegisterServerChangedEvent(IPlacement.OnAddServer onAddServer, IPlacement.OnRemoveServer onRemoveServer, IPlacement.OnServerOffline onServerOffline)
+        public void RegisterServerChangedEvent(Action<PlacementActorHostInfo> onAddServer, 
+                                                Action<PlacementActorHostInfo> onRemoveServer, 
+                                                Action<PlacementActorHostInfo> onServerOffline)
         {
             this.onAddServer = onAddServer;
             this.onRemoveServer = onRemoveServer;
