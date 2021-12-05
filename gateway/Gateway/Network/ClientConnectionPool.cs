@@ -15,7 +15,6 @@ namespace Gateway.Network
     {
         private readonly ILogger logger;
         private readonly IClientConnectionFactory connectionFactory;
-        private readonly IMessageHandlerFactory messageHandlerFactory;
         //ServerID => IChannel
         private readonly ConcurrentDictionary<long, WeakReference<IChannel>> clients = new ConcurrentDictionary<long, WeakReference<IChannel>>();
         private readonly LRU<long, object> recentRemoveServer = new LRU<long, object>(1024);
@@ -25,13 +24,13 @@ namespace Gateway.Network
         public long HeartBeatTimeOut { get; set; } = 5000 * 3;
 
         public ClientConnectionPool(ILoggerFactory loggerFactory,
-            IClientConnectionFactory clientConnectionFactory,
-            IMessageHandlerFactory messageHandlerFactory)
+            IClientConnectionFactory clientConnectionFactory)
         {
             this.logger = loggerFactory.CreateLogger("Network");
             this.connectionFactory = clientConnectionFactory;
-            this.messageHandlerFactory = messageHandlerFactory;
         }
+
+        public IMessageHandlerFactory MessageHandlerFactory { get; set; }
 
         public void OnAddServer(long serverID, EndPoint endPoint, Func<object> heartBeatMessageFn) 
         {
@@ -86,7 +85,7 @@ namespace Gateway.Network
                 }
                 this.logger.LogInformation("TryConnectAsync, ServerID:{0}, Address:{1} Start", serverID, endPoint);
 
-                var channel = await this.connectionFactory.ConnectAsync(endPoint, this.messageHandlerFactory).ConfigureAwait(false);
+                var channel = await this.connectionFactory.ConnectAsync(endPoint, this.MessageHandlerFactory).ConfigureAwait(false);
                 var sessionInfo = channel.GetSessionInfo();
                 this.logger.LogInformation("TryConnectAsync, ServerID:{0}, Address:{1}, SessionID:{2}",
                     serverID, endPoint, sessionInfo.SessionID);

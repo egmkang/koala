@@ -14,6 +14,9 @@ using DotNetty.Transport.Libuv;
 using DotNetty.Buffers;
 using DotNetty.Handlers.Timeout;
 using Abstractions.Network;
+using DotNetty.Codecs.Http;
+using DotNetty.Codecs.Http.WebSockets.Extensions.Compression;
+using DotNetty.Codecs.Http.WebSockets;
 
 namespace Gateway.Network
 {
@@ -43,16 +46,19 @@ namespace Gateway.Network
 
         public void Init()
         {
+            if (this.bossGroup != null)
+            { 
+                return;
+            }
+
             this.config = this.ServiceProvider.GetService<IOptionsMonitor<NetworkConfiguration>>().CurrentValue;
             var dispatcher = new DispatcherEventLoopGroup();
             bossGroup = dispatcher;
             workGroup = new WorkerEventLoopGroup(dispatcher, config.EventLoopCount);
         }
 
-        public async Task BindAsync(int port, IMessageHandlerFactory handlerFactory)
+        private ServerBootstrap MakeBootStrap() 
         {
-            factoryContext[port] = handlerFactory;
-
             var bootstrap = new ServerBootstrap();
             bootstrap.Group(this.bossGroup, this.workGroup)
                 .Channel<TcpServerChannel>();
@@ -74,28 +80,84 @@ namespace Gateway.Network
                 .ChildOption(ChannelOption.TcpNodelay, true)
                 .ChildOption(ChannelOption.SoKeepalive, true)
                 .ChildOption(ChannelOption.WriteBufferHighWaterMark, this.config.WriteBufferHighWaterMark)
-                .ChildOption(ChannelOption.WriteBufferLowWaterMark, this.config.WriteBufferLowWaterMark)
-                .ChildHandler(new ActionChannelInitializer<IChannel>((channel) =>
-                {
-                    var factory = this.factoryContext[(channel.LocalAddress as IPEndPoint).Port];
+                .ChildOption(ChannelOption.WriteBufferLowWaterMark, this.config.WriteBufferLowWaterMark);
 
-                    var info = this.channelSessionInfoFactory.NewSessionInfo(factory);
-                    info.ConnectionType = ConnectionType.Socket;
-                    channel.GetAttribute(ChannelExt.SESSION_INFO).Set(info);
+            return bootstrap;
+        }
 
-                    var localPort = (channel.LocalAddress as IPEndPoint).Port;
+        public async Task BindWebSocketAsync(int port, string websocketPath, IMessageHandlerFactory handlerFactory) 
+        {
+            factoryContext[port] = handlerFactory;
 
-                    info.RemoteAddress = channel.RemoteAddress as IPEndPoint;
+            var bootstrap = this.MakeBootStrap();
+            bootstrap.ChildHandler(new ActionChannelInitializer<IChannel>((channel) =>
+            {
+                var factory = this.factoryContext[(channel.LocalAddress as IPEndPoint).Port];
 
-                    this.connectionManager.AddConnection(channel);
+                var info = this.channelSessionInfoFactory.NewSessionInfo(factory);
+                info.ConnectionType = ConnectionType.WebSocket;
+                channel.GetAttribute(ChannelExt.SESSION_INFO).Set(info);
 
-                    IChannelPipeline pipeline = channel.Pipeline;
-                    pipeline.AddLast("TimeOut", new IdleStateHandler(this.config.ReadTimeout, this.config.WriteTimeout, this.config.ReadTimeout));
-                    pipeline.AddLast(factory.NewHandler());
+                var localPort = (channel.LocalAddress as IPEndPoint).Port;
 
-                    logger.LogInformation("NewSession SessionID:{0} IpAddr:{1}, CodecName:{2}",
-                            info.SessionID, info.RemoteAddress?.ToString(), factory.Codec.CodecName);
-                }));
+                info.RemoteAddress = channel.RemoteAddress as IPEndPoint;
+
+                this.connectionManager.AddConnection(channel);
+
+
+                IChannelPipeline pipeline = channel.Pipeline;
+                pipeline.AddLast("TimeOut", new IdleStateHandler(this.config.ReadTimeout, this.config.WriteTimeout, this.config.ReadTimeout));
+                pipeline.AddLast(new HttpServerCodec());
+                pipeline.AddLast(new HttpObjectAggregator(65536));
+                pipeline.AddLast(new WebSocketServerCompressionHandler());
+                pipeline.AddLast(new WebSocketServerProtocolHandler(
+                    websocketPath: websocketPath,
+                    subprotocols: null,
+                    allowExtensions: true,
+                    maxFrameSize: 65536,
+                    allowMaskMismatch: true,
+                    checkStartsWith: false,
+                    dropPongFrames: true,
+                    enableUtf8Validator: false));
+                pipeline.AddLast(new WebSocketServerHttpHandler());
+                pipeline.AddLast(new WebSocketFrameAggregator(65536));
+                pipeline.AddLast(factory.NewHandler());
+
+                logger.LogInformation("NewSession SessionID:{0} IpAddr:{1}, CodecName:{2}",
+                        info.SessionID, info.RemoteAddress?.ToString(), factory.Codec.CodecName);
+            }));
+
+            await bootstrap.BindAsync(port);
+            ports.Add(bootstrap);
+            logger.LogInformation("Listen Port:{0}, {1}, Codec:{2}", port, handlerFactory.NewHandler().GetType(), handlerFactory.Codec.GetType());
+        }
+
+        public async Task BindAsync(int port, IMessageHandlerFactory handlerFactory)
+        {
+            factoryContext[port] = handlerFactory;
+
+            var bootstrap = this.MakeBootStrap();
+            bootstrap.ChildHandler(new ActionChannelInitializer<IChannel>((channel) =>
+            {
+                var factory = this.factoryContext[(channel.LocalAddress as IPEndPoint).Port];
+
+                var info = this.channelSessionInfoFactory.NewSessionInfo(factory);
+                info.ConnectionType = ConnectionType.Socket;
+                channel.GetAttribute(ChannelExt.SESSION_INFO).Set(info);
+
+                var localPort = (channel.LocalAddress as IPEndPoint).Port;
+
+                info.RemoteAddress = channel.RemoteAddress as IPEndPoint;
+
+                this.connectionManager.AddConnection(channel);
+
+                IChannelPipeline pipeline = channel.Pipeline;
+                pipeline.AddLast("TimeOut", new IdleStateHandler(this.config.ReadTimeout, this.config.WriteTimeout, this.config.ReadTimeout));
+                pipeline.AddLast(factory.NewHandler());
+
+                logger.LogInformation("NewSession SessionID:{0} IpAddr:{1}, CodecName:{2}",
+                        info.SessionID, info.RemoteAddress?.ToString(), factory.Codec.CodecName);
+            }));
 
             await bootstrap.BindAsync(port);
             ports.Add(bootstrap);

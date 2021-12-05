@@ -42,6 +42,10 @@ namespace Gateway.Network
 
         public void Init()
         {
+            if (this.group != null) 
+            {
+                return;
+            }
             this.config = this.ServiceProvider.GetService<IOptionsMonitor<NetworkConfiguration>>().CurrentValue;
             this.group = new MultithreadEventLoopGroup(this.config.EventLoopCount);
         }

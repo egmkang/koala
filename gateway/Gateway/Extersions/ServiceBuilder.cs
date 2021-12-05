@@ -8,6 +8,7 @@ using Abstractions;
 using Abstractions.Placement;
 using Abstractions.Network;
 using Gateway.Message;
+using Gateway.Network;
 
 namespace Gateway.Extersions
 {
@@ -28,26 +29,38 @@ namespace Gateway.Extersions
             return this;
         }
 
-        public async Task InitAsync(string pdAddress, int port) 
+        public void SetPDAddress(string pdAddress) 
         {
             var placement = this.serviceProvider.GetRequiredService<IPlacement>();
             placement.SetPlacementServerInfo(pdAddress);
-
-            await this.Listen(port).ConfigureAwait(false);
         }
 
-        private async Task Listen(int port) 
+        public async Task Listen(int port, IMessageHandlerFactory factory, IMessageCodec codec) 
         {
             var connectionListener = this.ServiceProvider.GetRequiredService<IConnectionListener>();
             var messageCenter = this.ServiceProvider.GetRequiredService<IMessageCenter>();
-            var messageHandlerFactory = this.ServiceProvider.GetRequiredService<IMessageHandlerFactory>();
             var clientFactory = this.ServiceProvider.GetRequiredService<IClientConnectionFactory>();
-            messageHandlerFactory.Codec = new RpcMessageCodec();
+            var clientConnectionPool = this.serviceProvider.GetRequiredService<ClientConnectionPool>();
+            factory.Codec = codec;
 
             clientFactory.Init();
 
             connectionListener.Init();
-            await connectionListener.BindAsync(port, messageHandlerFactory).ConfigureAwait(false);
+            await connectionListener.BindAsync(port, factory).ConfigureAwait(false);
+            clientConnectionPool.MessageHandlerFactory = factory;
+        }
+
+        public async Task ListenWebSocket(int port, string websocketPath, IMessageHandlerFactory factory, IMessageCodec codec) 
+        {
+            var connectionListener = this.ServiceProvider.GetRequiredService<IConnectionListener>();
+            var messageCenter = this.ServiceProvider.GetRequiredService<IMessageCenter>();
+            var clientFactory = this.ServiceProvider.GetRequiredService<IClientConnectionFactory>();
+            factory.Codec = codec;
+
+            clientFactory.Init();
+
+            connectionListener.Init();
+            await connectionListener.BindWebSocketAsync(port, websocketPath, factory).ConfigureAwait(false);
         }
 
         public void ShutDown()

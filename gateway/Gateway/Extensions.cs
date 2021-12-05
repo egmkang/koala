@@ -12,6 +12,7 @@ using Microsoft.Extensions.Options;
 using Microsoft.Extensions.Logging;
 using Abstractions.Placement;
 using Gateway.Utils;
+using Gateway.Message;
 
 namespace Gateway
 {
@@ -24,14 +25,17 @@ namespace Gateway
 
             logger.LogInformation("RunGatewayAsync, PlacementDriverAddress:{0}, Host ListenPort:{1}, GatewayAddress:{2}",
                                     config.PlacementDriverAddress, config.ListenPort, config.GatewayAddress);
-            await builder.InitAsync(config.PlacementDriverAddress, config.ListenPort).ConfigureAwait(false);
-            await builder.ServiceProvider.PrepareGatewayAndRunAsync(config, logger);
+            builder.SetPDAddress(config.PlacementDriverAddress);
+            var handlerFactory = new MessageHandlerFactory(builder.ServiceProvider);
+            await builder.Listen(config.ListenPort, handlerFactory, new RpcMessageCodec()).ConfigureAwait(false);
+            await builder.PrepareGatewayAndRunAsync(config, logger);
         }
 
-        private static async Task PrepareGatewayAndRunAsync(this IServiceProvider provider, 
+        private static async Task PrepareGatewayAndRunAsync(this ServiceBuilder builder, 
                                                             GatewayConfiguration config,
                                                             ILogger logger)
         {
+            var provider = builder.ServiceProvider;
             var placement = provider.GetRequiredService<IPlacement>();
             var sessionUniqueSequence = provider.GetRequiredService<SessionUniqueSequence>();
 
@@ -40,6 +44,11 @@ namespace Gateway
             messageHandler.DisableTokenCheck = config.DisableTokenCheck;
             messageHandler.AuthService = config.AuthService;
 
+            var port = config.GetGatewayWebSocketPort();
+            var websocketPath = config.GetGatewayWebSocketPath();
+            await builder.ListenWebSocket(port, websocketPath, 
+                                            new WebSocketMessageHandlerFactory(builder.ServiceProvider), 
+                                            new BlockMessageCodec()).ConfigureAwait(false);
 
             try
             {

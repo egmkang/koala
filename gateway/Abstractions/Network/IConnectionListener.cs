@@ -9,6 +9,7 @@ namespace Abstractions.Network
     {
         void Init();
         Task BindAsync(int port, IMessageHandlerFactory factory);
+        Task BindWebSocketAsync(int port, string websocketPath, IMessageHandlerFactory factory);
         Task ShutdDownAsync();
     }
 }

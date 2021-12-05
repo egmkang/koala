@@ -1,8 +1,6 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Text;
 using DotNetty.Buffers;
-using DotNetty.Codecs;
+using DotNetty.Transport.Channels;
 
 namespace Abstractions.Network
 {
@@ -15,7 +13,7 @@ namespace Abstractions.Network
 
     public interface IMessageHandlerFactory
     {
-        ByteToMessageDecoder NewHandler();
+        IChannelHandler NewHandler();
 
         IMessageCodec Codec { get; set; }
     }

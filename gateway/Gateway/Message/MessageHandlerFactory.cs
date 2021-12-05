@@ -1,30 +1,49 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Text;
 using Microsoft.Extensions.Logging;
 using DotNetty.Codecs;
 using Abstractions.Network;
+using Microsoft.Extensions.DependencyInjection;
+using DotNetty.Transport.Channels;
 
 namespace Gateway.Message
 {
-    public sealed class MessageHandlerFactory : IMessageHandlerFactory
+    public class MessageHandlerFactoryBase
     {
-        private ILoggerFactory loggerFactory;
-        private IServiceProvider serviceProvider;
-        private IMessageCenter messageCenter;
+        protected readonly ILoggerFactory loggerFactory;
+        protected readonly IServiceProvider serviceProvider;
+        protected readonly IMessageCenter messageCenter;
 
-        public MessageHandlerFactory(IServiceProvider serviceProvider, ILoggerFactory loggerFactory, IMessageCenter messageCenter)
+        public MessageHandlerFactoryBase(IServiceProvider serviceProvider)
         {
-            this.messageCenter = messageCenter;
             this.serviceProvider = serviceProvider;
-            this.loggerFactory = loggerFactory;
+            this.messageCenter = this.serviceProvider.GetRequiredService<IMessageCenter>();
+            this.loggerFactory = this.serviceProvider.GetRequiredService<ILoggerFactory>();
         }
 
         public IMessageCodec Codec { get; set; }
+    }
 
-        public ByteToMessageDecoder NewHandler()
+    public sealed class MessageHandlerFactory : MessageHandlerFactoryBase, IMessageHandlerFactory
+    {
+        public MessageHandlerFactory(IServiceProvider serviceProvider) : base(serviceProvider)
+        {
+        }
+
+        public IChannelHandler NewHandler()
         {
             return new MessageHandler(this.serviceProvider, this.loggerFactory, this.messageCenter, this.Codec);
+        }
+    }
+
+    public sealed class WebSocketMessageHandlerFactory : MessageHandlerFactoryBase, IMessageHandlerFactory
+    {
+        public WebSocketMessageHandlerFactory(IServiceProvider serviceProvider) : base(serviceProvider)
+        {
+        }
+
+        public IChannelHandler NewHandler()
+        {
+            return new WebSocketServerFrameHandler(this.serviceProvider, this.loggerFactory, this.messageCenter, this.Codec);
         }
     }
 }

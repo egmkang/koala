@@ -32,7 +32,6 @@ namespace Gateway.Extersions
             services.TryAddSingleton<IClientConnectionFactory, ClientConnectionFactory>();
             services.TryAddSingleton<IConnectionListener, ConnectionListener>();
             services.TryAddSingleton<IMessageCenter, MessageCenter>();
-            services.TryAddSingleton<IMessageHandlerFactory, MessageHandlerFactory>();
             services.TryAddSingleton<IPlacement, PDPlacement>();
             services.TryAddSingleton<TimeBasedSequence>();
             services.TryAddSingleton<SessionUniqueSequence>();
