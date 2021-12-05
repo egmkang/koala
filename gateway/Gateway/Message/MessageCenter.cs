@@ -102,22 +102,6 @@ namespace Gateway.Message
             }
         }
 
-        public void OnMessageFail(OutboundMessage message)
-        {
-            try
-            {
-                var sessionInfo = message.DestConnection.GetSessionInfo();
-                if (sessionInfo.OnFail != null) 
-                {
-                    sessionInfo.OnFail(message);
-                }
-            }
-            catch (Exception e)
-            {
-                this.logger.LogError("MessageCenter OnMessageFail, Exception:{0}, StackTrace:{1}", e, e.StackTrace.ToString());
-            }
-        }
-
         public void OnReceiveMessage(InboundMessage message)
         {
             if (this.logger.IsEnabled(LogLevel.Trace)) 

@@ -87,19 +87,19 @@ namespace Gateway.Handler
             Task.Run(async () =>
             {
                 var position = await this.FindActorPositionAsync(playerInfo.ActorType, playerInfo.ActorID).ConfigureAwait(false);
-                if (playerInfo.GameServerID != position.ServerID)
+                if (playerInfo.DestServerID != position.ServerID)
                 {
-                    playerInfo.GameServerID = position.ServerID;
+                    playerInfo.DestServerID = position.ServerID;
                     this.logger.LogInformation("ProcessResponseQueryAccount, SessionID:{0}, Actor:{1}/{2}, Dest ServerID:{3}",
                                                 sessionInfo.SessionID, playerInfo.ActorType,
-                                                playerInfo.ActorID, playerInfo.GameServerID);
+                                                playerInfo.ActorID, playerInfo.DestServerID);
                 }
 
-                this.messageCenter.SendMessageToServer(playerInfo.GameServerID, new RpcMessage(new NotifyNewActorSession()
+                this.messageCenter.SendMessageToServer(playerInfo.DestServerID, new RpcMessage(new NotifyNewActorSession()
                 {
                     SessionID = sessionInfo.SessionID,
                     OpenID = playerInfo.OpenID,
-                    ServerID = playerInfo.GameServerID,
+                    ServerID = playerInfo.DestServerID,
                     ActorType = playerInfo.ActorType,
                     ActorID = playerInfo.ActorID,
                 }, playerInfo.Token));
@@ -168,7 +168,7 @@ namespace Gateway.Handler
                 sessionInfo.OnClosed = this.ProcessWebSocketClosed;
             } 
             var playerInfo = sessionInfo.GetPlayerInfo();
-            if (playerInfo.GameServerID != 0)
+            if (playerInfo.DestServerID != 0)
             {
                _ = this.ProcessWebSocketCommonMessage(session, msg).ConfigureAwait(false);
             }
@@ -202,19 +202,19 @@ namespace Gateway.Handler
             playerInfo.ActorID = actorID;
 
             var position = await this.FindActorPositionAsync(playerInfo.ActorType, playerInfo.ActorID).ConfigureAwait(false);
-            if (playerInfo.GameServerID != position.ServerID) 
+            if (playerInfo.DestServerID != position.ServerID) 
             {
-                playerInfo.GameServerID = position.ServerID;
+                playerInfo.DestServerID = position.ServerID;
                 this.logger.LogInformation("ProcessResponseQueryAccount, SessionID:{0}, Actor:{1}/{2}, Dest ServerID:{3}",
                                             sessionInfo.SessionID, playerInfo.ActorType,
-                                            playerInfo.ActorID, playerInfo.GameServerID);
+                                            playerInfo.ActorID, playerInfo.DestServerID);
             }
 
-            this.messageCenter.SendMessageToServer(playerInfo.GameServerID, new RpcMessage(new NotifyNewActorSession()
+            this.messageCenter.SendMessageToServer(playerInfo.DestServerID, new RpcMessage(new NotifyNewActorSession()
             {
                 SessionID = sessionInfo.SessionID,
                 OpenID = playerInfo.OpenID,
-                ServerID = playerInfo.GameServerID,
+                ServerID = playerInfo.DestServerID,
                 ActorType = playerInfo.ActorType,
                 ActorID = playerInfo.ActorID,
             }, playerInfo.Token));
@@ -250,7 +250,7 @@ namespace Gateway.Handler
                 var ServerID = Convert.ToInt32(firstPacket["server_id"].ToString());
 
                 playerInfo.OpenID = OpenID;
-                playerInfo.GameServerID = ServerID;
+                playerInfo.DestServerID = ServerID;
                 this.logger.LogInformation("WebSocketSession Login, SessionID:{0}, OpenID:{1}, ServerID:{2}",
                                             sessionInfo.SessionID, OpenID, ServerID);
 
@@ -273,7 +273,7 @@ namespace Gateway.Handler
                     var req = new RpcMessage(new RequestAccountLogin()
                     {
                         OpenID = playerInfo.OpenID,
-                        ServerID = playerInfo.GameServerID,
+                        ServerID = playerInfo.DestServerID,
                         SessionID = sessionInfo.SessionID,
                     }, body);
                     this.messageCenter.SendMessageToServer(position.ServerID, req);
@@ -297,29 +297,20 @@ namespace Gateway.Handler
             }
 
             var position = await this.FindActorPositionAsync(playerInfo.ActorType, playerInfo.ActorID).ConfigureAwait(false);
-            if (playerInfo.GameServerID != position.ServerID) 
+            if (playerInfo.DestServerID != position.ServerID) 
             {
-                playerInfo.GameServerID = position.ServerID;
+                playerInfo.DestServerID = position.ServerID;
                 this.logger.LogInformation("WebSocketSession, SessionID:{0}, Actor:{1}/{2}, Dest ServerID:{3}",
                                             sessionInfo.SessionID, playerInfo.ActorType, playerInfo.ActorID,
-                                            playerInfo.GameServerID);
+                                            playerInfo.DestServerID);
             }
 
-            this.messageCenter.SendMessageToServer(playerInfo.GameServerID, new RpcMessage(new NotifyNewActorMessage()
+            this.messageCenter.SendMessageToServer(playerInfo.DestServerID, new RpcMessage(new NotifyNewActorMessage()
             {
                 ActorType = playerInfo.ActorType,
                 ActorID = playerInfo.ActorID,
                 SessionId = sessionInfo.SessionID,
             }, buffer));
-        }
-
-        private void OnConnected(IChannel channel) 
-        {
-            var sessionInfo = channel.GetSessionInfo();
-            if (sessionInfo.ConnectionType == ConnectionType.WebSocket) 
-            {
-                sessionInfo.OnClosed = this.ProcessWebSocketClosed;
-            }
         }
 
         private void ProcessWebSocketClosed(IChannel channel) 

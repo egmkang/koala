@@ -1,25 +1,37 @@
 using System;
-using Microsoft.AspNetCore.Connections;
-using Microsoft.AspNetCore.Hosting;
-using Microsoft.Extensions.Hosting;
+using System.Threading.Tasks;
+using Gateway.Extersions;
+using Microsoft.Extensions.Configuration;
 
 namespace Gateway
 {
     public class Program
     {
-        public static void Main(string[] args)
+        public static async Task Main(string[] args)
         {
-            CreateHostBuilder(args)
-                .Build()
-                .Run();
-        }
+            var configuration = new ConfigurationBuilder()
+                     .AddJsonFile("appsettings.json")
+                     .Build();
 
-        public static IHostBuilder CreateHostBuilder(string[] args) =>
-            Host.CreateDefaultBuilder(args)
-                .ConfigureWebHostDefaults(webBuilder =>
-                {
-                    webBuilder.UseSockets();
-                    webBuilder.UseStartup<Startup>();
-                });
+            var builder = new ServiceBuilder();
+
+            builder.Configure<GatewayConfiguration>((config) =>
+            {
+                configuration.GetSection("Gateway").Bind(config);
+            });
+
+            builder.AddDefaultServices();
+            builder.AddGatewayServices();
+            builder.AddLog();
+
+            builder.Build();
+
+            await builder.RunGatewayAsync();
+
+            while (true)
+            {
+                await Task.Delay(1000).ConfigureAwait(false);
+            }
+        }
     }
 }

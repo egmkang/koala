@@ -22,7 +22,7 @@ namespace Gateway
         /// <summary>
         /// 和Host集群通讯的端口, 对外不需要暴露
         /// </summary>
-        public int ListenPort { get; set; }
+        public int ListenPort => Convert.ToInt32(this.ListenAddress.Split(':').Last());
         /// <summary>
         /// WebSocket的请求路径
         /// </summary>

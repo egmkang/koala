@@ -4,11 +4,82 @@ using System.Text;
 using System.Security.Cryptography;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
+using Gateway.Extersions;
+using Microsoft.Extensions.DependencyInjection;
+using Gateway.Handler;
+using System.Threading.Tasks;
+using Microsoft.Extensions.Options;
+using Microsoft.Extensions.Logging;
+using Abstractions.Placement;
+using Gateway.Utils;
 
 namespace Gateway
 {
     public static partial class Extensions
     {
+        public static async Task RunGatewayAsync(this ServiceBuilder builder)
+        {
+            var config = builder.ServiceProvider.GetRequiredService<IOptionsMonitor<GatewayConfiguration>>().CurrentValue;
+            var logger = builder.ServiceProvider.GetRequiredService<ILoggerFactory>().CreateLogger("F1.Gateway");
+
+            logger.LogInformation("RunGatewayAsync, PlacementDriverAddress:{0}, Host ListenPort:{1}, GatewayAddress:{2}",
+                                    config.PlacementDriverAddress, config.ListenPort, config.GatewayAddress);
+            await builder.InitAsync(config.PlacementDriverAddress, config.ListenPort).ConfigureAwait(false);
+            await builder.ServiceProvider.PrepareGatewayAndRunAsync(config, logger);
+        }
+
+        private static async Task PrepareGatewayAndRunAsync(this IServiceProvider provider, 
+                                                            GatewayConfiguration config,
+                                                            ILogger logger)
+        {
+            var placement = provider.GetRequiredService<IPlacement>();
+            var sessionUniqueSequence = provider.GetRequiredService<SessionUniqueSequence>();
+
+            var messageHandler = provider.GetRequiredService<GatewayMessageHandler>();
+            messageHandler.PrivateKey = config.PrivateKey;
+            messageHandler.DisableTokenCheck = config.DisableTokenCheck;
+            messageHandler.AuthService = config.AuthService;
+
+
+            try
+            {
+                var ServerID = await placement.GenerateServerIDAsync();
+                sessionUniqueSequence.SetServerID(ServerID);
+
+                logger.LogInformation("GetServerID, ServerID:{0}, Address:{1}", ServerID, config.ListenAddress);
+
+                var LeaseID = await placement.RegisterServerAsync(new PlacementActorHostInfo()
+                {
+                    ServerID = ServerID,
+                    Address = config.ListenAddress,
+                    StartTime = Platform.GetMilliSeconds(),
+                    TTL = config.KeepAliveInterval * 3,
+                    Desc = $"Gateway_{ServerID}",
+                    Services = new Dictionary<string, string>() { { "IGateway", "GatewayImpl" } },
+                    Labels = new Dictionary<string, string>() { { "GatewayAddress", config.GatewayAddress } },
+                });
+                logger.LogInformation("RegisterServer Success, LeaseID:{0}", LeaseID);
+            }
+            catch (Exception e)
+            {
+                logger.LogError("StartUp Gateway, Exception:{0}", e);
+            }
+
+            _ = placement.StartPullingAsync().ContinueWith((t) =>
+            {
+                logger.LogError("PDKeepAlive Process Exit");
+                NLog.LogManager.Flush();
+                Environment.Exit(-1);
+            });
+        }
+
+        public static void AddGatewayServices(this ServiceBuilder builder)
+        {
+            var services = builder.ServiceCollection;
+
+            services.AddSingleton<GatewayMessageHandler>();
+        }
+
         public static unsafe int CastToInt(this string str)
         {
             var bytes = Encoding.UTF8.GetBytes(str);

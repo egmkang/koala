@@ -27,8 +27,13 @@ namespace Gateway.Gateway
             this.placement = placement;
             this.clientConnectionPool = clientPool;
 
-            //消息处理
-            this.messageCenter.RegisterTypedMessageProc<ResponseHeartBeat>(this.ProcessHeartBeatResponse);
+            this.placement.RegisterServerChangedEvent(this.OnAddServer, this.OnRemoveServer, this.OnOfflineServer);
+            this.placement.OnException(this.OnPDKeepAliveException);
+        }
+
+        private void OnPDKeepAliveException(Exception e) 
+        {
+            this.logger.LogError("PDKeepAlive, Exception:{0}", e);
         }
 
         public void OnAddServer(PlacementActorHostInfo server)
@@ -49,23 +54,6 @@ namespace Gateway.Gateway
         {
             //TODO
             //貌似不需要干什么
-        }
-
-        private void ProcessHeartBeatResponse(InboundMessage message)
-        {
-            var msg = (message.Inner as RpcMessage).Meta as ResponseHeartBeat;
-            if (msg == null)
-            {
-                this.logger.LogError("ProcessHeartBeat input message type:{0}", message.Inner?.GetType());
-                return;
-            }
-            var elapsedTime = Platform.GetMilliSeconds() - msg.MilliSeconds;
-            if (elapsedTime >= 5)
-            {
-                var sessionInfo = message.SourceConnection.GetSessionInfo();
-                this.logger.LogWarning("ProcessHearBeat, SessionID:{0}, ServerID:{1}, RemoteAddress:{2}, Elapsed Time:{3}ms",
-                    sessionInfo.SessionID, sessionInfo.ServerID, sessionInfo.RemoteAddress, elapsedTime);
-            }
         }
     }
 }

@@ -33,7 +33,6 @@ namespace Abstractions.Network
         bool SendMessageToServer(long serverID, object message);
 
         void OnReceiveMessage(InboundMessage message);
-        void OnMessageFail(OutboundMessage message);
         void OnConnectionClosed(IChannel channel);
     }
 }

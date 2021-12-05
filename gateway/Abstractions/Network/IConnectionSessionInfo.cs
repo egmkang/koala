@@ -24,7 +24,6 @@ namespace Abstractions.Network
         bool IsActive { get; }
         Dictionary<string, object> States { get; }
         Action<IChannel> OnClosed { get; set; }
-        Action<OutboundMessage> OnFail { get; set; }
 
         int PutOutboundMessage(OutboundMessage msg);
         void SendMessagesBatch(IChannel channel);

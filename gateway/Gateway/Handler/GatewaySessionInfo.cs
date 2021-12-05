@@ -9,7 +9,7 @@ namespace Gateway.Handler
         public byte[] Token;
         public string ActorType;
         public string ActorID;
-        public long GameServerID;
+        public long DestServerID;
     }
 
     public static partial class GatewayExtensions
@@ -27,4 +27,4 @@ namespace Gateway.Handler
             return info;
         }
     }
-    }
+}
