@@ -190,8 +190,8 @@ namespace Gateway.Message
             }
             if (this.logger.IsEnabled(LogLevel.Debug)) 
             {
-                if (message.MessageName != "Rpc.RpcHeartBeatRequest" &&
-                    message.MessageName != "Rpc.RpcHeartBeatResponse") 
+                if (message.MessageName != "RequestHeartBeat" &&
+                    message.MessageName != "ResponseHeartBeat") 
                 {
                     this.logger.LogDebug("ProcessMessage, MessageName:{0}", message.MessageName);
                 }
