@@ -90,11 +90,26 @@ namespace Gateway.Message
             }
         }
 
+        static Func<object, string> TypeName => (o) =>
+        {
+            return (o as Type).Name;
+        };
+
+        private byte[] GetNameBytes(Type t) 
+        {
+            return StringMap.GetCachedStringBytes(t, TypeName);
+        }
+
+        private byte[] GetMsgJsonBytes(object o) 
+        {
+            return JsonSerializer.SerializeToUtf8Bytes(o); ;
+        }
+
         public object Encode(IByteBufferAllocator allocator, object message)
         {
             var msg = message as RpcMessage;
-            var name = StringMap.GetStringBytes(msg.Meta.GetType().Name);
-            var meta = JsonSerializer.SerializeToUtf8Bytes(msg.Meta as object);
+            var name = GetNameBytes(msg.Meta.GetType());
+            var meta = GetMsgJsonBytes(msg.Meta);
             var metaLength = 1 + name.Length + meta.Length;
             var bodyLength = msg.Body != null ? msg.Body.Length : 0;
             var totalLength = HeaderLength + metaLength + bodyLength;

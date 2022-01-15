@@ -71,6 +71,7 @@ namespace Gateway.Message
 
         [JsonPropertyName("actor_id")]
         public string ActorID { get; set; }
+
         [JsonPropertyName("trace")]
         public string Trace { get; set; }
     }

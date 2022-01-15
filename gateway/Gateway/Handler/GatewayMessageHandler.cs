@@ -183,7 +183,7 @@ namespace Gateway.Handler
         private static int RandomLoginServer => random.Next(0, 1024 * 2);
         private static ThreadLocal<PlacementFindActorPositionRequest> findActorRequestCache = new ThreadLocal<PlacementFindActorPositionRequest>(() => new PlacementFindActorPositionRequest());
 
-        private async Task<PlacementFindActorPositionResponse> FindActorPositionAsync(string actorType, string actorID) 
+        private async ValueTask<PlacementFindActorPositionResponse> FindActorPositionAsync(string actorType, string actorID) 
         {
             var findPositionReq = findActorRequestCache.Value;
             findPositionReq.ActorType = actorType;
@@ -192,7 +192,7 @@ namespace Gateway.Handler
             return position;
         }
 
-        private async Task ProcessQuickConnect(IChannel session, 
+        private async ValueTask ProcessQuickConnect(IChannel session, 
                                                 IConnectionSessionInfo sessionInfo, 
                                                 GatewayPlayerSessionInfo playerInfo, 
                                                 string actorType, 
@@ -228,7 +228,7 @@ namespace Gateway.Handler
             return Encoding.UTF8.GetBytes(string.Format("{\"error_code\":{0}, \"msg\":\"{1}\"}", code, msg));
         }
 
-        private async Task ProcessWebSocketFirstMessage(IChannel session, byte[] body)
+        private async ValueTask ProcessWebSocketFirstMessage(IChannel session, byte[] body)
         {
             // 一个包是一个JSON字符串
             //1. 包含`open_id`, `server_id`, `timestamp`, `check_sum`
@@ -286,7 +286,7 @@ namespace Gateway.Handler
                 sessionInfo.ShutDown();
             }
         }
-        private async Task ProcessWebSocketCommonMessage(IChannel session, byte[] buffer) 
+        private async ValueTask ProcessWebSocketCommonMessage(IChannel session, byte[] buffer) 
         {
             var sessionInfo = session.GetSessionInfo();
             var playerInfo = sessionInfo.GetPlayerInfo();
@@ -318,7 +318,7 @@ namespace Gateway.Handler
             _ = this.ProcessWebSocketClose(channel);
         }
 
-        private async Task ProcessWebSocketClose(IChannel session)
+        private async ValueTask ProcessWebSocketClose(IChannel session)
         {
             var sessionInfo = session.GetSessionInfo();
             try

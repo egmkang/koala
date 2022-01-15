@@ -1,4 +1,5 @@
 import asyncio
+from cProfile import run
 from typing import List, Tuple
 from websockets.legacy.client import connect as ws_connect
 import json
@@ -9,8 +10,9 @@ import random
 
 
 PRIVATE_KEY = "1234567890"
-ADDRESS = "ws://127.0.0.1:5000/ws"
+ADDRESS = "ws://127.0.0.1:5001/ws"
 echo = "1234567890qwertyuiop[]asdfghjkl;'zxcvbnm,"
+count = 0
 
 
 def message_compute_check_sum(message: dict, private_key: str, escape_key: str = "check_sum") -> str:
@@ -44,11 +46,24 @@ def generate_token(open_id: str, server_id: int, actor_type: str = None, actor_i
     return json.dumps(d).encode("utf-8")
 
 
+async def qps():
+    await asyncio.sleep(1.0)
+    c = count
+    while True:
+        new_value = count
+        if new_value != c:
+            print(new_value - c)
+            c = new_value
+        await asyncio.sleep(1.0)
+
+
 async def echo_client(address: str):
     if random.randint(0, 1000) % 2 == 0:
         token = generate_token("open_id_1", 1)
     else:
         token = generate_token("open_id_2", 2, "IPlayer", "2")
+
+    global count
 
     async with ws_connect(address) as client:
         await client.send(token)
@@ -58,8 +73,9 @@ async def echo_client(address: str):
         while True:
             await client.send(echo[0: random.randint(1, len(echo) - 1)])
             x = await client.recv()
-            print(x)
-    pass
+            count += 1
+            # print(x)
 
 
+asyncio.get_event_loop().create_task(qps())
 asyncio.get_event_loop().run_until_complete(echo_client(ADDRESS))

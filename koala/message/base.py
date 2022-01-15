@@ -1,4 +1,5 @@
 import dataclasses
+import inspect
 from koala.typing import *
 from koala.utils import to_dict
 
@@ -28,7 +29,11 @@ class JsonMeta(type):
 class JsonMessage(metaclass=JsonMeta):
     @classmethod
     def from_dict(cls, kwargs: dict):
-        return cls(**kwargs)
+        parameters = inspect.signature(cls).parameters
+        return cls(**{
+            k: v for k, v in kwargs.items()
+            if k in parameters
+        })
 
     def to_dict(self) -> dict:
         return cast(dict, to_dict(self))

@@ -178,24 +178,24 @@ namespace Abstractions.Placement
         /// 生成一个新的服务器ID, 服务器每次启动的时候都需要向PD去申请新的ID
         /// </summary>
         /// <returns>返回新的唯一ID</returns>
-        Task<long> GenerateServerIDAsync();
+        ValueTask<long> GenerateServerIDAsync();
         /// <summary>
         /// 获取一个新的ID, 可以提供比较频繁的调用
         /// </summary>
         /// <param name="sequenceType">类型</param>
         /// <param name="step">步长, 内部一次申请步长个ID, 缓冲起来, 提高性能用的参数</param>
         /// <returns>返回一个SequenceID</returns>
-        Task<long> GenerateNewSequenceAsync(string sequenceType, int step);
+        ValueTask<long> GenerateNewSequenceAsync(string sequenceType, int step);
         /// <summary>
         /// 生成一个新的写入Token, 用来做Actor写入权限的判断
         /// </summary>
         /// <returns>生成新的Token</returns>
-        Task<long> GenerateNewTokenAsync();
+        ValueTask<long> GenerateNewTokenAsync();
         /// <summary>
         /// 注册当前服务器到PD里面去
         /// </summary>
         /// <returns>返回租约</returns>
-        Task<long> RegisterServerAsync(PlacementActorHostInfo info);
+        ValueTask<long> RegisterServerAsync(PlacementActorHostInfo info);
         /// <summary>
         /// 给当前服务器续约, 维持其生命
         /// </summary>
@@ -203,7 +203,7 @@ namespace Abstractions.Placement
         /// <param name="leaseID">租约ID</param>
         /// <param name="load">服务器当前的负载</param>
         /// <returns>返回PD上面最新的事件</returns>
-        Task<PlacementKeepAliveResponse> KeepAliveServerAsync(long serverID, long leaseID, long load);
+        ValueTask<PlacementKeepAliveResponse> KeepAliveServerAsync(long serverID, long leaseID, long load);
         /// <summary>
         /// 在内存中找Actor所在的服务器信息
         /// </summary>
@@ -215,7 +215,7 @@ namespace Abstractions.Placement
         /// </summary>
         /// <param name="request">actor定位所需要的信息</param>
         /// <returns>Actor所在的目标服务器信息</returns>
-        Task<PlacementFindActorPositionResponse> FindActorPositonAsync(PlacementFindActorPositionRequest request);
+        ValueTask<PlacementFindActorPositionResponse> FindActorPositonAsync(PlacementFindActorPositionRequest request);
         /// <summary>
         /// 清空Actor的位置缓存
         /// </summary>
@@ -225,7 +225,7 @@ namespace Abstractions.Placement
         /// 获取版本信息
         /// </summary>
         /// <returns>返回版本信息的字符串</returns>
-        Task<PlacementVersionInfo> GetVersionAsync();
+        ValueTask<PlacementVersionInfo> GetVersionAsync();
         /// <summary>
         /// 获取当前服务器的信息
         /// </summary>

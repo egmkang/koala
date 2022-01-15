@@ -9,21 +9,21 @@ namespace Gateway.Utils
     public static class StringMap
     {
         private static readonly object mutex = new object();
-        private static Dictionary<string, byte[]> cache = new Dictionary<string, byte[]>();
+        private static Dictionary<object, byte[]> cache = new Dictionary<object, byte[]>();
 
-        public static byte[] GetStringBytes(string str)
+        public static byte[] GetCachedStringBytes(object o, Func<object, string> fn)
         {
-            if (cache.TryGetValue(str, out var bytes))
+            if (cache.TryGetValue(o, out var bytes))
             {
                 return bytes;
             }
 
-            bytes = Encoding.UTF8.GetBytes(str);
+            bytes = Encoding.UTF8.GetBytes(fn(o));
 
             lock (mutex)
             {
-                var table = new Dictionary<string, byte[]>(cache);
-                table.TryAdd(str, bytes);
+                var table = new Dictionary<object, byte[]>(cache);
+                table.TryAdd(o, bytes);
                 cache = table;
             }
 
