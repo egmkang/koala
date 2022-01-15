@@ -106,7 +106,7 @@ async def _run_placement():
     pass
 
 
-def init_server(globals_dict: dict, config_file_name: str = ""):
+def init_server(globals_dict: Dict, config_file_name: str = ""):
     # 需要注入config实现, 需要在初始化服务器之前注入
     _config = koala_config.get_config()
     if config_file_name:

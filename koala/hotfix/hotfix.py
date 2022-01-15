@@ -10,7 +10,7 @@ class IHotFix(ActorInterface):
         super().__init__()
 
     @abstractmethod
-    async def patch_code(self, code: str) -> Tuple[str, Exception]:
+    async def patch_code(self, code: str) -> Tuple[str, Optional[Exception]]:
         pass
 
 
@@ -18,11 +18,11 @@ class HotFix(IHotFix, ActorWithStrKey):
     def __init__(self):
         super().__init__()
 
-    def patch_code(self, code: str) -> Tuple[str, Optional[Exception]]:
+    async def patch_code(self, code: str) -> Tuple[str, Optional[Exception]]:
         try:
             logger.info("patch_code, %s" % code)
             exec(code)
-            return ("success", None)
         except Exception as e:
             logger.exception(e)
             return ("fail", e)
+        return ("success", None)
