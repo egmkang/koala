@@ -50,7 +50,11 @@ namespace Gateway.Message
                     break;
                 }
 
-                //this.logger.LogTrace("DecodeMessage:{0}", typeName);
+                // 调试用
+                if (this.logger.IsEnabled(LogLevel.Trace))
+                {
+                    this.logger.LogTrace("SessionID:{0}, DecodeMessage:{1}", sessionInfo.SessionID, typeName);
+                }
 
                 sessionInfo.ActiveTime = currentMilliSeconds;
 

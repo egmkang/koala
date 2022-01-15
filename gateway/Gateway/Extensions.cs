@@ -13,6 +13,7 @@ using Microsoft.Extensions.Logging;
 using Abstractions.Placement;
 using Gateway.Utils;
 using Gateway.Message;
+using Gateway.Gateway;
 
 namespace Gateway
 {
@@ -27,6 +28,7 @@ namespace Gateway
                                     config.PlacementDriverAddress, config.ListenPort, config.GatewayAddress);
             builder.SetPDAddress(config.PlacementDriverAddress);
             var handlerFactory = new MessageHandlerFactory(builder.ServiceProvider);
+            var gatewayClientFactory = builder.ServiceProvider.GetRequiredService<GatewayClientFactory>();
             await builder.Listen(config.ListenPort, handlerFactory, new RpcMessageCodec()).ConfigureAwait(false);
             await builder.PrepareGatewayAndRunAsync(config, logger);
         }

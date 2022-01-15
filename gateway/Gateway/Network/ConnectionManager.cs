@@ -26,7 +26,7 @@ namespace Gateway.Network
             }
             else 
             {
-                logger.LogInformation("ConnectionManager.AddConnection, SessionID:{0}", info.SessionID);
+                logger.LogInformation("ConnectionManager.AddConnection, SessionID:{0}, Type:{1}", info.SessionID, info.ConnectionType);
             }
         }
 

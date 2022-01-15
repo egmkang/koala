@@ -29,7 +29,7 @@ namespace Gateway.Network
         private readonly IConnectionManager connectionManager;
         private readonly IConnectionSessionInfoFactory channelSessionInfoFactory;
         private readonly List<ServerBootstrap> ports = new List<ServerBootstrap>();
-        private readonly Dictionary<int, IMessageHandlerFactory> factoryContext = new Dictionary<int, IMessageHandlerFactory>();
+        private readonly Dictionary<int, Action<IChannel>> factoryContext = new Dictionary<int, Action<IChannel>>();
 
         public IServiceProvider ServiceProvider { get; private set; }
 
@@ -87,14 +87,9 @@ namespace Gateway.Network
 
         public async Task BindWebSocketAsync(int port, string websocketPath, IMessageHandlerFactory handlerFactory) 
         {
-            factoryContext[port] = handlerFactory;
-
-            var bootstrap = this.MakeBootStrap();
-            bootstrap.ChildHandler(new ActionChannelInitializer<IChannel>((channel) =>
+            factoryContext[port] = (channel) => 
             {
-                var factory = this.factoryContext[(channel.LocalAddress as IPEndPoint).Port];
-
-                var info = this.channelSessionInfoFactory.NewSessionInfo(factory);
+                var info = this.channelSessionInfoFactory.NewSessionInfo(handlerFactory);
                 info.ConnectionType = ConnectionType.WebSocket;
                 channel.GetAttribute(ChannelExt.SESSION_INFO).Set(info);
 
@@ -121,10 +116,18 @@ namespace Gateway.Network
                     enableUtf8Validator: false));
                 pipeline.AddLast(new WebSocketServerHttpHandler());
                 pipeline.AddLast(new WebSocketFrameAggregator(65536));
-                pipeline.AddLast(factory.NewHandler());
+                pipeline.AddLast(handlerFactory.NewHandler());
 
-                logger.LogInformation("NewSession SessionID:{0} IpAddr:{1}, CodecName:{2}",
-                        info.SessionID, info.RemoteAddress?.ToString(), factory.Codec.CodecName);
+                logger.LogInformation("NewWebSocketSession SessionID:{0} IpAddr:{1}, CodecName:{2}",
+                        info.SessionID, info.RemoteAddress?.ToString(), handlerFactory.Codec.CodecName);
+            };
+
+            var bootstrap = this.MakeBootStrap();
+            bootstrap.ChildHandler(new ActionChannelInitializer<IChannel>((channel) =>
+            {
+                var port = (channel.LocalAddress as IPEndPoint).Port;
+                var factory = this.factoryContext[port];
+                factory(channel);
             }));
 
             await bootstrap.BindAsync(port);
@@ -134,14 +137,9 @@ namespace Gateway.Network
 
         public async Task BindAsync(int port, IMessageHandlerFactory handlerFactory)
         {
-            factoryContext[port] = handlerFactory;
-
-            var bootstrap = this.MakeBootStrap();
-            bootstrap.ChildHandler(new ActionChannelInitializer<IChannel>((channel) =>
+            factoryContext[port] = (channel) =>
             {
-                var factory = this.factoryContext[(channel.LocalAddress as IPEndPoint).Port];
-
-                var info = this.channelSessionInfoFactory.NewSessionInfo(factory);
+                var info = this.channelSessionInfoFactory.NewSessionInfo(handlerFactory);
                 info.ConnectionType = ConnectionType.Socket;
                 channel.GetAttribute(ChannelExt.SESSION_INFO).Set(info);
 
@@ -153,10 +151,18 @@ namespace Gateway.Network
 
                 IChannelPipeline pipeline = channel.Pipeline;
                 pipeline.AddLast("TimeOut", new IdleStateHandler(this.config.ReadTimeout, this.config.WriteTimeout, this.config.ReadTimeout));
-                pipeline.AddLast(factory.NewHandler());
+                pipeline.AddLast(handlerFactory.NewHandler());
 
                 logger.LogInformation("NewSession SessionID:{0} IpAddr:{1}, CodecName:{2}",
-                        info.SessionID, info.RemoteAddress?.ToString(), factory.Codec.CodecName);
+                        info.SessionID, info.RemoteAddress?.ToString(), handlerFactory.Codec.CodecName);
+            };
+
+            var bootstrap = this.MakeBootStrap();
+            bootstrap.ChildHandler(new ActionChannelInitializer<IChannel>((channel) =>
+            {
+                var port = (channel.LocalAddress as IPEndPoint).Port;
+                var factory = this.factoryContext[port];
+                factory(channel);
             }));
 
             await bootstrap.BindAsync(port);

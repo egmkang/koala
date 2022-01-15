@@ -13,6 +13,7 @@ using Gateway.Message;
 using Gateway.Gateway;
 using Abstractions.Placement;
 using Gateway.Placement;
+using Microsoft.Extensions.Configuration;
 
 namespace Gateway.Extersions
 {
@@ -40,14 +41,14 @@ namespace Gateway.Extersions
             services.TryAddSingleton<SendingThreads>();
         }
 
-        public static void AddLog(this IServiceBuilder serviceBuilder, LogLevel logLevel = LogLevel.Information) 
+        public static void AddLog(this IServiceBuilder serviceBuilder, IConfiguration config) 
         {
             var services = serviceBuilder.ServiceCollection;
 
             services.AddLogging(builder =>
             {
                 builder.ClearProviders();
-                builder.SetMinimumLevel(logLevel);
+                builder.AddConfiguration(config.GetSection("Logging"));
                 builder.AddNLog();
             });
         }

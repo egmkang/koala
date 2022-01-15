@@ -10,7 +10,7 @@ namespace Gateway
         public static async Task Main(string[] args)
         {
             var configuration = new ConfigurationBuilder()
-                     .AddJsonFile("appsettings.json")
+                     .AddJsonFile("appsettings.json", optional: true, reloadOnChange: true)
                      .Build();
 
             var builder = new ServiceBuilder();
@@ -22,7 +22,7 @@ namespace Gateway
 
             builder.AddDefaultServices();
             builder.AddGatewayServices();
-            builder.AddLog();
+            builder.AddLog(configuration);
 
             builder.Build();
 

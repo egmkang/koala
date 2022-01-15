@@ -133,7 +133,7 @@ namespace Gateway.Network
 
                 await Task.Delay(HeartBeatInterval).ConfigureAwait(false);
             }
-            this.logger.LogInformation("TrySednHeartBeatLoop Exit, SessionID:{0}", sessionInfo.SessionID);
+            this.logger.LogInformation("TrySendHeartBeatLoop Exit, SessionID:{0}", sessionInfo.SessionID);
         }
 
         private void TryCloseCurrentClient(long serverID) 

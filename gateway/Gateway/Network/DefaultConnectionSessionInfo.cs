@@ -88,7 +88,11 @@ namespace Gateway.Network
             {
                 try
                 {
-                    //this.logger.LogTrace("Encoding Msg:{0}", message.Inner.GetType().Name);
+                    // 调试用
+                    if (this.logger.IsEnabled(LogLevel.Trace)) 
+                    {
+                        this.logger.LogTrace("SessionID:{0}, Encoding Msg:{1}", this.sessionID, message.Inner.GetType().Name);
+                    }
                     var msg = this.codec.Encode(allocator, message.Inner);
                     channel.WriteAsync(msg);
                 }
