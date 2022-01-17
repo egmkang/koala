@@ -78,7 +78,7 @@ namespace Gateway.Placement
 
         private async ValueTask<ValueTuple<int, string>> PostAsync(string path, object o)
         {
-            var url = $"{this.PlacementServerAddress}{path}";
+            var url = StringMap.GetCachedString(path, (p) => $"{this.PlacementServerAddress}{p}");
             var response = await this.httpClient.PostAsync(url, o.AsJson()).ConfigureAwait(false);
             var str = await response.Content.ReadAsStringAsync().ConfigureAwait(false);
             return new ValueTuple<int, string>((int)response.StatusCode, str);
