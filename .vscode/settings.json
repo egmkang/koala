@@ -2,4 +2,6 @@
     "python.autoComplete.extraPaths": [],
     "python.analysis.extraPaths": [],
     "svn.ignoreMissingSvnWarning": true,
+    "python.formatting.provider": "black",
+    "python.languageServer": "Pylance"
 }
