@@ -1,5 +1,13 @@
 TODO:
 
+v0.8
+
+* [ ] build.sh升级到.net 6
+* [ ] python代码用black格式化
+* [ ] 依赖升级
+* [ ] type hint继续加强
+* [ ] 杂项
+
 v0.7
 
 * [x] hotfix
