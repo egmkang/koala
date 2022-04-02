@@ -1,4 +1,5 @@
 {
     "python.autoComplete.extraPaths": [],
     "python.analysis.extraPaths": [],
+    "svn.ignoreMissingSvnWarning": true,
 }

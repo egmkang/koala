@@ -1,7 +1,6 @@
 import pickle
-import lz4.frame
+import lz4.frame        # type: ignore
 from koala.typing import *
-import pickletools
 import io
 import hashlib
 import socket
@@ -24,21 +23,21 @@ try:
     json_loads = orjson.loads
     json_dumps = orjson.dumps
 except:
-    def _dumps(o): return json.dumps(o).encode()
-    def _loads(b): return json_loads(b.decode())
-    json_loads = _loads
-    json_dumps = _dumps
+    def _dumps(o): return json.dumps(o).encode()    # type: ignore
+    def _loads(b): return json_loads(b.decode())    # type: ignore
+    json_loads = _loads                             # type: ignore
+    json_dumps = _dumps                             # type: ignore
     pass
 
 
-def get_host_ip(host=None, port=None):
+def get_host_ip(host: str = "", port: int = 0):
     global _local_ip
     if len(_local_ip) > 4:
         return _local_ip
 
-    if host is None:
+    if not host:
         host = '8.8.8.8'
-    if port is None:
+    if not port:
         port = 80
     s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
     try:
@@ -50,7 +49,7 @@ def get_host_ip(host=None, port=None):
     return _local_ip
 
 
-def to_dict(obj):
+def to_dict(obj: Any) -> Dict | List:
     if isinstance(obj, dict):
         return {k: to_dict(v) for k, v in obj.items()}
     elif hasattr(obj, "_ast"):
@@ -64,7 +63,7 @@ def to_dict(obj):
     elif not isinstance(obj, str) and hasattr(obj, "__iter__"):
         return [to_dict(v) for v in obj]
     else:
-        return obj
+        return cast(Dict, obj)
 
 
 def message_compute_check_sum(message: dict, private_key: str, escape_key: str = "check_sum") -> str:
@@ -89,10 +88,10 @@ def message_compute_check_sum(message: dict, private_key: str, escape_key: str =
 
 def message_check_sum(raw_message: bytes, private_key: str, check_sum_key: str = "check_sum") -> Tuple[dict, bool]:
     message: dict = json_loads(raw_message)
-    input_check_sum = ""
-    for (k, v) in message.items():
+    input_check_sum: str = ""
+    for k, v in message.items():
         if k == check_sum_key:
-            input_check_sum = "%s" % v
+            input_check_sum = cast(str, "%s" % v)
             break
 
     check_sum = message_compute_check_sum(message, private_key, check_sum_key)

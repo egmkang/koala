@@ -8,9 +8,9 @@ using System.Text.Json;
 using System.Text.Json.Serialization;
 using System.Threading;
 using System.Threading.Tasks;
+using Abstractions.Placement;
 using Gateway.Utils;
 using Microsoft.Extensions.Logging;
-using static Gateway.Placement.IPlacement;
 
 namespace Gateway.Placement
 {
@@ -34,15 +34,15 @@ namespace Gateway.Placement
         });
         const int ServerLRUSize = 1024;
         private readonly ILogger logger;
-        private readonly LRU<string, PlacementFindActorPositionResponse> positionLru = new LRU<string, PlacementFindActorPositionResponse>(10 * 10000);
+        private readonly LRU<(string, string), PlacementFindActorPositionResponse> positionLru = new LRU<(string, string), PlacementFindActorPositionResponse>(10 * 10000);
         private readonly LRU<long, object> addedServer = new LRU<long, object>(ServerLRUSize);
         private readonly LRU<long, object> removedServer = new LRU<long, object>(ServerLRUSize);
         private readonly LRU<long, object> offlineServer = new LRU<long, object>(ServerLRUSize);
         private Dictionary<long, PlacementActorHostInfo> host = new Dictionary<long, PlacementActorHostInfo>(); //readonly
         private PlacementActorHostInfo currentServerInfo = new PlacementActorHostInfo();
-        private OnAddServer onAddServer;
-        private OnRemoveServer onRemoveServer;
-        private OnServerOffline onServerOffline;
+        private Action<PlacementActorHostInfo> onAddServer;
+        private Action<PlacementActorHostInfo> onRemoveServer;
+        private Action<PlacementActorHostInfo> onServerOffline;
         private Action<Exception> onFatalError;
 
         public string PlacementServerAddress { get; private set; }
@@ -68,7 +68,7 @@ namespace Gateway.Placement
             this.logger.LogInformation("SetPlacementServerInfo, Address:{0}", pdAddress);
         }
 
-        private async Task<ValueTuple<int, string>> GetAsync(string path)
+        private async ValueTask<ValueTuple<int, string>> GetAsync(string path)
         {
             var url = $"{this.PlacementServerAddress}{path}";
             var response = await this.httpClient.GetAsync(url).ConfigureAwait(false);
@@ -76,9 +76,9 @@ namespace Gateway.Placement
             return new ValueTuple<int, string>((int)response.StatusCode, str);
         }
 
-        private async Task<ValueTuple<int, string>> PostAsync(string path, object o)
+        private async ValueTask<ValueTuple<int, string>> PostAsync(string path, object o)
         {
-            var url = $"{this.PlacementServerAddress}{path}";
+            var url = StringMap.GetCachedString(path, (p) => $"{this.PlacementServerAddress}{p}");
             var response = await this.httpClient.PostAsync(url, o.AsJson()).ConfigureAwait(false);
             var str = await response.Content.ReadAsStringAsync().ConfigureAwait(false);
             return new ValueTuple<int, string>((int)response.StatusCode, str);
@@ -92,8 +92,7 @@ namespace Gateway.Placement
 
         public PlacementFindActorPositionResponse FindActorPositionInCache(PlacementFindActorPositionRequest request)
         {
-            var uniqueName = $"{request.ActorType}/{request.ActorID}";
-            var pos = this.positionLru.Get(uniqueName);
+            var pos = this.positionLru.Get((request.ActorType, request.ActorID));
             if (pos != null && this.IsServerValid(pos.ServerID))
             {
                 return pos;
@@ -101,17 +100,17 @@ namespace Gateway.Placement
             return null;
         }
 
-        public async Task<PlacementFindActorPositionResponse> FindActorPositonAsync(PlacementFindActorPositionRequest request)
+        public async ValueTask<PlacementFindActorPositionResponse> FindActorPositonAsync(PlacementFindActorPositionRequest request)
         {
             //check actor position cache
-            var uniqueName = $"{request.ActorType}/{request.ActorID}";
+            var id = (request.ActorType, request.ActorID);
 
-            var pos = this.positionLru.Get(uniqueName);
+            var pos = this.positionLru.Get(id);
             if (pos != null && this.IsServerValid(pos.ServerID))
             {
                 return pos;
             }
-            this.positionLru.Remove(uniqueName);
+            this.positionLru.Remove(id);
 
             var (code, str) = await this.PostAsync("/pd/api/v1/placement/find_position", request).ConfigureAwait(false);
             if (code != (int)HttpStatusCode.OK)
@@ -126,7 +125,7 @@ namespace Gateway.Placement
             //如果服务器要下线了, 那么存到LRU里面, 还是需要每次都去重新定位
             if (this.offlineServer.Get(position.ServerID) == null)
             {
-                this.positionLru.Add(uniqueName, position);
+                this.positionLru.Add(id, position);
             }
             return position;
         }
@@ -138,7 +137,7 @@ namespace Gateway.Placement
         }
 
         private static readonly object EmptyObject = new Dictionary<string, string>();
-        public async Task<long> GenerateNewSequenceAsync(string sequenceType, int step)
+        public async ValueTask<long> GenerateNewSequenceAsync(string sequenceType, int step)
         {
             var path = $"/pd/api/v1/id/new_sequence/{sequenceType}/{step}";
             var (code, str) = await this.PostAsync(path, EmptyObject.AsJson()).ConfigureAwait(false);
@@ -154,7 +153,7 @@ namespace Gateway.Placement
             return response.ID;
         }
 
-        public async Task<long> GenerateNewTokenAsync()
+        public async ValueTask<long> GenerateNewTokenAsync()
         {
             var path = "/pd/api/v1/placement/new_token";
             var (code, str) = await this.PostAsync(path, EmptyObject.AsJson()).ConfigureAwait(false);
@@ -169,7 +168,7 @@ namespace Gateway.Placement
             return response.ID;
         }
 
-        public async Task<long> GenerateServerIDAsync()
+        public async ValueTask<long> GenerateServerIDAsync()
         {
             var path = "/pd/api/v1/id/new_server_id";
             var (code, str) = await this.PostAsync(path, EmptyObject.AsJson()).ConfigureAwait(false);
@@ -184,7 +183,7 @@ namespace Gateway.Placement
             return response.ID;
         }
 
-        public async Task<PlacementKeepAliveResponse> KeepAliveServerAsync(long serverID, long leaseID, long load)
+        public async ValueTask<PlacementKeepAliveResponse> KeepAliveServerAsync(long serverID, long leaseID, long load)
         {
             var path = "/pd/api/v1/membership/keep_alive";
             var (code, str) = await this.PostAsync(path, new PlacementActorHostInfo()
@@ -208,7 +207,7 @@ namespace Gateway.Placement
             public long LeaseID { get; set; }
         }
 
-        public async Task<long> RegisterServerAsync(PlacementActorHostInfo info)
+        public async ValueTask<long> RegisterServerAsync(PlacementActorHostInfo info)
         {
             if (info.TTL == 0)
             {
@@ -236,7 +235,7 @@ namespace Gateway.Placement
             return response.LeaseID;
         }
 
-        public async Task<PlacementVersionInfo> GetVersionAsync()
+        public async ValueTask<PlacementVersionInfo> GetVersionAsync()
         {
             var (code, str) = await this.GetAsync("/pd/api/v1/version").ConfigureAwait(false);
 
@@ -250,7 +249,9 @@ namespace Gateway.Placement
             return position;
         }
 
-        public void RegisterServerChangedEvent(IPlacement.OnAddServer onAddServer, IPlacement.OnRemoveServer onRemoveServer, IPlacement.OnServerOffline onServerOffline)
+        public void RegisterServerChangedEvent(Action<PlacementActorHostInfo> onAddServer, 
+                                                Action<PlacementActorHostInfo> onRemoveServer, 
+                                                Action<PlacementActorHostInfo> onServerOffline)
         {
             this.onAddServer = onAddServer;
             this.onRemoveServer = onRemoveServer;
@@ -429,9 +430,8 @@ namespace Gateway.Placement
 
         public void ClearActorPositionCache(PlacementFindActorPositionRequest request)
         {
-            var uniqueName = $"{request.ActorType}/{request.ActorID}";
-            this.positionLru.Remove(uniqueName);
-            this.logger.LogInformation("ClearActorPosition, UniqueName:{0}", uniqueName);
+            this.positionLru.Remove((request.ActorType, request.ActorID));
+            this.logger.LogInformation("ClearActorPosition, UniqueName:{0}/{1}", request.ActorType, request.ActorID);
         }
 
         public void OnException(Action<Exception> fn)

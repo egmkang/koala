@@ -1,23 +1,96 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Collections.Specialized;
 using System.Text;
 using System.Security.Cryptography;
-using Gateway.Handler;
-using Gateway.Network;
-using Gateway.Placement;
-using Gateway.Utils;
-using Microsoft.AspNetCore.Connections;
-using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
-using NLog.Extensions.Logging;
+using Gateway.Extersions;
+using Microsoft.Extensions.DependencyInjection;
+using Gateway.Handler;
+using System.Threading.Tasks;
+using Microsoft.Extensions.Options;
+using Microsoft.Extensions.Logging;
+using Abstractions.Placement;
+using Gateway.Utils;
+using Gateway.Message;
+using Gateway.Gateway;
 
 namespace Gateway
 {
     public static partial class Extensions
     {
+        public static async Task RunGatewayAsync(this ServiceBuilder builder)
+        {
+            var config = builder.ServiceProvider.GetRequiredService<IOptionsMonitor<GatewayConfiguration>>().CurrentValue;
+            var logger = builder.ServiceProvider.GetRequiredService<ILoggerFactory>().CreateLogger("F1.Gateway");
+
+            logger.LogInformation("RunGatewayAsync, PlacementDriverAddress:{0}, Host ListenPort:{1}, GatewayAddress:{2}",
+                                    config.PlacementDriverAddress, config.ListenPort, config.GatewayAddress);
+            builder.SetPDAddress(config.PlacementDriverAddress);
+            var handlerFactory = new MessageHandlerFactory(builder.ServiceProvider);
+            var gatewayClientFactory = builder.ServiceProvider.GetRequiredService<GatewayClientFactory>();
+            await builder.Listen(config.ListenPort, handlerFactory, new RpcMessageCodec()).ConfigureAwait(false);
+            await builder.PrepareGatewayAndRunAsync(config, logger);
+        }
+
+        private static async Task PrepareGatewayAndRunAsync(this ServiceBuilder builder, 
+                                                            GatewayConfiguration config,
+                                                            ILogger logger)
+        {
+            var provider = builder.ServiceProvider;
+            var placement = provider.GetRequiredService<IPlacement>();
+            var sessionUniqueSequence = provider.GetRequiredService<SessionUniqueSequence>();
+
+            var messageHandler = provider.GetRequiredService<GatewayMessageHandler>();
+            messageHandler.PrivateKey = config.PrivateKey;
+            messageHandler.DisableTokenCheck = config.DisableTokenCheck;
+            messageHandler.AuthService = config.AuthService;
+
+            var port = config.GetGatewayWebSocketPort();
+            var websocketPath = config.GetGatewayWebSocketPath();
+            await builder.ListenWebSocket(port, websocketPath, 
+                                            new WebSocketMessageHandlerFactory(builder.ServiceProvider), 
+                                            new BlockMessageCodec()).ConfigureAwait(false);
+
+            try
+            {
+                var ServerID = await placement.GenerateServerIDAsync();
+                sessionUniqueSequence.SetServerID(ServerID);
+
+                logger.LogInformation("GetServerID, ServerID:{0}, Address:{1}", ServerID, config.ListenAddress);
+
+                var LeaseID = await placement.RegisterServerAsync(new PlacementActorHostInfo()
+                {
+                    ServerID = ServerID,
+                    Address = config.ListenAddress,
+                    StartTime = Platform.GetMilliSeconds(),
+                    TTL = config.KeepAliveInterval * 3,
+                    Desc = $"Gateway_{ServerID}",
+                    Services = new Dictionary<string, string>() { { "IGateway", "GatewayImpl" } },
+                    Labels = new Dictionary<string, string>() { { "GatewayAddress", config.GatewayAddress } },
+                });
+                logger.LogInformation("RegisterServer Success, LeaseID:{0}", LeaseID);
+            }
+            catch (Exception e)
+            {
+                logger.LogError("StartUp Gateway, Exception:{0}", e);
+            }
+
+            _ = placement.StartPullingAsync().ContinueWith((t) =>
+            {
+                logger.LogError("PDKeepAlive Process Exit");
+                NLog.LogManager.Flush();
+                Environment.Exit(-1);
+            });
+        }
+
+        public static void AddGatewayServices(this ServiceBuilder builder)
+        {
+            var services = builder.ServiceCollection;
+
+            services.AddSingleton<GatewayMessageHandler>();
+        }
+
         public static unsafe int CastToInt(this string str)
         {
             var bytes = Encoding.UTF8.GetBytes(str);
@@ -89,40 +162,5 @@ namespace Gateway
 
             return checkSum == inputCheckSum;
         } 
-
-        public static void ConfigureServices(this IServiceCollection services)
-        {
-            Type connectionFactoryType = GetSocketConnectionFactory();
-            if (connectionFactoryType == null)
-            {
-                throw new Exception("SocketConnectionFactory Not Found");
-            }
-
-            services.AddLogging(builder =>
-            {
-                builder.ClearProviders();
-                builder.SetMinimumLevel(LogLevel.Debug);
-                builder.AddNLog();
-            });
-
-            services.AddSingleton<IMessageCenter, MessageCenter>();
-            services.AddSingleton(typeof(IConnectionFactory), connectionFactoryType);
-            services.AddSingleton<IPlacement, PDPlacement>();
-            services.AddSingleton<SessionUniqueSequence>();
-            services.AddSingleton<SessionManager>();
-            services.AddSingleton<ClientConnectionPool>();
-            services.AddSingleton<MessageHandler>();
-        }
-
-        static Type GetSocketConnectionFactory() 
-        {
-            var assemblies = AppDomain.CurrentDomain.GetAssemblies();
-            foreach (var asm in assemblies)
-            {
-                var type = asm.GetType("Microsoft.AspNetCore.Server.Kestrel.Transport.Sockets.SocketConnectionFactory");
-                if (type != null) return type;
-            }
-            return null;
-        }
     }
 }

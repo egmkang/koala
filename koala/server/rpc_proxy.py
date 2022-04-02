@@ -104,7 +104,7 @@ class _RpcProxyObject(object):
 
 def get_rpc_proxy(i_type: Type[ActorInterfaceType],
                   uid: ActorID,
-                  context: ActorContext = None,
+                  context: Optional[ActorContext] = None,
                   server_node: Optional[ServerNode] = None,
                   check_postion: bool = True) -> ActorInterfaceType:
     o = _RpcProxyObject(i_type, uid, context, server_node,

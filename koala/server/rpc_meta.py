@@ -67,7 +67,7 @@ def get_rpc_impl_method(name: Tuple[str, str]):
     return fn
 
 
-def build_meta_info(items: dict):
+def build_meta_info(items: Dict):
     interface_set: Set[Type] = set()
     actor_type_set: Set[Type] = set()
     ignore_set = set()

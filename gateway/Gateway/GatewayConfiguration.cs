@@ -20,6 +20,10 @@ namespace Gateway
         /// </summary>
         public string ListenAddress { get; set; }
         /// <summary>
+        /// 和Host集群通讯的端口, 对外不需要暴露
+        /// </summary>
+        public int ListenPort => Convert.ToInt32(this.ListenAddress.Split(':').Last());
+        /// <summary>
         /// WebSocket的请求路径
         /// </summary>
         public string WebSocketPath { get; set; }
@@ -44,5 +48,24 @@ namespace Gateway
         /// 是否禁用token校验
         /// </summary>
         public bool DisableTokenCheck { get; set; }
+
+        public int GetGatewayWebSocketPort() 
+        {
+            if (this.GatewayAddress.IndexOf(':', this.GatewayAddress.IndexOf("://") + 3) < 0) 
+            {
+                return 80;
+            }
+            var sub = this.GatewayAddress.Substring(this.GatewayAddress.IndexOf(':', this.GatewayAddress.IndexOf("://") + 3) + 1);
+            return Convert.ToInt32(sub.Split('/')[0]);
+        }
+        public string GetGatewayWebSocketPath() 
+        {
+            if (this.GatewayAddress.IndexOf('/', this.GatewayAddress.IndexOf("://") + 3) < 0) 
+            {
+                return "/";
+            }
+            var sub = this.GatewayAddress.Substring(this.GatewayAddress.IndexOf('/', this.GatewayAddress.IndexOf("://") + 3));
+            return sub;
+        }
     }
 }
