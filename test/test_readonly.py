@@ -36,9 +36,14 @@ class TestReadOnly:
             dict_in_list: List[Dict[str, int]] = []
             list_in_dict: Dict[str, List[int]] = {}
 
-        test_data1 = {'id': 12, 'title1': 'haha', 'list_in_list': [["123"], ["456"]],
-                      'dict_in_dict': {'123': {'456': 1}}, 'dict_in_list': [{'str': 1234}],
-                      'list_in_dict': {'list': [1, 2, 3]}}
+        test_data1 = {
+            "id": 12,
+            "title1": "haha",
+            "list_in_list": [["123"], ["456"]],
+            "dict_in_dict": {"123": {"456": 1}},
+            "dict_in_list": [{"str": 1234}],
+            "list_in_dict": {"list": [1, 2, 3]},
+        }
 
         item = AccessItem(test_data1)
         assert item.id == 12
@@ -56,7 +61,9 @@ class TestReadOnly:
         assert l1 == l2
 
         d1 = ReadOnlyDict({1: 1, 2: 2, 3: 3})
-        d2: Dict[int, int] = pickle.loads(pickle.dumps(d1, protocol=pickle.HIGHEST_PROTOCOL))
+        d2: Dict[int, int] = pickle.loads(
+            pickle.dumps(d1, protocol=pickle.HIGHEST_PROTOCOL)
+        )
         assert d1 == d2
 
         s1 = ReadOnlySet({3, 2, 1})

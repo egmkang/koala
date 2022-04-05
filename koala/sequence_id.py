@@ -1,4 +1,3 @@
-
 class SequenceId(object):
     SHIFT = 1000000000
 

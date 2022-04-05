@@ -22,4 +22,3 @@ class Codec(ABC):
     @abstractmethod
     def encode(self, msg: object) -> bytes:
         pass
-

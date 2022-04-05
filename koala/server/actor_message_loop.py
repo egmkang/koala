@@ -34,10 +34,11 @@ async def _send_error_resp(session: SocketSession, request_id: int, e: Exception
     await session.send_message(resp)
 
 
-async def _dispatch_actor_rpc_request(actor: ActorBase, session: Optional[SocketSession], req: RpcRequest):
+async def _dispatch_actor_rpc_request(
+    actor: ActorBase, session: Optional[SocketSession], req: RpcRequest
+):
     try:
-        method = rpc_meta.get_rpc_impl_method(
-            (req.service_name, req.method_name))
+        method = rpc_meta.get_rpc_impl_method((req.service_name, req.method_name))
         if method is None:
             raise RpcException.method_not_found()
 
@@ -54,8 +55,10 @@ async def _dispatch_actor_rpc_request(actor: ActorBase, session: Optional[Socket
         if session:
             await session.send_message(RpcMessage.from_msg(resp, raw_response))
     except Exception as e:
-        logger.error("_dispatch_actor_rpc_request, Actor:%s/%s, Exception:%s, StackTrace:%s" %
-                     (actor.type_name, actor.uid, e, traceback.format_exc()))
+        logger.error(
+            "_dispatch_actor_rpc_request, Actor:%s/%s, Exception:%s, StackTrace:%s"
+            % (actor.type_name, actor.uid, e, traceback.format_exc())
+        )
         if session:
             await _send_error_resp(session, req.request_id, e)
 
@@ -75,17 +78,23 @@ async def _dispatch_actor_message_in_loop(actor: ActorBase):
             await actor.activate_async()
             loaded = True
         except Exception as e:
-            logger.error("Actor:%s/%s ActivateAsync Fail, Exception:%s, StackTrace:%s" %
-                         (actor.type_name, actor.uid, e, traceback.format_exc()))
+            logger.error(
+                "Actor:%s/%s ActivateAsync Fail, Exception:%s, StackTrace:%s"
+                % (actor.type_name, actor.uid, e, traceback.format_exc())
+            )
             context.loop_id = 0
             return
         while True:
             # 让出CPU给其他协程, 防止某些协程等待时间过长
             await asyncio.sleep(0)
-            o = cast(Tuple[weakref.ReferenceType[SocketSession], object], await context.pop_message())
+            o = cast(
+                Tuple[weakref.ReferenceType[SocketSession], object],
+                await context.pop_message(),
+            )
             if o is None:
-                logger.info("Actor:%s/%s exit message loop" %
-                            (actor.type_name, actor.uid))
+                logger.info(
+                    "Actor:%s/%s exit message loop" % (actor.type_name, actor.uid)
+                )
                 break
             session, msg = o[0]() if o[0] else None, o[1]
             if isinstance(msg, RpcRequest):
@@ -94,22 +103,25 @@ async def _dispatch_actor_message_in_loop(actor: ActorBase):
             else:
                 await actor.dispatch_message(msg)
     except Exception as e:
-        logger.error("_dispatch_actor_message_loop, Exception:%s, StackTrace:%s" %
-                     (e, traceback.format_exc()))
+        logger.error(
+            "_dispatch_actor_message_loop, Exception:%s, StackTrace:%s"
+            % (e, traceback.format_exc())
+        )
         pass
 
     try:
         if loaded:
             await actor.deactivate_async()
     except Exception as e:
-        logger.error("Actor:%s/%s DeactivateAsync Fail, Exception:%s, StaceTrace:%s" %
-                     (actor.type_name, actor.uid, e, traceback.format_exc()))
+        logger.error(
+            "Actor:%s/%s DeactivateAsync Fail, Exception:%s, StaceTrace:%s"
+            % (actor.type_name, actor.uid, e, traceback.format_exc())
+        )
 
     if context.loop_id == loop_id:
         context.reentrant_id = -1
         context.loop_id = 0
-    logger.info("Actor:%s/%s loop:%d finished" %
-                (actor.type_name, actor.uid, loop_id))
+    logger.info("Actor:%s/%s loop:%d finished" % (actor.type_name, actor.uid, loop_id))
 
 
 def run_actor_message_loop(actor: ActorBase):
@@ -125,8 +137,7 @@ async def dispatch_actor_message(actor: ActorBase, session: SocketSession, msg: 
         req = cast(RpcRequest, msg)
         if actor.context.reentrant_id == req.reentrant_id:
             # 这边要直接派发
-            asyncio.create_task(
-                _dispatch_actor_rpc_request(actor, session, req))
+            asyncio.create_task(_dispatch_actor_rpc_request(actor, session, req))
             return
     weak_session = weakref.ref(session)
     await actor.context.push_message((weak_session, msg))

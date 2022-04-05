@@ -7,9 +7,22 @@ from koala.network.tcp_server import TcpServer
 from koala.network import event_handler
 from koala.logger import logger, init_logger
 from koala.placement.placement import Placement
-from koala.message import RpcRequest, RpcResponse, RequestHeartBeat, ResponseHeartBeat, NotifyNewActorMessage, \
-    NotifyActorSessionAborted, NotifyNewActorSession, RequestAccountLogin
-from koala.server import rpc_message_dispatch, gateway_message_dispatch, rpc_request_id, rpc_meta
+from koala.message import (
+    RpcRequest,
+    RpcResponse,
+    RequestHeartBeat,
+    ResponseHeartBeat,
+    NotifyNewActorMessage,
+    NotifyActorSessionAborted,
+    NotifyNewActorSession,
+    RequestAccountLogin,
+)
+from koala.server import (
+    rpc_message_dispatch,
+    gateway_message_dispatch,
+    rpc_request_id,
+    rpc_meta,
+)
 from koala.server.actor_manager import ActorManager
 from koala import koala_config
 from koala.server.fastapi import *
@@ -18,25 +31,28 @@ from koala.placement.placement import *
 from koala.pd.placement import *
 
 _socket_session_manager: SocketSessionManager = SocketSessionManager()
-_user_message_handler_map: Dict[MessageType,
-                                Callable[[SocketSession, object], Coroutine]] = {}
-_user_socket_close_handler_map: Dict[MessageType,
-                                     Callable[[SocketSession], None]] = {}
+_user_message_handler_map: Dict[
+    MessageType, Callable[[SocketSession, object], Coroutine]
+] = {}
+_user_socket_close_handler_map: Dict[MessageType, Callable[[SocketSession], None]] = {}
 _tcp_server: TcpServer = TcpServer()
 _actor_manager = ActorManager()
 
 
-def register_user_handler(cls: MessageType, handler: Callable[[SocketSession, object], Coroutine]):
+def register_user_handler(
+    cls: MessageType, handler: Callable[[SocketSession, object], Coroutine]
+):
     if cls in _user_message_handler_map:
         logger.warning("register_user_handler, Type:%s exists" % str(cls))
     _user_message_handler_map[cls] = handler
     pass
 
 
-def register_user_socket_closed_handler(cls: MessageType, handler: Callable[[SocketSession], None]):
+def register_user_socket_closed_handler(
+    cls: MessageType, handler: Callable[[SocketSession], None]
+):
     if cls in _user_socket_close_handler_map:
-        logger.warning(
-            "register_user_socket_close_handler, Type:%s exists" % str(cls))
+        logger.warning("register_user_socket_close_handler, Type:%s exists" % str(cls))
     _user_socket_close_handler_map[cls] = handler
     pass
 
@@ -44,11 +60,9 @@ def register_user_socket_closed_handler(cls: MessageType, handler: Callable[[Soc
 async def _message_handler(session: SocketSession, clz: Type, msg: object):
     t = clz
     if t not in _user_message_handler_map:
-        logger.error(
-            "process user message, Type:%s not found a processor" % str(t))
+        logger.error("process user message, Type:%s not found a processor" % str(t))
         return
-    handler: Callable[[SocketSession, object],
-                      Coroutine] = _user_message_handler_map[t]
+    handler: Callable[[SocketSession, object], Coroutine] = _user_message_handler_map[t]
     await handler(session, msg)
 
 
@@ -63,21 +77,29 @@ def _socket_close_handler(session: SocketSession):
 
 def _init_internal_message_handler():
     register_user_handler(RpcRequest, rpc_message_dispatch.process_rpc_request)
+    register_user_handler(RpcResponse, rpc_message_dispatch.process_rpc_response)
     register_user_handler(
-        RpcResponse, rpc_message_dispatch.process_rpc_response)
+        RequestHeartBeat, rpc_message_dispatch.process_heartbeat_request
+    )
     register_user_handler(
-        RequestHeartBeat, rpc_message_dispatch.process_heartbeat_request)
-    register_user_handler(
-        ResponseHeartBeat, rpc_message_dispatch.process_heartbeat_response)
+        ResponseHeartBeat, rpc_message_dispatch.process_heartbeat_response
+    )
     # 网关消息和集群内的消息
     register_user_handler(
-        RequestAccountLogin, gateway_message_dispatch.process_gateway_account_login)
-    register_user_handler(NotifyNewActorSession,
-                          gateway_message_dispatch.process_gateway_new_actor_session)
-    register_user_handler(NotifyActorSessionAborted,
-                          gateway_message_dispatch.process_gateway_actor_session_aborted)
-    register_user_handler(NotifyNewActorMessage,
-                          gateway_message_dispatch.process_gateway_new_actor_message)
+        RequestAccountLogin, gateway_message_dispatch.process_gateway_account_login
+    )
+    register_user_handler(
+        NotifyNewActorSession,
+        gateway_message_dispatch.process_gateway_new_actor_session,
+    )
+    register_user_handler(
+        NotifyActorSessionAborted,
+        gateway_message_dispatch.process_gateway_actor_session_aborted,
+    )
+    register_user_handler(
+        NotifyNewActorMessage,
+        gateway_message_dispatch.process_gateway_new_actor_message,
+    )
     # 在这边可以初始化内置的消息处理器
     # 剩下的消息可以交给用户自己去处理
     event_handler.register_message_handler(_message_handler)
@@ -101,8 +123,10 @@ async def _run_placement():
             await impl.placement_loop()
         except Exception as e:
             await asyncio.sleep(1.0)
-            logger.error("run placement fail, Exception:%s, StackTrace:%s" % (
-                e, traceback.format_exc()))
+            logger.error(
+                "run placement fail, Exception:%s, StackTrace:%s"
+                % (e, traceback.format_exc())
+            )
     pass
 
 
@@ -115,7 +139,7 @@ def init_server(globals_dict: Dict, config_file_name: str = ""):
 
     rpc_meta.build_meta_info(globals_dict)
     _init_internal_message_handler()
-    _time_offset_of = 1626245658    # 随便找了一个时间戳, 可以减小request id序列化的大小
+    _time_offset_of = 1626245658  # 随便找了一个时间戳, 可以减小request id序列化的大小
     rpc_request_id.set_request_id_seed(int(time.time() - _time_offset_of))
 
 

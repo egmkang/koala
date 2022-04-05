@@ -27,11 +27,13 @@ class SelfHostedPlacement(Placement):
     def _init_server_node(self):
         if not self.server_node:
             service_list = rpc_meta.get_all_services()
-            self.server_node = ServerNode(server_uid=1,
-                                          host="127.0.0.1",
-                                          port=self.server_port,
-                                          service_type=service_list,
-                                          server_name="single node cluster")
+            self.server_node = ServerNode(
+                server_uid=1,
+                host="127.0.0.1",
+                port=self.server_port,
+                service_type=service_list,
+                server_name="single node cluster",
+            )
 
     def server_id(self) -> int:
         self._init_server_node()
@@ -88,13 +90,19 @@ class SelfHostedPlacement(Placement):
 
     async def _try_connect(self, node: ServerNode):
         try:
-            session = await TcpSocketSession.connect(node.host, int(node.port), CODEC_RPC)
+            session = await TcpSocketSession.connect(
+                node.host, int(node.port), CODEC_RPC
+            )
             if session is not None:
                 node.set_session(session)
-                logger.info("try_connect ServerID:%d, Host:%s:%s success" % (
-                    node.server_uid, node.host, node.port))
+                logger.info(
+                    "try_connect ServerID:%d, Host:%s:%s success"
+                    % (node.server_uid, node.host, node.port)
+                )
                 self.session = session
         except Exception as e:
-            logger.error("try_connect ServerID:%d, Host:%s:%s, Exception:%s" %
-                         (node.server_uid, node.host, node.port, e))
+            logger.error(
+                "try_connect ServerID:%d, Host:%s:%s, Exception:%s"
+                % (node.server_uid, node.host, node.port, e)
+            )
         pass

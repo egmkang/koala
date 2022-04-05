@@ -21,11 +21,14 @@ def _milli_seconds() -> int:
 
 
 class ActorTimer:
-    def __init__(self, weak_actor: weakref.ReferenceType,
-                 actor_id: str,
-                 manager: "ActorTimerManager",
-                 fn: Callable[["ActorTimer"], None],
-                 interval: int):
+    def __init__(
+        self,
+        weak_actor: weakref.ReferenceType,
+        actor_id: str,
+        manager: "ActorTimerManager",
+        fn: Callable[["ActorTimer"], None],
+        interval: int,
+    ):
         self._timer_id = _gen_timer_id()
         self._weak_actor = weak_actor
         self._actor_id = actor_id
@@ -66,12 +69,15 @@ class ActorTimer:
             self._tick_count += 1
             self._fn(self)
         except Exception as e:
-            logger.error("ActorTimer, Actor:%s, ActorID:%d, Exception:%s" %
-                         (self._actor_id, self.timer_id, e))
+            logger.error(
+                "ActorTimer, Actor:%s, ActorID:%d, Exception:%s"
+                % (self._actor_id, self.timer_id, e)
+            )
             return
         if not self.is_cancel:
             next_wait = self.next_tick_time()
             self._manager.internal_register_timer(next_wait, self)
+
     pass
 
     def run(self):
@@ -106,13 +112,15 @@ class ActorTimerManager:
     @classmethod
     async def _run_timer(cls, sleep: int, timer: ActorTimer):
         if sleep > 0:
-            await asyncio.sleep(sleep/1000)
+            await asyncio.sleep(sleep / 1000)
         timer.run()
 
     def internal_register_timer(self, next_time: int, timer: ActorTimer):
         asyncio.create_task(self._run_timer(next_time, timer))
 
-    def register_timer(self, interval: int, fn: Callable[[ActorTimer], None]) -> ActorTimer:
+    def register_timer(
+        self, interval: int, fn: Callable[[ActorTimer], None]
+    ) -> ActorTimer:
         timer = ActorTimer(self._weak_actor, self.actor_id, self, fn, interval)
         self._dict[timer.timer_id] = timer
 
@@ -134,4 +142,3 @@ class ActorTimerManager:
             self.unregister_timer(timer_id)
         del self._dict
         self._dict = {}
-

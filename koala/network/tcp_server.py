@@ -16,6 +16,7 @@ class TcpServer(Singleton):
         super(TcpServer, self).__init__()
         try:
             import uvloop  # type: ignore
+
             uvloop.install()
             pass
         except Exception as e:
@@ -24,18 +25,18 @@ class TcpServer(Singleton):
         pass
 
     @classmethod
-    async def _handle_new_session(cls, codec: Codec,
-                                  reader: asyncio.StreamReader,
-                                  writer: asyncio.StreamWriter):
-        conn = TcpSocketSession(
-            session_id_gen.new_session_id(), codec, reader, writer)
+    async def _handle_new_session(
+        cls, codec: Codec, reader: asyncio.StreamReader, writer: asyncio.StreamWriter
+    ):
+        conn = TcpSocketSession(session_id_gen.new_session_id(), codec, reader, writer)
         await conn.recv_message()
 
     async def listen(self, port: int, codec_id: int):
         codec = _codec_manager.get_codec(codec_id)
         if codec is None:
-            logger.error("listen port:%d failed, CodecID:%d not found" %
-                         (port, codec_id))
+            logger.error(
+                "listen port:%d failed, CodecID:%d not found" % (port, codec_id)
+            )
             return
 
         async def callback(reader: asyncio.StreamReader, writer: asyncio.StreamWriter):

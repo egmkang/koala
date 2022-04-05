@@ -9,6 +9,6 @@ class RpcMessage:
     body: bytes = b""
 
     @classmethod
-    def from_msg(cls, meta: JsonMessage, body: bytes = b"") -> 'RpcMessage':
+    def from_msg(cls, meta: JsonMessage, body: bytes = b"") -> "RpcMessage":
         msg = RpcMessage(meta=meta, body=body)
         return msg

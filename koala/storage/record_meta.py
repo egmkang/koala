@@ -33,14 +33,18 @@ def get_record_meta(record_type) -> Optional[RecordMetaData]:
     return None
 
 
-def record_meta(table_name: str,
-                key_name: str, 
-                key_name_2: Optional[str] = None):
+def record_meta(table_name: str, key_name: str, key_name_2: Optional[str] = None):
     def f(clz: Type[RecordType]):
         global __global_dict
         annotions = clz.__annotations__
-        key_info = KeyInfo(key_name, annotions[key_name], key_name_2, annotions[key_name_2] if key_name_2 else None)
+        key_info = KeyInfo(
+            key_name,
+            annotions[key_name],
+            key_name_2,
+            annotions[key_name_2] if key_name_2 else None,
+        )
         meta_data = RecordMetaData(table_name=table_name, key_info=key_info)
         __global_dict[clz] = meta_data
         return clz
+
     return f

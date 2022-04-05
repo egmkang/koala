@@ -5,7 +5,11 @@ import pytest_asyncio.plugin
 from koala.storage.storage import *
 from koala.storage.record import *
 from koala.storage.record_meta import *
-from motor.motor_asyncio import AsyncIOMotorClient, AsyncIOMotorCollection, AsyncIOMotorCursor
+from motor.motor_asyncio import (
+    AsyncIOMotorClient,
+    AsyncIOMotorCollection,
+    AsyncIOMotorCursor,
+)
 
 
 @record_meta("test_table", "uid")
@@ -51,7 +55,7 @@ def test_meta_data():
 async def test_mongo_find():
     _mongo_client = AsyncIOMotorClient(_connection_str)
     collection: AsyncIOMotorCollection = _mongo_client[_db_name]["test_table"]
-    cursor: AsyncIOMotorCursor = collection.find({'uid': {'$eq': 1}})
+    cursor: AsyncIOMotorCursor = collection.find({"uid": {"$eq": 1}})
     for document in await cursor.to_list(length=1024):
         print(document)
     assert True
@@ -62,7 +66,9 @@ async def test_mongo_find():
 async def test_mongo_upsert():
     _mongo_client = AsyncIOMotorClient(_connection_str)
     collection: AsyncIOMotorCollection = _mongo_client[_db_name]["test_table"]
-    result = await collection.update_one({"uid": 1}, {'$set': {"uid": 1, "name": "121212345678"}}, upsert=True)
+    result = await collection.update_one(
+        {"uid": 1}, {"$set": {"uid": 1, "name": "121212345678"}}, upsert=True
+    )
     print(result)
     assert True
 

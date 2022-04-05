@@ -5,7 +5,12 @@ from motor.motor_asyncio import AsyncIOMotorClient
 
 
 class RecordStorageMongo(RecordStorage[RecordType]):
-    def __init__(self, record_type: Type[RecordType], meta: RecordMetaData, db: AsyncIOMotorCollection):
+    def __init__(
+        self,
+        record_type: Type[RecordType],
+        meta: RecordMetaData,
+        db: AsyncIOMotorCollection,
+    ):
         self.__record_type = record_type
         self.__meta = meta
         self.__db = db
@@ -19,18 +24,22 @@ class RecordStorageMongo(RecordStorage[RecordType]):
     def unique_key(self) -> KeyInfo:
         return self.__meta.key_info
 
-    def __get_filter(self, record: Optional[dict], key: Optional[TypeID] = None, key2: Optional[TypeID] = None) -> dict:
+    def __get_filter(
+        self,
+        record: Optional[dict],
+        key: Optional[TypeID] = None,
+        key2: Optional[TypeID] = None,
+    ) -> dict:
         key_info = self.__meta.key_info
 
         mongo_filter = {}
         name_1 = key_info.key_name
-        mongo_filter[name_1] = {'$eq': record.get(name_1) if record else key}
+        mongo_filter[name_1] = {"$eq": record.get(name_1) if record else key}
         assert mongo_filter[name_1]
 
         if key_info.key_name_2:
             name_2 = key_info.key_name
-            mongo_filter[name_2] = {
-                '$eq': record.get(name_2) if record else key}
+            mongo_filter[name_2] = {"$eq": record.get(name_2) if record else key}
             assert mongo_filter[name_2]
         return mongo_filter
 
@@ -46,7 +55,9 @@ class RecordStorageMongo(RecordStorage[RecordType]):
         result = await self.__db.delete_many(mongo_filter)
         return result
 
-    async def find(self, key1: TypeID, key2: Optional[TypeID] = None) -> List[RecordType]:
+    async def find(
+        self, key1: TypeID, key2: Optional[TypeID] = None
+    ) -> List[RecordType]:
         result: List[RecordType] = []
         mongo_filter = self.__get_filter(None, key1, key2)
         cursor: AsyncIOMotorCursor = self.__db.find(mongo_filter)

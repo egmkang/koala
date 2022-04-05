@@ -7,6 +7,5 @@ import os
 
 koala_host.init_server(globals().copy(), f"{os.getcwd()}/sample/app.yaml")
 koala_host.use_pd()
-koala_host.register_user_handler(
-    RequestAccountLogin, process_gateway_account_login)
+koala_host.register_user_handler(RequestAccountLogin, process_gateway_account_login)
 koala_host.run_server()

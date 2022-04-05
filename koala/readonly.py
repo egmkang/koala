@@ -5,6 +5,7 @@ from collections import abc
 class ReadOnlyException(Exception):
     def __init__(self, *args, **kwargs):
         super(ReadOnlyException, self).__init__(*args, **kwargs)
+
     pass
 
 
@@ -145,7 +146,7 @@ class ReadOnlyList(abc.Sequence, ReadOnly):
 
 class ReadOnlyObject(object):
     def __setattr__(self, key, val):
-        raise AttributeError(f'can not alter a const {self.__class__.__name__}')
+        raise AttributeError(f"can not alter a const {self.__class__.__name__}")
 
     def __init__(self, data):
         super().__init__()
@@ -159,4 +160,3 @@ class ReadOnlyObject(object):
 
     def __repr__(self):
         return self.__class__.__name__
-

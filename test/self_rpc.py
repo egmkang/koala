@@ -37,7 +37,10 @@ class Service1Impl(IService1, ActorWithStrKey):
 
     async def say_hello(self, hello: str) -> str:
         service_2 = self.get_proxy(IService2, "2")
-        logger.info("service 2 return %s" % await service_2.hello(self.uid, random.randrange(0, 10000)))
+        logger.info(
+            "service 2 return %s"
+            % await service_2.hello(self.uid, random.randrange(0, 10000))
+        )
         return "my name is %s, and yours is %s" % (self.uid, hello)
 
     async def say(self):
@@ -88,6 +91,7 @@ class BenchImpl(IBench, ActorWithStrKey):
             if timer.tick_count >= count:
                 a: BenchImpl = cast(BenchImpl, weak_actor())
                 a.unregister_timer(timer.timer_id)
+
         self.register_timer(1000, f)
 
 
@@ -125,7 +129,8 @@ async def patch_code():
     servers = placement.get_all_servers()
     for server in servers:
         proxy = rpc_proxy.get_rpc_proxy(
-            hotfix.IHotFix, "1", server_node=server, check_postion=False)
+            hotfix.IHotFix, "1", server_node=server, check_postion=False
+        )
         await proxy.patch_code("print(112233)")
 
 

@@ -24,8 +24,15 @@ async def _rpc_call(unique_id: int) -> object:
 
 
 class _RpcMethodObject(object):
-    def __init__(self, actor_type: str, actor_id: ActorID, method_name: str, reentrant_id: int,
-                 server_node: Optional[ServerNode] = None, check_position: bool = True):
+    def __init__(
+        self,
+        actor_type: str,
+        actor_id: ActorID,
+        method_name: str,
+        reentrant_id: int,
+        server_node: Optional[ServerNode] = None,
+        check_position: bool = True,
+    ):
         self.actor_type = actor_type
         self.actor_id = actor_id
         self.method_name = method_name
@@ -36,7 +43,9 @@ class _RpcMethodObject(object):
 
     async def __send_request(self, *arg, **kwargs):
         # position
-        position = await Placement.instance().find_position(self.actor_type, self.actor_id)
+        position = await Placement.instance().find_position(
+            self.actor_type, self.actor_id
+        )
         if self.server_node:
             position = self.server_node
         if position is None:
@@ -44,8 +53,9 @@ class _RpcMethodObject(object):
 
         session = position.session
         if session is None:
-            raise Exception("Target Server Not Valid, ServerUID: %d" %
-                            position.server_uid)
+            raise Exception(
+                "Target Server Not Valid, ServerUID: %d" % position.server_uid
+            )
 
         req = RpcRequest()
         req.request_id = rpc_request_id.new_request_id()
@@ -71,15 +81,22 @@ class _RpcMethodObject(object):
                 return await _rpc_call(request_id)
             except RpcException as e:
                 if e.code == RPC_ERROR_POSITION_CHANGED:
-                    Placement.instance().remove_position_cache(self.actor_type, self.actor_id)
+                    Placement.instance().remove_position_cache(
+                        self.actor_type, self.actor_id
+                    )
                     continue
                 raise e
 
 
 class _RpcProxyObject(object):
-    def __init__(self, i_type: Type, uid: ActorID, context: Optional[ActorContext],
-                 server_node: Optional[ServerNode] = None,
-                 check_position: bool = True):
+    def __init__(
+        self,
+        i_type: Type,
+        uid: ActorID,
+        context: Optional[ActorContext],
+        server_node: Optional[ServerNode] = None,
+        check_position: bool = True,
+    ):
         self.service_name = i_type.__qualname__
         self.uid = uid
         self.context = None
@@ -98,15 +115,22 @@ class _RpcProxyObject(object):
         else:
             reentrant_id = rpc_request_id.new_reentrant_id()
         method = _RpcMethodObject(
-            self.service_name, self.uid, name, reentrant_id, self.server_node, self.check_position)
+            self.service_name,
+            self.uid,
+            name,
+            reentrant_id,
+            self.server_node,
+            self.check_position,
+        )
         return method
 
 
-def get_rpc_proxy(i_type: Type[ActorInterfaceType],
-                  uid: ActorID,
-                  context: Optional[ActorContext] = None,
-                  server_node: Optional[ServerNode] = None,
-                  check_postion: bool = True) -> ActorInterfaceType:
-    o = _RpcProxyObject(i_type, uid, context, server_node,
-                        check_postion)
+def get_rpc_proxy(
+    i_type: Type[ActorInterfaceType],
+    uid: ActorID,
+    context: Optional[ActorContext] = None,
+    server_node: Optional[ServerNode] = None,
+    check_postion: bool = True,
+) -> ActorInterfaceType:
+    o = _RpcProxyObject(i_type, uid, context, server_node, check_postion)
     return cast(ActorInterfaceType, o)

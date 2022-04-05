@@ -10,4 +10,5 @@ class IPlayer(ActorInterface):
     @abstractmethod
     async def echo(self, msg: str) -> str:
         pass
+
     pass

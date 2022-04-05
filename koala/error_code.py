@@ -1,4 +1,3 @@
-
 class KoalaErrorCode(object):
     def __init__(self, c: int, e: str):
         self.code = c

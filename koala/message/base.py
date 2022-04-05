@@ -3,7 +3,7 @@ import inspect
 from koala.typing import *
 from koala.utils import to_dict
 
-JsonVar = TypeVar("JsonVar", bound='JsonMessage')
+JsonVar = TypeVar("JsonVar", bound="JsonMessage")
 __json_mapper: Dict[str, Any] = dict()
 
 
@@ -12,7 +12,7 @@ def register_model(cls):
     __json_mapper[cls.__qualname__] = cls
 
 
-def find_model(name: str) -> Optional[Type['JsonMessage']]:
+def find_model(name: str) -> Optional[Type["JsonMessage"]]:
     if name in __json_mapper:
         return __json_mapper[name]
     return None
@@ -30,10 +30,7 @@ class JsonMessage(metaclass=JsonMeta):
     @classmethod
     def from_dict(cls, kwargs: dict):
         parameters = inspect.signature(cls).parameters
-        return cls(**{
-            k: v for k, v in kwargs.items()
-            if k in parameters
-        })
+        return cls(**{k: v for k, v in kwargs.items() if k in parameters})
 
     def to_dict(self) -> dict:
         return cast(dict, to_dict(self))

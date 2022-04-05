@@ -23,7 +23,9 @@ class RecordStorage(Generic[RecordType]):
         pass
 
     @abstractmethod
-    async def find(self, key1: TypeID, key2: Optional[TypeID] = None) -> List[RecordType]:
+    async def find(
+        self, key1: TypeID, key2: Optional[TypeID] = None
+    ) -> List[RecordType]:
         pass
 
     @abstractmethod
@@ -42,4 +44,5 @@ class IStorageFactory:
     @abstractmethod
     def get_storage(self, record_type: Type[RecordType]) -> RecordStorage[RecordType]:
         pass
+
     pass

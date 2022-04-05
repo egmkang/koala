@@ -18,4 +18,3 @@ def set_reentrant_id_seed(seed: int):
 
 def new_reentrant_id() -> int:
     return _reentrant_id.new_id()
-

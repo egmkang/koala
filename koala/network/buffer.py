@@ -1,4 +1,3 @@
-
 class Buffer:
     def __init__(self):
         self._buffer = bytearray(1024)
@@ -15,7 +14,7 @@ class Buffer:
     def shrink(self):
         length = self.readable_length()
         if length > 0:
-            self._buffer[0: length] = self._buffer[self._read: self._write]
+            self._buffer[0:length] = self._buffer[self._read : self._write]
         self._write = length
         self._read = 0
 
@@ -31,15 +30,15 @@ class Buffer:
     def append(self, data: bytes):
         first_space = min(self.writeable_length(), len(data))
         second_space = len(data) - first_space
-        self._buffer[self._write: self._write + first_space] = data[0: first_space]
+        self._buffer[self._write : self._write + first_space] = data[0:first_space]
         if second_space > 0:
             self._buffer.extend(data[first_space:])
         self._write += len(data)
 
     def slice(self, count=0):
         if count <= 0:
-            return self._buffer[self._read: self._write]
-        return self._buffer[self._read: self._read + count]
+            return self._buffer[self._read : self._write]
+        return self._buffer[self._read : self._read + count]
 
     def read(self, count):
         if count < 0:

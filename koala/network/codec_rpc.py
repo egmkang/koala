@@ -38,10 +38,10 @@ class CodecRpc(Codec):
     @classmethod
     def _decode_meta(cls, array: bytes) -> Optional[JsonMessage]:
         name_length = array[0]
-        name = array[1: name_length + 1].decode()
+        name = array[1 : name_length + 1].decode()
         model = find_model(name)
         if model is not None:
-            json = utils.json_loads(array[name_length + 1:])
+            json = utils.json_loads(array[name_length + 1 :])
             return model.from_dict(json)
         return None
 
@@ -51,8 +51,8 @@ class CodecRpc(Codec):
         # 这边需要对包的长度进行判断
         header = buffer.slice(self.HEADER_LENGTH)
         magic = header[:4].decode()
-        meta_length = int.from_bytes(header[4:8], 'little')
-        body_length = int.from_bytes(header[8:], 'little')
+        meta_length = int.from_bytes(header[4:8], "little")
+        body_length = int.from_bytes(header[8:], "little")
         if buffer.readable_length() < meta_length + body_length + self.HEADER_LENGTH:
             return None
         if magic != "KOLA":
@@ -76,8 +76,12 @@ class CodecRpc(Codec):
         # 参数的序列化需要放到rpc call的地方
         # gateway也可以用这个协议来做非RPC协议的传输
         body_data = msg.body if msg.body else b""
-        return b"".join((KOLA_MAGIC,
-                         int(len(meta_data)).to_bytes(4, 'little'),
-                         int(len(body_data)).to_bytes(4, 'little'),
-                         meta_data,
-                         body_data))
+        return b"".join(
+            (
+                KOLA_MAGIC,
+                int(len(meta_data)).to_bytes(4, "little"),
+                int(len(body_data)).to_bytes(4, "little"),
+                meta_data,
+                body_data,
+            )
+        )

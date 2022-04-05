@@ -25,7 +25,7 @@ class TestCodec:
         decoded_msg = cast(RpcMessage, codec.decode(Buffer.from_bytes(data)))
         msg = cast(RequestHeartBeat, decoded_msg.meta)
         assert heart_beat.milli_seconds == msg.milli_seconds
-        assert decoded_msg.body is None or decoded_msg.body == b''
+        assert decoded_msg.body is None or decoded_msg.body == b""
 
     def test_echo_codec(self):
         codec = CodecEcho()

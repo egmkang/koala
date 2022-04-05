@@ -77,13 +77,15 @@ class ActorManager(Singleton):
         current_time = time.time()
         need_remove: List[Tuple[ActorID, ActorBase]] = list()
         for actor_id, actor in actors.items():
-            if not actor.context or current_time >= actor.context.last_message_time + actor.gc_time():
+            if (
+                not actor.context
+                or current_time >= actor.context.last_message_time + actor.gc_time()
+            ):
                 need_remove.append((actor_id, actor))
         for actor_id, actor in need_remove:
             if actor.context:
                 await actor.context.push_message(None)
-            logger.info("gc_actors, Actor:%s/%s" %
-                        (actor.type_name, actor.uid))
+            logger.info("gc_actors, Actor:%s/%s" % (actor.type_name, actor.uid))
             actors.pop(actor_id)
 
     async def calc_weight_loop(self):

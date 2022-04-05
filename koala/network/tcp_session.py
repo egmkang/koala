@@ -17,10 +17,13 @@ _codec_manager: CodecManager = CodecManager()
 
 
 class TcpSocketSession(SocketSession):
-    def __init__(self, session_id: int,
-                 codec: Codec,
-                 reader: asyncio.StreamReader,
-                 writer: asyncio.StreamWriter):
+    def __init__(
+        self,
+        session_id: int,
+        codec: Codec,
+        reader: asyncio.StreamReader,
+        writer: asyncio.StreamWriter,
+    ):
         super(TcpSocketSession, self).__init__()
         self._session_id = session_id
         self._create_time = int(time.time())
@@ -51,7 +54,9 @@ class TcpSocketSession(SocketSession):
         self._last_update_time = time_now
 
     def is_dead(self, current_time: float) -> bool:
-        return self._stop or (current_time - self._last_update_time >= SOCKET_HEART_BEAT)
+        return self._stop or (
+            current_time - self._last_update_time >= SOCKET_HEART_BEAT
+        )
 
     @property
     def is_closed(self) -> bool:
@@ -76,8 +81,10 @@ class TcpSocketSession(SocketSession):
         self._user_data = data
 
     def close(self):
-        logger.info("TcpSession.close, SessionID:%d Address:%s" %
-                    (self.session_id, self._address))
+        logger.info(
+            "TcpSession.close, SessionID:%d Address:%s"
+            % (self.session_id, self._address)
+        )
         self._stop = True
         try:
             self._writer.close()
@@ -96,10 +103,14 @@ class TcpSocketSession(SocketSession):
                 msg = await self._recv_data()
                 if msg is None:
                     break
-                await event_handler._process_socket_message(self, self.get_real_type(msg), msg)
+                await event_handler._process_socket_message(
+                    self, self.get_real_type(msg), msg
+                )
         except Exception as e:
-            logger.error("TcpSocketSession.recv_message, SessionID:%d Exception:%s, StackTrace:%s" % (
-                self.session_id, e, traceback.format_exc()))
+            logger.error(
+                "TcpSocketSession.recv_message, SessionID:%d Exception:%s, StackTrace:%s"
+                % (self.session_id, e, traceback.format_exc())
+            )
             self.close()
         finally:
             event_handler._process_close_socket(session_id=self.session_id)
@@ -114,7 +125,8 @@ class TcpSocketSession(SocketSession):
             data = await self._reader.read(1024)
             if not data or len(data) == 0:
                 logger.error(
-                    "TcpSocketSession.recv, SessionID:%d recv 0" % self.session_id)
+                    "TcpSocketSession.recv, SessionID:%d recv 0" % self.session_id
+                )
                 return None
             self._buffer.append(data)
 
@@ -123,21 +135,29 @@ class TcpSocketSession(SocketSession):
             data = self._codec.encode(msg)
             self._writer.write(data)
         except Exception as e:
-            logger.error("send_message, Exception:%s, StackTrace:%s" %
-                         (e, traceback.format_exc()))
+            logger.error(
+                "send_message, Exception:%s, StackTrace:%s"
+                % (e, traceback.format_exc())
+            )
         # await self._writer.drain()
 
     @classmethod
-    async def connect(cls, host: str, port: int, codec_id: int) -> Optional[SocketSession]:
+    async def connect(
+        cls, host: str, port: int, codec_id: int
+    ) -> Optional[SocketSession]:
         codec = _codec_manager.get_codec(codec_id)
         if not codec:
-            logger.error("connect %s:%d failed, CodecID:%d not found" %
-                         (host, port, codec_id))
+            logger.error(
+                "connect %s:%d failed, CodecID:%d not found" % (host, port, codec_id)
+            )
             return None
 
-        reader, writer = await asyncio.open_connection(host=host, port=port, limit=WINDOW_SIZE)
+        reader, writer = await asyncio.open_connection(
+            host=host, port=port, limit=WINDOW_SIZE
+        )
         session = TcpSocketSession(
-            session_id_gen.new_session_id(), codec, reader, writer)
+            session_id_gen.new_session_id(), codec, reader, writer
+        )
         session._is_client = True
         asyncio.create_task(session.recv_message())
         return session

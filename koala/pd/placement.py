@@ -28,7 +28,9 @@ class PDPlacementImpl(Placement):
         self._last_heart_beat = time.time()
         self._recent_removed: Set[int] = set()
         self._recent_added: Set[int] = set()
-        cache_size = self._config.pd_cache_size if self._config.pd_cache_size else 10 * 10000
+        cache_size = (
+            self._config.pd_cache_size if self._config.pd_cache_size else 10 * 10000
+        )
         self._lru_cache = pylru.lrucache(cache_size)
         pass
 
@@ -39,30 +41,34 @@ class PDPlacementImpl(Placement):
         resp = await api.new_server_id()
         if resp.error_code == 0:
             self._server_id = resp.id
-            logger.info("PD Register Server Success, ServerID:%d" %
-                        self._server_id)
+            logger.info("PD Register Server Success, ServerID:%d" % self._server_id)
         else:
-            logger.error("PD Register Server Fail, ExitCode:%d" %
-                         ERROR_PD_NEW_SERVER.code)
+            logger.error(
+                "PD Register Server Fail, ExitCode:%d" % ERROR_PD_NEW_SERVER.code
+            )
             exit(ERROR_PD_NEW_SERVER.code)
             return
-        resp = await api.register_server(self._server_id,
-                                         self._config.start_time,
-                                         self._config.ttl,
-                                         self._config.address,
-                                         self._config.services,
-                                         self._config.desc if self._config.desc else "host_%s" % self.server_id())
+        resp = await api.register_server(
+            self._server_id,
+            self._config.start_time,
+            self._config.ttl,
+            self._config.address,
+            self._config.services,
+            self._config.desc if self._config.desc else "host_%s" % self.server_id(),
+        )
         if resp.error_code == 0:
             self._lease_id = resp.lease_id
-            logger.info("ServerID:%d, LeaseID:%d" %
-                        (self._server_id, self._lease_id))
-            service_list = ["%s => %s" %
-                            (k, self._config.services[k]) for k in self._config.services]
+            logger.info("ServerID:%d, LeaseID:%d" % (self._server_id, self._lease_id))
+            service_list = [
+                "%s => %s" % (k, self._config.services[k])
+                for k in self._config.services
+            ]
             logger.info("Host Services:%s" % (", ".join(service_list)))
             asyncio.create_task(self._heart_beat_loop())
         else:
-            logger.error("%d, %s" % (ERROR_PD_NEW_SERVER.code,
-                         ERROR_PD_NEW_SERVER.message))
+            logger.error(
+                "%d, %s" % (ERROR_PD_NEW_SERVER.code, ERROR_PD_NEW_SERVER.message)
+            )
             exit(ERROR_PD_REGISTER_SERVER.code)
         pass
 
@@ -78,14 +84,20 @@ class PDPlacementImpl(Placement):
 
     async def _pd_keep_alive(self) -> api.KeepAliveServerResponse:
         if time.time() - self._last_heart_beat > self._config.ttl:
-            logger.error("%s, %s" % (ERROR_PD_KEEP_ALIVE_TIME_OUT.code,
-                         ERROR_PD_KEEP_ALIVE_TIME_OUT.message))
+            logger.error(
+                "%s, %s"
+                % (
+                    ERROR_PD_KEEP_ALIVE_TIME_OUT.code,
+                    ERROR_PD_KEEP_ALIVE_TIME_OUT.message,
+                )
+            )
             exit(ERROR_PD_KEEP_ALIVE_TIME_OUT.code)
             pass
         resp = await api.keep_alive(self._server_id, self._lease_id, self._load)
         if resp.error_code != 0:
-            logger.error("%d, %s" % (ERROR_PD_KEEP_ALIVE.code,
-                         ERROR_PD_KEEP_ALIVE.message))
+            logger.error(
+                "%d, %s" % (ERROR_PD_KEEP_ALIVE.code, ERROR_PD_KEEP_ALIVE.message)
+            )
             print(resp.error_msg)
             exit(ERROR_PD_KEEP_ALIVE.code)
         self._last_heart_beat = time.time()
@@ -116,22 +128,25 @@ class PDPlacementImpl(Placement):
 
     def _try_delete_old_server(self, node: api.HostNodeInfo) -> bool:
         if self._config.address == node.address and self.server_id() > node.server_id:
-            logger.info("try_delete_old_server, OldServerID:%s Address:%s" % (
-                node.server_id, node.address))
-            asyncio.create_task(api.delete_server(
-                node.server_id, node.address))
+            logger.info(
+                "try_delete_old_server, OldServerID:%s Address:%s"
+                % (node.server_id, node.address)
+            )
+            asyncio.create_task(api.delete_server(node.server_id, node.address))
             return True
         return False
 
     @classmethod
     def _build_node_info(cls, info: api.HostNodeInfo) -> ServerNode:
         array = info.address.split(":")
-        return ServerNode(server_uid=info.server_id,
-                          server_name="",
-                          host=array[0],
-                          port=array[1],
-                          desc=info.desc,
-                          service_type=info.services)
+        return ServerNode(
+            server_uid=info.server_id,
+            server_name="",
+            host=array[0],
+            port=array[1],
+            desc=info.desc,
+            service_type=info.services,
+        )
 
     def _rebuild_recent_removed(self, events: List[api.HostNodeAddRemoveEvent]):
         self._recent_removed.clear()
@@ -170,13 +185,14 @@ class PDPlacementImpl(Placement):
         node = _membership.get_member(resp.server_id)
         if node is not None:
             self._lru_cache[(i_type, uid)] = node.server_uid
-            logger.info("FindActorPosition:%s/%s, ServerID:%s, Address:%s:%s" % (
-                i_type, uid, node.server_uid, node.host, node.port))
+            logger.info(
+                "FindActorPosition:%s/%s, ServerID:%s, Address:%s:%s"
+                % (i_type, uid, node.server_uid, node.host, node.port)
+            )
         else:
             if (i_type, uid) in self._lru_cache:
                 del self._lru_cache[(i_type, uid)]
-            logger.info("FindActorPosition:%s/%s position not found" %
-                        (i_type, uid))
+            logger.info("FindActorPosition:%s/%s position not found" % (i_type, uid))
         return node
 
     def remove_position_cache(self, i_type: str, uid: object):
@@ -215,13 +231,19 @@ class PDPlacementImpl(Placement):
     async def _try_connect(cls, node: ServerNode):
         begin = time.time()
         try:
-            session = await TcpSocketSession.connect(node.host, int(node.port), CODEC_RPC)
+            session = await TcpSocketSession.connect(
+                node.host, int(node.port), CODEC_RPC
+            )
             if session is not None:
                 node.set_session(session)
-                logger.info("try_connect ServerID:%d, Host:%s:%s success" % (
-                    node.server_uid, node.host, node.port))
+                logger.info(
+                    "try_connect ServerID:%d, Host:%s:%s success"
+                    % (node.server_uid, node.host, node.port)
+                )
         except Exception as e:
             end = time.time()
-            logger.error("try_connect ServerID:%d, Host:%s:%s, CostTime:%sms, Exception:%s" %
-                         (node.server_uid, node.host, node.port, int((end-begin) * 1000), e))
+            logger.error(
+                "try_connect ServerID:%d, Host:%s:%s, CostTime:%sms, Exception:%s"
+                % (node.server_uid, node.host, node.port, int((end - begin) * 1000), e)
+            )
         pass

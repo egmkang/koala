@@ -4,7 +4,12 @@ import weakref
 from abc import ABC, abstractmethod
 from koala.server.actor_interface import ActorInterface, ActorInterfaceType
 from koala.membership.membership_manager import MembershipManager
-from koala.message import RpcMessage, NotifyActorSessionAborted, NotifyNewActorMessage, NotifyNewActorSession
+from koala.message import (
+    RpcMessage,
+    NotifyActorSessionAborted,
+    NotifyNewActorMessage,
+    NotifyNewActorSession,
+)
 from koala.typing import *
 from koala.logger import logger
 from koala.network.socket_session import SocketSession, SocketSessionManager
@@ -35,11 +40,11 @@ class ActorBase(ActorInterface, ABC):
 
     @classmethod
     def gc_time(cls) -> int:
-        return 30 * 60      # 默认GC超时时间是30分钟
+        return 30 * 60  # 默认GC超时时间是30分钟
 
     @classmethod
     def actor_weight(cls) -> int:
-        return 1            # 默认的权重, 系统会按照负载来分配Actor的位置
+        return 1  # 默认的权重, 系统会按照负载来分配Actor的位置
 
     @property
     def type_name(self) -> str:
@@ -76,8 +81,10 @@ class ActorBase(ActorInterface, ABC):
         self.on_session_changed(old_session)
 
     def on_session_changed(self, old_session_id: int):
-        logger.info("Actor:%s/%s, OldSessionID:%s, NewSessionID:%s" %
-                    (self.type_name, self.uid, old_session_id, self.session_id))
+        logger.info(
+            "Actor:%s/%s, OldSessionID:%s, NewSessionID:%s"
+            % (self.type_name, self.uid, old_session_id, self.session_id)
+        )
 
     @property
     def session_id(self) -> int:
@@ -93,8 +100,10 @@ class ActorBase(ActorInterface, ABC):
         try:
             await self.on_activate_async()
         except Exception as e:
-            logger.error("Actor.OnActivateAsync, Actor:%s/%s, Exception:%s, StackTrace:%s" %
-                         (self.type_name, self.uid, e, traceback.format_exc()))
+            logger.error(
+                "Actor.OnActivateAsync, Actor:%s/%s, Exception:%s, StackTrace:%s"
+                % (self.type_name, self.uid, e, traceback.format_exc())
+            )
 
     async def deactivate_async(self):
         try:
@@ -103,14 +112,18 @@ class ActorBase(ActorInterface, ABC):
                 del self.__timer_manager
                 self.__timer_manager = None
         except Exception as e:
-            logger.error("Actor.OnDeactivateAsync, Actor:%s/%s, Exception:%s, StackTrace:%s" %
-                         (self.type_name, self.uid, e, traceback.format_exc()))
+            logger.error(
+                "Actor.OnDeactivateAsync, Actor:%s/%s, Exception:%s, StackTrace:%s"
+                % (self.type_name, self.uid, e, traceback.format_exc())
+            )
             pass
         try:
             await self.on_deactivate_async()
         except Exception as e:
-            logger.error("Actor.OnDeactivateAsync, Actor:%s/%s, Exception:%s, StackTrace:%s" %
-                         (self.type_name, self.uid, e, traceback.format_exc()))
+            logger.error(
+                "Actor.OnDeactivateAsync, Actor:%s/%s, Exception:%s, StackTrace:%s"
+                % (self.type_name, self.uid, e, traceback.format_exc())
+            )
 
     async def on_activate_async(self):
         pass
@@ -128,7 +141,9 @@ class ActorBase(ActorInterface, ABC):
             await socket_session.send_message(msg)
         else:
             logger.warning(
-                "Actor.SendMessage, Actor:%s/%s , SocketSession not found" % (self.type_name, self.uid))
+                "Actor.SendMessage, Actor:%s/%s , SocketSession not found"
+                % (self.type_name, self.uid)
+            )
 
     async def dispatch_message(self, msg: object) -> None:
         try:
@@ -137,7 +152,10 @@ class ActorBase(ActorInterface, ABC):
                 if isinstance(rpc_message.meta, NotifyNewActorMessage):
                     await self.dispatch_user_message(msg)
                 elif isinstance(rpc_message.meta, NotifyNewActorSession):
-                    await self.on_new_session(rpc_message.meta, rpc_message.body if rpc_message.body else b"{}")
+                    await self.on_new_session(
+                        rpc_message.meta,
+                        rpc_message.body if rpc_message.body else b"{}",
+                    )
                 elif isinstance(rpc_message.meta, NotifyActorSessionAborted):
                     await self.on_session_aborted(rpc_message.meta)
             elif isinstance(msg, ActorTimer):
@@ -148,8 +166,10 @@ class ActorBase(ActorInterface, ABC):
             if not isinstance(msg, ActorTimer) and self.context:
                 self.context.last_message_time = time.time()
         except Exception as e:
-            logger.error("Actor:%s/%s dispatch_message Exception:%s" %
-                         (self.type_name, self.uid, e))
+            logger.error(
+                "Actor:%s/%s dispatch_message Exception:%s"
+                % (self.type_name, self.uid, e)
+            )
 
     async def dispatch_user_message(self, msg: object) -> None:
         """
@@ -167,22 +187,29 @@ class ActorBase(ActorInterface, ABC):
 
     async def on_new_session(self, msg: NotifyNewActorSession, body: bytes):
         _ = body
-        logger.info("Actor:%s/%s NewSessionID:%s" %
-                    (self.type_name, self.uid, msg.session_id))
+        logger.info(
+            "Actor:%s/%s NewSessionID:%s" % (self.type_name, self.uid, msg.session_id)
+        )
         self.set_session_id(msg.session_id)
         pass
 
     async def on_session_aborted(self, msg: NotifyActorSessionAborted):
         _ = msg
-        logger.info("Actor:%s/%s SessionID:%s aborted" %
-                    (self.type_name, self.uid, self.session_id))
+        logger.info(
+            "Actor:%s/%s SessionID:%s aborted"
+            % (self.type_name, self.uid, self.session_id)
+        )
         self.set_session_id(0)
 
-    def get_proxy(self, actor_type: Type[ActorInterfaceType], uid: ActorID) -> ActorInterfaceType:
+    def get_proxy(
+        self, actor_type: Type[ActorInterfaceType], uid: ActorID
+    ) -> ActorInterfaceType:
         o = rpc_proxy.get_rpc_proxy(actor_type, uid, self.context)
         return cast(ActorInterfaceType, o)
 
-    def register_timer(self, interval: int, fn: Callable[[ActorTimer], None]) -> ActorTimer:
+    def register_timer(
+        self, interval: int, fn: Callable[[ActorTimer], None]
+    ) -> ActorTimer:
         assert self.__timer_manager
         return self.__timer_manager.register_timer(interval, fn)
 

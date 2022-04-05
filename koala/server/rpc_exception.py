@@ -1,4 +1,3 @@
-
 RPC_ERROR_BEGIN = 10000
 RPC_ERROR_INTERFACE_INVALID = RPC_ERROR_BEGIN + 1
 RPC_ERROR_IMPL_INVALID = RPC_ERROR_BEGIN + 2
@@ -32,5 +31,3 @@ class RpcException(Exception):
     @staticmethod
     def position_changed():
         return RpcException(RPC_ERROR_POSITION_CHANGED, "position changed")
-
-
