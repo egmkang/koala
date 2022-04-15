@@ -1,7 +1,7 @@
 import asyncio
 import pylru
 import time
-from koala.typing import *
+from koala.koala_typing import *
 from koala.placement.placement import Placement
 from koala.membership.server_node import ServerNode
 from koala.membership.membership_manager import MembershipManager

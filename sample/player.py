@@ -1,4 +1,4 @@
-from koala.typing import *
+from koala.koala_typing import *
 from koala.message import RpcMessage
 from koala.message.gateway import (
     NotifyNewActorMessage,

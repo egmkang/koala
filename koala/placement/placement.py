@@ -1,7 +1,7 @@
 import traceback
 from abc import ABC, abstractmethod
 
-from koala.typing import *
+from koala.koala_typing import *
 from koala.membership.server_node import ServerNode
 from koala.membership.membership_manager import MembershipManager
 from koala.logger import logger

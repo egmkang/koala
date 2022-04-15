@@ -1,5 +1,5 @@
 from abc import ABC, abstractmethod
-from koala.typing import *
+from koala.koala_typing import *
 from koala.network.buffer import Buffer
 
 

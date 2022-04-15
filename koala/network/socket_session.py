@@ -3,7 +3,7 @@ import time
 from abc import abstractmethod
 from koala.singleton import Singleton
 from koala.logger import logger
-from koala.typing import *
+from koala.koala_typing import *
 from koala.network.codec import Codec
 from koala.network.constant import SOCKET_GC_INTERVAL
 

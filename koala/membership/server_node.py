@@ -1,6 +1,6 @@
 import weakref
 from pydantic import BaseModel, PrivateAttr
-from koala.typing import *
+from koala.koala_typing import *
 from koala.network.socket_session import SocketSession
 
 

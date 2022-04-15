@@ -1,7 +1,7 @@
 import inspect
 import types
 import sys
-from koala.typing import *
+from koala.koala_typing import *
 from koala.server.actor_interface import ActorInterface
 
 

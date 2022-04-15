@@ -1,4 +1,4 @@
-from koala.typing import *
+from koala.koala_typing import *
 from koala.singleton import Singleton
 from koala.membership.server_node import ServerNode
 

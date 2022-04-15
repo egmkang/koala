@@ -1,5 +1,5 @@
 from abc import abstractmethod
-from koala.typing import *
+from koala.koala_typing import *
 from koala.server.actor_interface import ActorInterface
 from koala.server.actor_base import ActorWithStrKey
 from koala.logger import logger

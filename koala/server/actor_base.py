@@ -1,7 +1,7 @@
 import time
 import traceback
 import weakref
-from abc import ABC, abstractmethod
+from abc import ABC
 from koala.server.actor_interface import ActorInterface, ActorInterfaceType
 from koala.membership.membership_manager import MembershipManager
 from koala.message import (
@@ -10,8 +10,8 @@ from koala.message import (
     NotifyNewActorMessage,
     NotifyNewActorSession,
 )
-from koala.typing import *
-from koala.logger import logger
+from koala.koala_typing import *
+from koala.logger import LoggerWithPrefix
 from koala.network.socket_session import SocketSession, SocketSessionManager
 from koala.server.actor_context import ActorContext
 from koala.server import rpc_proxy
@@ -22,7 +22,7 @@ _session_manager = SocketSessionManager()
 _membership = MembershipManager()
 
 
-class ActorBase(ActorInterface, ABC):
+class ActorBase(ActorInterface, ABC, LoggerWithPrefix):
     def __init__(self):
         super(ActorBase, self).__init__()
 
@@ -36,6 +36,7 @@ class ActorBase(ActorInterface, ABC):
     def _init_actor(self, uid: ActorID, context: ActorContext):
         self.__uid = self.actor_uid_type()(uid)
         self.__context = context
+        self.set_prefix("Actor:%s/%s " % (self.type_name, self.uid))
         pass
 
     @classmethod
@@ -81,9 +82,8 @@ class ActorBase(ActorInterface, ABC):
         self.on_session_changed(old_session)
 
     def on_session_changed(self, old_session_id: int):
-        logger.info(
-            "Actor:%s/%s, OldSessionID:%s, NewSessionID:%s"
-            % (self.type_name, self.uid, old_session_id, self.session_id)
+        self.info(
+            "OldSessionID:%s, NewSessionID:%s" % (old_session_id, self.session_id)
         )
 
     @property
@@ -100,9 +100,9 @@ class ActorBase(ActorInterface, ABC):
         try:
             await self.on_activate_async()
         except Exception as e:
-            logger.error(
-                "Actor.OnActivateAsync, Actor:%s/%s, Exception:%s, StackTrace:%s"
-                % (self.type_name, self.uid, e, traceback.format_exc())
+            self.error(
+                "Actor.OnActivateAsync, Exception:%s, StackTrace:%s"
+                % (e, traceback.format_exc())
             )
 
     async def deactivate_async(self):
@@ -112,17 +112,17 @@ class ActorBase(ActorInterface, ABC):
                 del self.__timer_manager
                 self.__timer_manager = None
         except Exception as e:
-            logger.error(
-                "Actor.OnDeactivateAsync, Actor:%s/%s, Exception:%s, StackTrace:%s"
-                % (self.type_name, self.uid, e, traceback.format_exc())
+            self.error(
+                "Actor.OnDeactivateAsync, Exception:%s, StackTrace:%s"
+                % (e, traceback.format_exc())
             )
             pass
         try:
             await self.on_deactivate_async()
         except Exception as e:
-            logger.error(
-                "Actor.OnDeactivateAsync, Actor:%s/%s, Exception:%s, StackTrace:%s"
-                % (self.type_name, self.uid, e, traceback.format_exc())
+            self.error(
+                "Actor.OnDeactivateAsync, Exception:%s, StackTrace:%s"
+                % (e, traceback.format_exc())
             )
 
     async def on_activate_async(self):
@@ -140,10 +140,7 @@ class ActorBase(ActorInterface, ABC):
         if socket_session:
             await socket_session.send_message(msg)
         else:
-            logger.warning(
-                "Actor.SendMessage, Actor:%s/%s , SocketSession not found"
-                % (self.type_name, self.uid)
-            )
+            self.warning("Actor.SendMessage,  SocketSession not found")
 
     async def dispatch_message(self, msg: object) -> None:
         try:
@@ -166,10 +163,7 @@ class ActorBase(ActorInterface, ABC):
             if not isinstance(msg, ActorTimer) and self.context:
                 self.context.last_message_time = time.time()
         except Exception as e:
-            logger.error(
-                "Actor:%s/%s dispatch_message Exception:%s"
-                % (self.type_name, self.uid, e)
-            )
+            self.error("dispatch_message Exception:%s" % (e))
 
     async def dispatch_user_message(self, msg: object) -> None:
         """
@@ -187,18 +181,13 @@ class ActorBase(ActorInterface, ABC):
 
     async def on_new_session(self, msg: NotifyNewActorSession, body: bytes):
         _ = body
-        logger.info(
-            "Actor:%s/%s NewSessionID:%s" % (self.type_name, self.uid, msg.session_id)
-        )
+        self.info("NewSessionID:%s" % (msg.session_id))
         self.set_session_id(msg.session_id)
         pass
 
     async def on_session_aborted(self, msg: NotifyActorSessionAborted):
         _ = msg
-        logger.info(
-            "Actor:%s/%s SessionID:%s aborted"
-            % (self.type_name, self.uid, self.session_id)
-        )
+        self.info("SessionID:%s aborted" % (self.session_id))
         self.set_session_id(0)
 
     def get_proxy(

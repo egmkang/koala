@@ -7,6 +7,7 @@ v0.8
 * [ ] 依赖升级
 * [ ] type hint继续加强
 * [ ] 杂项
+  * [x] Actor logger
 
 v0.7
 

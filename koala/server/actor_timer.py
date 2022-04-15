@@ -3,7 +3,7 @@ import gc
 import time
 import weakref
 
-from koala.typing import *
+from koala.koala_typing import *
 from koala.logger import logger
 
 

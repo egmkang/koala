@@ -1,4 +1,4 @@
-from koala.typing import *
+from koala.koala_typing import *
 from koala.network.buffer import Buffer
 from koala.network.codec import Codec
 from koala.network.constant import *

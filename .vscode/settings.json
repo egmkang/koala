@@ -3,5 +3,6 @@
     "python.analysis.extraPaths": [],
     "svn.ignoreMissingSvnWarning": true,
     "python.formatting.provider": "black",
-    "python.languageServer": "Pylance"
+    "python.languageServer": "Pylance",
+    "python.analysis.typeCheckingMode": "basic"
 }

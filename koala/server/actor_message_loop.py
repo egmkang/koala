@@ -2,7 +2,7 @@ import asyncio
 import time
 import traceback
 import weakref
-from koala.typing import *
+from koala.koala_typing import *
 from koala import utils
 from koala.message import RpcResponse, RpcRequest
 from koala.message.rpc_message import RpcMessage

@@ -3,7 +3,7 @@ import time
 import traceback
 
 from koala.message import RpcMessage
-from koala.typing import *
+from koala.koala_typing import *
 from koala.network.buffer import Buffer
 from koala.logger import logger
 from koala.network.codec import Codec

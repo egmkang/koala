@@ -1,7 +1,7 @@
 from abc import ABC, abstractmethod
 import time
 import yaml
-from koala.typing import *
+from koala.koala_typing import *
 from koala import utils
 from koala.server import rpc_meta
 

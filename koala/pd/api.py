@@ -2,7 +2,7 @@ import asyncio
 import time
 import httpx
 from pydantic import BaseModel
-from koala.typing import *
+from koala.koala_typing import *
 
 ResultType = TypeVar("ResultType", bound="PDResponse")
 

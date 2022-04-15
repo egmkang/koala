@@ -1,6 +1,6 @@
 from abc import ABC, abstractmethod
 from pydantic import BaseModel
-from koala.typing import *
+from koala.koala_typing import *
 from koala import utils
 from dataclasses import dataclass
 from koala.storage.record import Record

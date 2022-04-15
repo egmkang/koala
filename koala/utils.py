@@ -1,6 +1,6 @@
 import pickle
 import lz4.frame  # type: ignore
-from koala.typing import *
+from koala.koala_typing import *
 import io
 import hashlib
 import socket

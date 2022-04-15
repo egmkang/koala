@@ -4,7 +4,7 @@ from fastapi import FastAPI
 from uvicorn import Server, Config
 from uvicorn.supervisors import ChangeReload
 from koala.logger import logger
-from koala.typing import *
+from koala.koala_typing import *
 
 
 app = FastAPI()

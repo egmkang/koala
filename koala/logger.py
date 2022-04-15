@@ -1,5 +1,5 @@
 import logging
-from koala.typing import *
+from koala.koala_typing import *
 from loguru import logger
 
 
@@ -70,3 +70,36 @@ def init_logger(
         pass
 
     hook_logging()
+
+
+class LoggerWithPrefix:
+    def __init__(self) -> None:
+        self.__prefix: str = ""
+
+    def set_prefix(self, prefix: str) -> None:
+        self.__prefix = prefix
+
+    def trace(self, message: str, *args, **kwargs) -> None:
+        logger.trace(self.__prefix + message, *args, **kwargs)
+
+    def debug(self, message: str, *args, **kwargs) -> None:
+        logger.debug(self.__prefix + message, *args, **kwargs)
+
+    def info(self, message: str, *args, **kwargs) -> None:
+        logger.info(self.__prefix + message, *args, **kwargs)
+
+    def warning(self, message: str, *args, **kwargs) -> None:
+        logger.warning(self.__prefix + message, *args, **kwargs)
+
+    def error(self, message: str, *args, **kwargs) -> None:
+        logger.error(self.__prefix + message, *args, **kwargs)
+
+    def critical(self, message: str, *args, **kwargs) -> None:
+        logger.critical(self.__prefix + message, *args, **kwargs)
+
+
+if __name__ == "__main__":
+    l = LoggerWithPrefix()
+    l.set_prefix("[test] ")
+    l.info("hello")
+    l.info("hello2")

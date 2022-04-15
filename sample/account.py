@@ -1,4 +1,4 @@
-from koala.typing import *
+from koala.koala_typing import *
 from koala.logger import logger
 from koala.message import RpcMessage, RequestAccountLogin, ResponseAccountLogin
 from koala.network.socket_session import SocketSession

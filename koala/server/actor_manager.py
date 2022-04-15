@@ -1,6 +1,6 @@
 import asyncio
 import time
-from koala.typing import *
+from koala.koala_typing import *
 from koala.logger import logger
 from koala.singleton import Singleton
 from koala.server import rpc_meta

@@ -1,6 +1,6 @@
 from pydantic import BaseModel
 from koala import utils
-from koala.typing import cast
+from koala.koala_typing import cast
 
 
 class Record(BaseModel):

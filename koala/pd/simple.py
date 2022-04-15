@@ -1,6 +1,6 @@
 import asyncio
 import time
-from koala.typing import *
+from koala.koala_typing import *
 from koala.membership.server_node import ServerNode
 from koala.placement.placement import Placement
 from koala.network.socket_session import SocketSessionManager, SocketSession

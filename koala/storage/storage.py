@@ -1,4 +1,4 @@
-from koala.typing import *
+from koala.koala_typing import *
 from koala.storage.record import *
 from koala.storage.record_meta import *
 

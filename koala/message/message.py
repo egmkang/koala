@@ -1,4 +1,4 @@
-from koala.typing import *
+from koala.koala_typing import *
 from koala.message.base import JsonMessage
 from dataclasses import dataclass
 

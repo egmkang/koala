@@ -1,7 +1,7 @@
 import asyncio
 import time
 import traceback
-from koala.typing import *
+from koala.koala_typing import *
 from koala.network.socket_session import SocketSession, SocketSessionManager
 from koala.logger import logger
 

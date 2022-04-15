@@ -1,6 +1,6 @@
 import dataclasses
 import inspect
-from koala.typing import *
+from koala.koala_typing import *
 from koala.utils import to_dict
 
 JsonVar = TypeVar("JsonVar", bound="JsonMessage")

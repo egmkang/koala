@@ -1,5 +1,5 @@
 from abc import ABC
-from koala.typing import *
+from koala.koala_typing import *
 
 
 class ActorInterface(ABC):
