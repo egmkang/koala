@@ -1,5 +1,5 @@
 import pickle
-import lz4.frame  # type: ignore
+from zstd import ZSTD_compress, ZSTD_uncompress
 from koala.koala_typing import *
 import io
 import hashlib
@@ -111,7 +111,7 @@ def pickle_dumps(o: Any) -> bytes:
     # array = pickletools.optimize(array)
     compressed = UNCOMPRESSED + array
     if len(array) > THRESHOLD:
-        compressed = lz4.frame.compress(array)
+        compressed = ZSTD_compress(array, 1)
         if len(compressed) < len(array):
             compressed = COMPRESSED + compressed
     return compressed
@@ -121,5 +121,5 @@ def pickle_loads(array: bytes) -> Any:
     flag = array[0:1]
     data = array[1:]
     if flag == COMPRESSED:
-        data = lz4.frame.decompress(data)
+        data = ZSTD_uncompress(data)
     return pickle.loads(data)
