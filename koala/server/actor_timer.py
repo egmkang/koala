@@ -2,6 +2,7 @@ import asyncio
 import gc
 import time
 import weakref
+from koala import default_dict
 
 from koala.koala_typing import *
 from koala.logger import logger
@@ -98,7 +99,9 @@ class ActorTimerManager:
     def __init__(self, weak_actor: weakref.ReferenceType):
         self._weak_actor = weak_actor
         self._actor_id = ""
-        self._dict: Dict[int, ActorTimer] = dict()
+        self._dict: default_dict.DefaultDict[
+            int, ActorTimer
+        ] = default_dict.DefaultDict()
 
     @property
     def actor_id(self) -> str:
@@ -129,7 +132,7 @@ class ActorTimerManager:
         return timer
 
     def unregister_timer(self, timer_id: int):
-        if timer_id in self._dict:
+        if self._dict.contains_key(timer_id):
             timer = self._dict[timer_id]
             self._dict.pop(timer_id)
             timer.cancel()
@@ -141,4 +144,4 @@ class ActorTimerManager:
         for timer_id in remove_list:
             self.unregister_timer(timer_id)
         del self._dict
-        self._dict = {}
+        self._dict = default_dict.DefaultDict()

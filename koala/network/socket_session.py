@@ -1,6 +1,7 @@
 import asyncio
 import time
 from abc import abstractmethod
+from koala import default_dict
 from koala.singleton import Singleton
 from koala.logger import logger
 from koala.koala_typing import *
@@ -67,7 +68,9 @@ class SocketSession:
 class SocketSessionManager(Singleton):
     def __init__(self):
         super(SocketSessionManager, self).__init__()
-        self._session_dict: Dict[int, SocketSession] = dict()
+        self._session_dict: default_dict.DefaultDict[
+            int, SocketSession
+        ] = default_dict.DefaultDict()
         pass
 
     async def run(self):
@@ -92,7 +95,7 @@ class SocketSessionManager(Singleton):
 
     def add_session(self, session: SocketSession):
         session_id = session.session_id
-        if session_id in self._session_dict:
+        if self._session_dict.contains_key(session_id):
             return
         self._session_dict[session_id] = session
         logger.info(
@@ -101,7 +104,7 @@ class SocketSessionManager(Singleton):
         )
 
     def remove_session(self, session_id: int):
-        if session_id in self._session_dict:
+        if self._session_dict.contains_key(session_id):
             session = self._session_dict[session_id]
             if session:
                 session.close()
@@ -114,6 +117,6 @@ class SocketSessionManager(Singleton):
     # 可以通过session id来获取SocketSession
     # 之后对SocketSession的引用, 建议搞成弱引用, 否则生命周期会被拉长
     def get_session(self, session_id: int) -> Optional[SocketSession]:
-        if session_id in self._session_dict:
+        if self._session_dict.contains_key(session_id):
             return self._session_dict[session_id]
         return None

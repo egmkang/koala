@@ -1,10 +1,11 @@
 import dataclasses
 import inspect
+from koala import default_dict
 from koala.koala_typing import *
 from koala.utils import to_dict
 
 JsonVar = TypeVar("JsonVar", bound="JsonMessage")
-__json_mapper: Dict[str, Any] = dict()
+__json_mapper: default_dict.DefaultDict[str, Any] = default_dict.DefaultDict()
 
 
 def register_model(cls):
@@ -13,7 +14,7 @@ def register_model(cls):
 
 
 def find_model(name: str) -> Optional[Type["JsonMessage"]]:
-    if name in __json_mapper:
+    if __json_mapper.contains_key(name):
         return __json_mapper[name]
     return None
 
