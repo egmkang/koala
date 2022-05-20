@@ -1,5 +1,6 @@
 import asyncio
 from koala import utils
+from koala.logger import logger
 from koala.message import RpcRequest, RpcResponse, RequestHeartBeat, ResponseHeartBeat
 from koala.server.rpc_future import *
 from koala.server import actor_message_loop
@@ -85,7 +86,13 @@ async def process_rpc_response(session: SocketSession, response: object):
     resp = cast(RpcResponse, resp)
     resp._response = utils.pickle_loads(raw_response)
 
-    future: Future = get_future(resp.request_id)
+    future = get_future(resp.request_id)
+    if not future:
+        logger.warning(
+            "process_rpc_response, future not found, request_id:%d, remote_address:%s, result:%s"
+            % (resp.request_id, session.remote_address, (resp.error_str, resp.response))
+        )
+        return
     if resp.error_code != 0:
         future.set_exception(Exception(resp.error_str))
     else:

@@ -18,8 +18,8 @@ from koala.message import (
     RequestAccountLogin,
 )
 from koala.server import (
-    rpc_message_dispatch,
-    gateway_message_dispatch,
+    rpc_message_dispatch as rpc,
+    gateway_message_dispatch as gateway,
     rpc_request_id,
     rpc_meta,
 )
@@ -76,29 +76,23 @@ def _socket_close_handler(session: SocketSession):
 
 
 def _init_internal_message_handler():
-    register_user_handler(RpcRequest, rpc_message_dispatch.process_rpc_request)
-    register_user_handler(RpcResponse, rpc_message_dispatch.process_rpc_response)
-    register_user_handler(
-        RequestHeartBeat, rpc_message_dispatch.process_heartbeat_request
-    )
-    register_user_handler(
-        ResponseHeartBeat, rpc_message_dispatch.process_heartbeat_response
-    )
+    register_user_handler(RpcRequest, rpc.process_rpc_request)
+    register_user_handler(RpcResponse, rpc.process_rpc_response)
+    register_user_handler(RequestHeartBeat, rpc.process_heartbeat_request)
+    register_user_handler(ResponseHeartBeat, rpc.process_heartbeat_response)
     # 网关消息和集群内的消息
-    register_user_handler(
-        RequestAccountLogin, gateway_message_dispatch.process_gateway_account_login
-    )
+    register_user_handler(RequestAccountLogin, gateway.process_gateway_account_login)
     register_user_handler(
         NotifyNewActorSession,
-        gateway_message_dispatch.process_gateway_new_actor_session,
+        gateway.process_gateway_new_actor_session,
     )
     register_user_handler(
         NotifyActorSessionAborted,
-        gateway_message_dispatch.process_gateway_actor_session_aborted,
+        gateway.process_gateway_actor_session_aborted,
     )
     register_user_handler(
         NotifyNewActorMessage,
-        gateway_message_dispatch.process_gateway_new_actor_message,
+        gateway.process_gateway_new_actor_message,
     )
     # 在这边可以初始化内置的消息处理器
     # 剩下的消息可以交给用户自己去处理
@@ -190,7 +184,7 @@ def run_server():
     _config = koala_config.get_config()
     if _config.port:
         listen_rpc(_config.port)
-    _tcp_server.create_task(rpc_message_dispatch.update_process_time())
+    _tcp_server.create_task(rpc.update_process_time())
     _tcp_server.create_task(_socket_session_manager.run())
     _tcp_server.create_task(_run_placement())
     _tcp_server.create_task(_actor_manager.gc_loop())

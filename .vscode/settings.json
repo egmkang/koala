@@ -4,5 +4,6 @@
     "svn.ignoreMissingSvnWarning": true,
     "python.formatting.provider": "black",
     "python.languageServer": "Pylance",
-    "python.analysis.typeCheckingMode": "basic"
+    "python.analysis.typeCheckingMode": "basic",
+    "python.analysis.diagnosticMode": "workspace"
 }
