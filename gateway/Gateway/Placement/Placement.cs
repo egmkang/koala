@@ -121,7 +121,7 @@ namespace Gateway.Placement
             }
 
             var position =  JsonSerializer.Deserialize<PlacementFindActorPositionResponse>(str);
-
+            ArgumentNullException.ThrowIfNull(position);
             //如果服务器要下线了, 那么存到LRU里面, 还是需要每次都去重新定位
             if (this.offlineServer.Get(position.ServerID) == null)
             {
@@ -150,6 +150,7 @@ namespace Gateway.Placement
             }
 
             var response = JsonSerializer.Deserialize<SequenceResponse>(str);
+            ArgumentNullException.ThrowIfNull(response);
             return response.ID;
         }
 
@@ -165,6 +166,7 @@ namespace Gateway.Placement
             }
 
             var response = JsonSerializer.Deserialize<SequenceResponse>(str);
+            ArgumentNullException.ThrowIfNull(response);
             return response.ID;
         }
 
@@ -180,6 +182,7 @@ namespace Gateway.Placement
             }
 
             var response = JsonSerializer.Deserialize<SequenceResponse>(str);
+            ArgumentNullException.ThrowIfNull(response);
             return response.ID;
         }
 
@@ -221,6 +224,7 @@ namespace Gateway.Placement
                 throw new PlacementException(code, str);
             }
             var response = JsonSerializer.Deserialize<RegisterServerResponse>(str);
+            ArgumentNullException.ThrowIfNull(response, nameof(response));
             if (response.LeaseID != 0)
             {
                 this.currentServerInfo.ServerID = info.ServerID;

@@ -3,6 +3,8 @@ using System.Collections.Generic;
 using System.Text;
 using DotNetty.Transport.Channels;
 
+#nullable enable
+
 namespace Abstractions.Network
 {
     public interface IConnectionManager
@@ -11,6 +13,6 @@ namespace Abstractions.Network
 
         void RemoveConnection(long sessionID);
 
-        IChannel GetConnection(long sessionID);
+        IChannel? GetConnection(long sessionID);
     }
 }

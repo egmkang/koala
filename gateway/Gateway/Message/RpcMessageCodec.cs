@@ -75,6 +75,7 @@ namespace Gateway.Message
                 input.ReadBytes(metaBody, 0, metaBodyLength);
 
                 var meta = JsonSerializer.Deserialize(new ReadOnlySpan<byte>(metaBody, 0, metaBodyLength), messageType);
+                ArgumentNullException.ThrowIfNull(meta, $"MessageType:{messageType}");
                 var body = Empty;
                 if (bodyLength > 0)
                 {
@@ -92,7 +93,9 @@ namespace Gateway.Message
 
         static Func<object, string> TypeName => (o) =>
         {
-            return (o as Type).Name;
+            var t = o as Type;
+            ArgumentNullException.ThrowIfNull(t);
+            return t.Name;
         };
 
         private byte[] GetNameBytes(Type t) 
@@ -108,6 +111,7 @@ namespace Gateway.Message
         public object Encode(IByteBufferAllocator allocator, object message)
         {
             var msg = message as RpcMessage;
+            ArgumentNullException.ThrowIfNull(msg);
             var name = GetNameBytes(msg.Meta.GetType());
             var meta = GetMsgJsonBytes(msg.Meta);
             var metaLength = 1 + name.Length + meta.Length;

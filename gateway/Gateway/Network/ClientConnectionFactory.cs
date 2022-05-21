@@ -46,7 +46,7 @@ namespace Gateway.Network
             {
                 return;
             }
-            this.config = this.ServiceProvider.GetService<IOptionsMonitor<NetworkConfiguration>>().CurrentValue;
+            this.config = this.ServiceProvider.GetRequiredService<IOptionsMonitor<NetworkConfiguration>>().CurrentValue;
             this.group = new MultithreadEventLoopGroup(this.config.EventLoopCount);
         }
 

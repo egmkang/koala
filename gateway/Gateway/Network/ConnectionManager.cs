@@ -5,6 +5,8 @@ using Microsoft.Extensions.Logging;
 using DotNetty.Transport.Channels;
 using Abstractions.Network;
 
+#nullable enable
+
 namespace Gateway.Network
 {
     public sealed class ConnectionManager : IConnectionManager
@@ -30,9 +32,10 @@ namespace Gateway.Network
             }
         }
 
-        public IChannel GetConnection(long sessionID)
+        public IChannel? GetConnection(long sessionID)
         {
             channels.TryGetValue(sessionID, out var channel);
+            if (channel == null) return null;
             channel.TryGetTarget(out var v);
             return v;
         }

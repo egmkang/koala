@@ -71,7 +71,7 @@ namespace Gateway.Message
                     }
                     catch (Exception e)
                     {
-                        this.logger.LogError("MessageCenter Process InboundMessage, Exception:{0}, StackTrace:{1}", e, e.StackTrace.ToString());
+                        this.logger.LogError("MessageCenter Process InboundMessage, Exception:{0}, StackTrace:{1}", e, e.StackTrace?.ToString());
                     }
                 }
             }
@@ -98,7 +98,7 @@ namespace Gateway.Message
             catch (Exception e)
             {
                 this.logger.LogError("MessageCenter OnConnectionClosed, ChannelID:{0}, Exception:{1}, StackTrace:{2}",
-                    channel.GetSessionInfo().SessionID, e, e.StackTrace.ToString());
+                    channel.GetSessionInfo().SessionID, e, e.StackTrace?.ToString());
             }
         }
 

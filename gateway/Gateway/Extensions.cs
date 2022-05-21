@@ -109,10 +109,11 @@ namespace Gateway
         public static Dictionary<string, string> DecodeFirstMessage(this ReadOnlySpan<byte> memory)
         {
             var firstPacket = JsonConvert.DeserializeObject(Encoding.UTF8.GetString(memory)) as JObject;
+            ArgumentNullException.ThrowIfNull(firstPacket);
             var dict = new Dictionary<string, string>();
             foreach (var (k, v) in firstPacket) 
             {
-                dict[k.ToString()] = v.ToString();
+                dict[k.ToString()] = v?.ToString();
             }
             return dict;
         }

@@ -31,6 +31,10 @@ namespace Gateway.Utils
                 if (dict.Count > capacity)
                 {
                     var delete = list.First;
+                    if (delete == null) 
+                    {
+                        return true;
+                    }
                     dict.Remove(delete.Value.Item1);
                     list.Remove(delete);
                 }
@@ -56,6 +60,10 @@ namespace Gateway.Utils
                 if (dict.Count > capacity)
                 {
                     var delete = list.First;
+                    if (delete == null) 
+                    {
+                        return;
+                    }
                     dict.Remove(delete.Value.Item1);
                     list.Remove(delete);
                 }

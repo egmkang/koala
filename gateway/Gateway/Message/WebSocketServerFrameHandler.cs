@@ -80,8 +80,8 @@ namespace Gateway.Message
         public override void UserEventTriggered(IChannelHandlerContext context, object evt)
         {
             var sessionInfo = context.Channel.GetSessionInfo();
-
-            if (evt is IdleStateEvent && (evt as IdleStateEvent).State == IdleState.ReaderIdle)
+            var e = evt as IdleStateEvent;
+            if (e != null && e.State == IdleState.ReaderIdle)
             {
                 logger.LogError("SessionID:{0} TimeOut, Close", sessionInfo.SessionID);
                 context.CloseAsync();

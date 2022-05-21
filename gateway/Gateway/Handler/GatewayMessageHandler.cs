@@ -56,6 +56,11 @@ namespace Gateway.Handler
             {
                 var channel = inboundMessage.SourceConnection;
                 var msg = inboundMessage.Inner as RpcMessage;
+                if (msg == null) 
+                {
+                    this.logger.LogWarning("InboudMessage Type Error, {0}", inboundMessage.Inner);
+                    return;
+                }
                 func(channel, msg.Meta as T, msg.Body);
             };
             this.messageCenter.RegisterMessageProc(typeof(T).Name, f, false);
@@ -186,6 +191,7 @@ namespace Gateway.Handler
         private async ValueTask<PlacementFindActorPositionResponse> FindActorPositionAsync(string actorType, string actorID) 
         {
             var findPositionReq = findActorRequestCache.Value;
+            ArgumentNullException.ThrowIfNull(findPositionReq);
             findPositionReq.ActorType = actorType;
             findPositionReq.ActorID = actorID;
             var position = await this.placement.FindActorPositonAsync(findPositionReq).ConfigureAwait(false);

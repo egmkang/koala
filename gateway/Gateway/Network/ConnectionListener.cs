@@ -51,7 +51,7 @@ namespace Gateway.Network
                 return;
             }
 
-            this.config = this.ServiceProvider.GetService<IOptionsMonitor<NetworkConfiguration>>().CurrentValue;
+            this.config = this.ServiceProvider.GetRequiredService<IOptionsMonitor<NetworkConfiguration>>().CurrentValue;
             var dispatcher = new DispatcherEventLoopGroup();
             bossGroup = dispatcher;
             workGroup = new WorkerEventLoopGroup(dispatcher, config.EventLoopCount);
@@ -93,12 +93,9 @@ namespace Gateway.Network
                 info.ConnectionType = ConnectionType.WebSocket;
                 channel.GetAttribute(ChannelExt.SESSION_INFO).Set(info);
 
-                var localPort = (channel.LocalAddress as IPEndPoint).Port;
-
                 info.RemoteAddress = channel.RemoteAddress as IPEndPoint;
 
                 this.connectionManager.AddConnection(channel);
-
 
                 IChannelPipeline pipeline = channel.Pipeline;
                 pipeline.AddLast("TimeOut", new IdleStateHandler(this.config.ReadTimeout, this.config.WriteTimeout, this.config.ReadTimeout));
@@ -125,7 +122,13 @@ namespace Gateway.Network
             var bootstrap = this.MakeBootStrap();
             bootstrap.ChildHandler(new ActionChannelInitializer<IChannel>((channel) =>
             {
-                var port = (channel.LocalAddress as IPEndPoint).Port;
+                var endPoint = channel.LocalAddress as IPEndPoint;
+                if (endPoint == null) 
+                {
+                    logger.LogError("newChannel Error, Don't have EndPoint");
+                    return;
+                }
+                var port = endPoint.Port;
                 var factory = this.factoryContext[port];
                 factory(channel);
             }));
@@ -143,8 +146,6 @@ namespace Gateway.Network
                 info.ConnectionType = ConnectionType.Socket;
                 channel.GetAttribute(ChannelExt.SESSION_INFO).Set(info);
 
-                var localPort = (channel.LocalAddress as IPEndPoint).Port;
-
                 info.RemoteAddress = channel.RemoteAddress as IPEndPoint;
 
                 this.connectionManager.AddConnection(channel);
@@ -160,7 +161,13 @@ namespace Gateway.Network
             var bootstrap = this.MakeBootStrap();
             bootstrap.ChildHandler(new ActionChannelInitializer<IChannel>((channel) =>
             {
-                var port = (channel.LocalAddress as IPEndPoint).Port;
+                var endPoint = channel.RemoteAddress as IPEndPoint;
+                if (endPoint == null) 
+                {
+                    logger.LogError("NewChannel Error, Don't have a EndPoint");
+                    return;
+                }
+                var port = endPoint.Port;
                 var factory = this.factoryContext[port];
                 factory(channel);
             }));

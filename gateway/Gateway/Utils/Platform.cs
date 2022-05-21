@@ -47,6 +47,7 @@ namespace Gateway.Utils
             var udpClient = new UdpClient();
             udpClient.Connect("8.8.8.8", 80);
             var localEndPoint = udpClient.Client.LocalEndPoint as IPEndPoint;
+            ArgumentNullException.ThrowIfNull(localEndPoint, nameof(localEndPoint));
             LocalIpAddress = localEndPoint.Address.ToString();
             return LocalIpAddress;
         }
