@@ -12,6 +12,7 @@ namespace Gateway.Message
         protected readonly ILoggerFactory loggerFactory;
         protected readonly IServiceProvider serviceProvider;
         protected readonly IMessageCenter messageCenter;
+        private IMessageCodec? codec;
 
         public MessageHandlerFactoryBase(IServiceProvider serviceProvider)
         {
@@ -20,7 +21,7 @@ namespace Gateway.Message
             this.loggerFactory = this.serviceProvider.GetRequiredService<ILoggerFactory>();
         }
 
-        public IMessageCodec Codec { get; set; }
+        public IMessageCodec Codec { get { ArgumentNullException.ThrowIfNull(this.codec); return this.codec; } set => this.codec = value; }
     }
 
     public sealed class MessageHandlerFactory : MessageHandlerFactoryBase, IMessageHandlerFactory

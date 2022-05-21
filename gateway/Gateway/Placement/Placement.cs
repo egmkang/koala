@@ -40,12 +40,12 @@ namespace Gateway.Placement
         private readonly LRU<long, object> offlineServer = new LRU<long, object>(ServerLRUSize);
         private Dictionary<long, PlacementActorHostInfo> host = new Dictionary<long, PlacementActorHostInfo>(); //readonly
         private PlacementActorHostInfo currentServerInfo = new PlacementActorHostInfo();
-        private Action<PlacementActorHostInfo> onAddServer;
-        private Action<PlacementActorHostInfo> onRemoveServer;
-        private Action<PlacementActorHostInfo> onServerOffline;
-        private Action<Exception> onFatalError;
+        private Action<PlacementActorHostInfo> onAddServer = (_) => { };
+        private Action<PlacementActorHostInfo> onRemoveServer = (_) => { };
+        private Action<PlacementActorHostInfo> onServerOffline = (_) => { };
+        private Action<Exception> onFatalError = (_) => { };
 
-        public string PlacementServerAddress { get; private set; }
+        public string PlacementServerAddress { get; private set; } = "";
         public long CurrentServerID => this.currentServerInfo.ServerID;
 
         public PDPlacement(ILoggerFactory loggerFactory)
@@ -87,26 +87,25 @@ namespace Gateway.Placement
         private bool IsServerValid(long serverID)
         {
             return this.host.TryGetValue(serverID, out var _) ||
-                   this.offlineServer.Get(serverID) != null;
+                   !this.offlineServer.Get(serverID, out var v) || 
+                   v == null;
         }
 
-        public PlacementFindActorPositionResponse FindActorPositionInCache(PlacementFindActorPositionRequest request)
+        public PlacementFindActorPositionResponse? FindActorPositionInCache(PlacementFindActorPositionRequest request)
         {
-            var pos = this.positionLru.Get((request.ActorType, request.ActorID));
-            if (pos != null && this.IsServerValid(pos.ServerID))
+            if (this.positionLru.Get((request.ActorType, request.ActorID), out var pos) && pos != null && this.IsServerValid(pos.ServerID))
             {
                 return pos;
             }
             return null;
         }
 
-        public async ValueTask<PlacementFindActorPositionResponse> FindActorPositonAsync(PlacementFindActorPositionRequest request)
+        public async ValueTask<PlacementFindActorPositionResponse?> FindActorPositonAsync(PlacementFindActorPositionRequest request)
         {
             //check actor position cache
             var id = (request.ActorType, request.ActorID);
 
-            var pos = this.positionLru.Get(id);
-            if (pos != null && this.IsServerValid(pos.ServerID))
+            if (this.positionLru.Get(id, out var pos) && pos != null && this.IsServerValid(pos.ServerID))
             {
                 return pos;
             }
@@ -123,7 +122,7 @@ namespace Gateway.Placement
             var position =  JsonSerializer.Deserialize<PlacementFindActorPositionResponse>(str);
             ArgumentNullException.ThrowIfNull(position);
             //如果服务器要下线了, 那么存到LRU里面, 还是需要每次都去重新定位
-            if (this.offlineServer.Get(position.ServerID) == null)
+            if (!this.offlineServer.Get(position.ServerID, out var v) || v == null)
             {
                 this.positionLru.Add(id, position);
             }
@@ -186,7 +185,7 @@ namespace Gateway.Placement
             return response.ID;
         }
 
-        public async ValueTask<PlacementKeepAliveResponse> KeepAliveServerAsync(long serverID, long leaseID, long load)
+        public async ValueTask<PlacementKeepAliveResponse?> KeepAliveServerAsync(long serverID, long leaseID, long load)
         {
             var path = "/pd/api/v1/membership/keep_alive";
             var (code, str) = await this.PostAsync(path, new PlacementActorHostInfo()
@@ -239,7 +238,7 @@ namespace Gateway.Placement
             return response.LeaseID;
         }
 
-        public async ValueTask<PlacementVersionInfo> GetVersionAsync()
+        public async ValueTask<PlacementVersionInfo?> GetVersionAsync()
         {
             var (code, str) = await this.GetAsync("/pd/api/v1/version").ConfigureAwait(false);
 
@@ -280,12 +279,23 @@ namespace Gateway.Placement
                                                             this.currentServerInfo.LeaseID,
                                                             this.currentServerInfo.Load).ConfigureAwait(false);
 
+            if (response == null) 
+            {
+                this.logger.LogWarning("KeepAliveServerAsync fail, response is null");
+                return;
+            }
+
             if (this.logger.IsEnabled(LogLevel.Trace))
             {
-                this.logger.LogTrace("KeepAliveServerAsync response, EventCount: {0}", response.Events.Count);
+                this.logger.LogTrace("KeepAliveServerAsync response, HostCount:{1}, EventCount: {0}", 
+                        response.Events?.Count, response.Hosts?.Count);
             }
 
             var newServerList = response.Hosts;
+            if (newServerList == null || response.Events == null) 
+            {
+                return;
+            }
             foreach (var item in response.Events)
             {
                 ProcessAddServerEvent(newServerList, item);
@@ -340,6 +350,7 @@ namespace Gateway.Placement
 
         private void ProcessAddServerEvent(Dictionary<long, PlacementActorHostInfo> newServerList, PlacementEvents item)
         {
+            if (item.Add == null) return;
             foreach (var add in item.Add)
             {
                 if (this.addedServer.TryAdd(add, EmptyObject))
@@ -362,6 +373,10 @@ namespace Gateway.Placement
 
         private void ProcessRemoveServerEvent(PlacementEvents item)
         {
+            if (item.Remove == null) 
+            {
+                return;
+            }
             foreach (var remove in item.Remove)
             {
                 if (this.removedServer.TryAdd(remove, EmptyObject))

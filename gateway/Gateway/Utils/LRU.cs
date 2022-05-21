@@ -1,10 +1,12 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
 using System.Text;
 
 namespace Gateway.Utils
 {
     public class LRU<K, V> where V : class
+                           where K: notnull
     {
         private readonly object mutex = new object();
         private readonly LinkedList<ValueTuple<K, V>> list = new LinkedList<ValueTuple<K, V>>();
@@ -26,6 +28,7 @@ namespace Gateway.Utils
                 }
                 list.AddLast((k, v));
                 vv = list.Last;
+                ArgumentNullException.ThrowIfNull(vv);
                 dict.Add(k, vv);
 
                 if (dict.Count > capacity)
@@ -55,6 +58,7 @@ namespace Gateway.Utils
                 }
                 list.AddLast((k, v));
                 vv = list.Last;
+                ArgumentNullException.ThrowIfNull(vv);
                 dict.Add(k, vv);
 
                 if (dict.Count > capacity)
@@ -70,7 +74,7 @@ namespace Gateway.Utils
             }
         }
 
-        public V Get(K k)
+        public bool Get(K k, [MaybeNullWhen(false)] out V value)
         {
             lock (mutex)
             {
@@ -78,9 +82,11 @@ namespace Gateway.Utils
                 {
                     list.Remove(v);
                     list.AddLast(v);
-                    return v.Value.Item2;
+                    value = v.Value.Item2;
+                    return true;
                 }
-                return null;
+                value = default(V);
+                return false;
             }
         }
 

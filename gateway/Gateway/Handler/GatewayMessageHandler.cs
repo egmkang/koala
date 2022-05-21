@@ -35,7 +35,7 @@ namespace Gateway.Handler
             this.messageCenter = messageCenter;
             this.sessionManager = sessionManager;
             this.placement = placement;
-            this.clientConnectionPool = serviceProvider.GetService<ClientConnectionPool>();
+            this.clientConnectionPool = serviceProvider.GetRequiredService<ClientConnectionPool>();
 
             this.messageCenter.RegisterMessageProc(new BlockMessageCodec().CodecName, this.ProcessWebSocketMessage, false);
             this.messageCenter.RegisterDefaultMessageProc(this.ProcessDefaultMessage);
@@ -46,9 +46,9 @@ namespace Gateway.Handler
             this.RegisterHandler<ResponseHeartBeat>(this.ProcessResponseHeartBeat);
         }
 
-        public string AuthService { get; set; }
+        public string AuthService { get; set; } = "";
         public bool DisableTokenCheck { get; set; }
-        public string PrivateKey { get; set; }
+        public string PrivateKey { get; set; } = "";
 
         private void RegisterHandler<T>(Action<IChannel, T, byte[]> func) where T : RpcMeta
         {
@@ -61,7 +61,13 @@ namespace Gateway.Handler
                     this.logger.LogWarning("InboudMessage Type Error, {0}", inboundMessage.Inner);
                     return;
                 }
-                func(channel, msg.Meta as T, msg.Body);
+                var meta = msg.Meta as T;
+                if (meta == null) 
+                {
+                    this.logger.LogWarning("InboudMessage Meta Error, {0}", msg.Meta);
+                    return;
+                }
+                func(channel, meta, msg.Body);
             };
             this.messageCenter.RegisterMessageProc(typeof(T).Name, f, false);
             this.logger.LogInformation("RegisterHandler, Type:{0}", typeof(T).Name);
@@ -92,6 +98,13 @@ namespace Gateway.Handler
             Task.Run(async () =>
             {
                 var position = await this.FindActorPositionAsync(playerInfo.ActorType, playerInfo.ActorID).ConfigureAwait(false);
+                if (position == null) 
+                {
+                    this.logger.LogError("ProcessResponseAccountLogin Position Fail, SessionID:{0}, Actor:{1}/{2}", 
+                                                sessionInfo.SessionID, playerInfo.ActorType,
+                                                playerInfo.ActorID);
+                    return;
+                }
                 if (playerInfo.DestServerID != position.ServerID)
                 {
                     playerInfo.DestServerID = position.ServerID;
@@ -134,12 +147,15 @@ namespace Gateway.Handler
             }
             else
             {
-                foreach (var sessionID in request.SessionIds)
+                if (request.SessionIds != null)
                 {
-                    var destSession = this.sessionManager.GetConnection(request.SessionId);
-                    if (destSession != null)
+                    foreach (var sessionID in request.SessionIds)
                     {
-                        this.messageCenter.SendMessage(new OutboundMessage(destSession, body));
+                        var destSession = this.sessionManager.GetConnection(request.SessionId);
+                        if (destSession != null)
+                        {
+                            this.messageCenter.SendMessage(new OutboundMessage(destSession, body));
+                        }
                     }
                 }
             }
@@ -167,6 +183,7 @@ namespace Gateway.Handler
         {
             var session = inboundMessage.SourceConnection;
             var msg = inboundMessage.Inner as byte[];
+            ArgumentNullException.ThrowIfNull(msg);
             var sessionInfo = inboundMessage.SourceConnection.GetSessionInfo();
             if (sessionInfo.OnClosed == null) 
             {
@@ -188,7 +205,7 @@ namespace Gateway.Handler
         private static int RandomLoginServer => random.Next(0, 1024 * 2);
         private static ThreadLocal<PlacementFindActorPositionRequest> findActorRequestCache = new ThreadLocal<PlacementFindActorPositionRequest>(() => new PlacementFindActorPositionRequest());
 
-        private async ValueTask<PlacementFindActorPositionResponse> FindActorPositionAsync(string actorType, string actorID) 
+        private async ValueTask<PlacementFindActorPositionResponse?> FindActorPositionAsync(string actorType, string actorID) 
         {
             var findPositionReq = findActorRequestCache.Value;
             ArgumentNullException.ThrowIfNull(findPositionReq);
@@ -208,6 +225,13 @@ namespace Gateway.Handler
             playerInfo.ActorID = actorID;
 
             var position = await this.FindActorPositionAsync(playerInfo.ActorType, playerInfo.ActorID).ConfigureAwait(false);
+            if (position == null)
+            {
+                this.logger.LogError("ProcessQuickConnect Position Fail, SessionID:{0}, Actor:{1}/{2}",
+                                            sessionInfo.SessionID, playerInfo.ActorType,
+                                            playerInfo.ActorID);
+                return;
+            }
             if (playerInfo.DestServerID != position.ServerID) 
             {
                 playerInfo.DestServerID = position.ServerID;
@@ -275,7 +299,13 @@ namespace Gateway.Handler
 
                     //这边需要通过账号信息, 查找目标Actor的位置
                     var position =  await this.FindActorPositionAsync(this.AuthService, RandomLoginServer.ToString()).ConfigureAwait(false);
-
+                    if (position == null)
+                    {
+                        this.logger.LogError("ProcessWebSocketFirstMessage Position Fail, SessionID:{0}, Actor:{1}/{2}",
+                                                    sessionInfo.SessionID, playerInfo.ActorType,
+                                                    playerInfo.ActorID);
+                        return;
+                    }
                     var req = new RpcMessage(new RequestAccountLogin()
                     {
                         OpenID = playerInfo.OpenID,
@@ -303,6 +333,13 @@ namespace Gateway.Handler
             }
 
             var position = await this.FindActorPositionAsync(playerInfo.ActorType, playerInfo.ActorID).ConfigureAwait(false);
+            if (position == null)
+            {
+                this.logger.LogError("ProcessWebSocketCommonMessage Position Fail, SessionID:{0}, Actor:{1}/{2}",
+                                            sessionInfo.SessionID, playerInfo.ActorType,
+                                            playerInfo.ActorID);
+                return;
+            }
             if (playerInfo.DestServerID != position.ServerID) 
             {
                 playerInfo.DestServerID = position.ServerID;
@@ -333,6 +370,13 @@ namespace Gateway.Handler
                     return;
                 var playerInfo = sessionInfo.GetPlayerInfo();
                 var position = await this.FindActorPositionAsync(playerInfo.ActorType, playerInfo.ActorID).ConfigureAwait(false);
+                if (position == null)
+                {
+                    this.logger.LogError("ProcessWebSocketClose Position Fail, SessionID:{0}, Actor:{1}/{2}",
+                                                sessionInfo.SessionID, playerInfo.ActorType,
+                                                playerInfo.ActorID);
+                    return;
+                }
 
                 var closeMessage = new RpcMessage(new NotifyActorSessionAborted()
                 {

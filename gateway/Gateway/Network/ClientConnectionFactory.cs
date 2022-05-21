@@ -17,8 +17,8 @@ namespace Gateway.Network
 {
     public sealed class ClientConnectionFactory : IClientConnectionFactory
     {
-        private MultithreadEventLoopGroup group;
-        private NetworkConfiguration config;
+        private MultithreadEventLoopGroup? group;
+        private NetworkConfiguration? config;
         private readonly object mutex = new object();
         private Dictionary<IMessageHandlerFactory, Bootstrap> bootstraps = new Dictionary<IMessageHandlerFactory, Bootstrap>();
 
@@ -52,7 +52,8 @@ namespace Gateway.Network
 
         public async Task<IChannel> ConnectAsync(EndPoint address, IMessageHandlerFactory factory)
         {
-            Bootstrap bootstrap;
+            ArgumentNullException.ThrowIfNull(this.config);
+            Bootstrap? bootstrap;
             lock (mutex) 
             {
                 if (!this.bootstraps.TryGetValue(factory, out bootstrap))
@@ -85,7 +86,9 @@ namespace Gateway.Network
                 }
             }
             var channel = await bootstrap.ConnectAsync(address).ConfigureAwait(false);
-            channel.GetSessionInfo().RemoteAddress = channel.RemoteAddress as IPEndPoint;
+            var addr = channel.RemoteAddress as IPEndPoint;
+            ArgumentNullException.ThrowIfNull(addr);
+            channel.GetSessionInfo().RemoteAddress = addr;
             this.connectionManager.AddConnection(channel);
             return channel;
         }

@@ -22,9 +22,9 @@ namespace Gateway.Network
 {
     public sealed class ConnectionListener : IConnectionListener
     {
-        private IEventLoopGroup bossGroup;
-        private IEventLoopGroup workGroup;
-        private NetworkConfiguration config;
+        private IEventLoopGroup? bossGroup;
+        private IEventLoopGroup? workGroup;
+        private NetworkConfiguration? config;
         private readonly ILogger logger;
         private readonly IConnectionManager connectionManager;
         private readonly IConnectionSessionInfoFactory channelSessionInfoFactory;
@@ -59,6 +59,8 @@ namespace Gateway.Network
 
         private ServerBootstrap MakeBootStrap() 
         {
+            ArgumentNullException.ThrowIfNull(this.config);
+
             var bootstrap = new ServerBootstrap();
             bootstrap.Group(this.bossGroup, this.workGroup)
                 .Channel<TcpServerChannel>();
@@ -87,13 +89,17 @@ namespace Gateway.Network
 
         public async Task BindWebSocketAsync(int port, string websocketPath, IMessageHandlerFactory handlerFactory) 
         {
+            ArgumentNullException.ThrowIfNull(this.config);
+
             factoryContext[port] = (channel) => 
             {
                 var info = this.channelSessionInfoFactory.NewSessionInfo(handlerFactory);
                 info.ConnectionType = ConnectionType.WebSocket;
                 channel.GetAttribute(ChannelExt.SESSION_INFO).Set(info);
 
-                info.RemoteAddress = channel.RemoteAddress as IPEndPoint;
+                var addr = channel.RemoteAddress as IPEndPoint;
+                ArgumentNullException.ThrowIfNull(addr);
+                info.RemoteAddress = addr;
 
                 this.connectionManager.AddConnection(channel);
 
@@ -140,13 +146,17 @@ namespace Gateway.Network
 
         public async Task BindAsync(int port, IMessageHandlerFactory handlerFactory)
         {
+            ArgumentNullException.ThrowIfNull(this.config);
+
             factoryContext[port] = (channel) =>
             {
                 var info = this.channelSessionInfoFactory.NewSessionInfo(handlerFactory);
                 info.ConnectionType = ConnectionType.Socket;
                 channel.GetAttribute(ChannelExt.SESSION_INFO).Set(info);
 
-                info.RemoteAddress = channel.RemoteAddress as IPEndPoint;
+                var addr = channel.RemoteAddress as IPEndPoint;
+                ArgumentNullException.ThrowIfNull(addr);
+                info.RemoteAddress = addr;
 
                 this.connectionManager.AddConnection(channel);
 

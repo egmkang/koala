@@ -30,7 +30,7 @@ namespace Gateway.Network
             this.connectionFactory = clientConnectionFactory;
         }
 
-        public IMessageHandlerFactory MessageHandlerFactory { get; set; }
+        public IMessageHandlerFactory? MessageHandlerFactory { get; set; }
 
         public void OnAddServer(long serverID, EndPoint endPoint, Func<object> heartBeatMessageFn) 
         {
@@ -44,7 +44,7 @@ namespace Gateway.Network
             this.TryCloseCurrentClient(serverID);
         }
 
-        public IChannel GetChannelByServerID(long serverID) 
+        public IChannel? GetChannelByServerID(long serverID) 
         {
             if (this.clients.TryGetValue(serverID, out var c) && c.TryGetTarget(out var channel))
             {
@@ -58,7 +58,7 @@ namespace Gateway.Network
         {
             while (true) 
             {
-                if (this.recentRemoveServer.Get(serverID) != null) 
+                if (this.recentRemoveServer.Get(serverID, out var pos) && pos != null) 
                 {
                     this.logger.LogInformation("ExitReconnectLoop, ServerID:{0}", serverID);
                     return;
@@ -76,9 +76,10 @@ namespace Gateway.Network
         private async Task TryConnectAsync(long serverID, EndPoint endPoint, 
                                             Func<object> heartBeatMessageFn)
         {
+            ArgumentNullException.ThrowIfNull(this.MessageHandlerFactory);
             try
             {
-                if (this.recentRemoveServer.Get(serverID) != null)
+                if (this.recentRemoveServer.Get(serverID, out var pos) && pos != null)
                 {
                     this.logger.LogInformation("TryConnectAsync, ServerID:{0} has been canceled", serverID);
                     return;

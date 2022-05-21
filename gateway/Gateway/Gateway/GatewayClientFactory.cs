@@ -43,6 +43,11 @@ namespace Gateway.Gateway
                 var rpcMessage = new RpcMessage(new RequestHeartBeat() { MilliSeconds = Platform.GetMilliSeconds() }, null);
                 return rpcMessage;
             };
+            if (server.Address == null) 
+            {
+                this.logger.LogError("OnAddServer, BadAddress:{0}", server.Address);
+                return;
+            }
             this.clientConnectionPool.OnAddServer(server.ServerID,
                                                 IPEndPoint.Parse(server.Address), fn);
         }

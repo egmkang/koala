@@ -7,7 +7,7 @@ namespace Gateway.Message
     public class RequestAccountLogin : RpcMeta 
     {
         [JsonPropertyName("open_id")]
-        public string OpenID { get; set; }
+        public string OpenID { get; set; } = "";
         [JsonPropertyName("server_id")]
         public long ServerID { get; set; }
         [JsonPropertyName("session_id")]
@@ -19,22 +19,22 @@ namespace Gateway.Message
         [JsonPropertyName("session_id")]
         public long SessionID { get; set; }
         [JsonPropertyName("actor_type")]
-        public string ActorType { get; set; }
+        public string ActorType { get; set; } = "";
         [JsonPropertyName("actor_id")]
-        public string ActorID { get; set; }
+        public string ActorID { get; set; } = "";
     }
 
     // token的bytes, 带在RPC PROTOCOL的body里面
     public class NotifyNewActorSession : RpcMeta
     {
         [JsonPropertyName("actor_type")]
-        public string ActorType { get; set; }
+        public string ActorType { get; set; } = "";
         [JsonPropertyName("actor_id")]
-        public string ActorID { get; set; }
+        public string ActorID { get; set; } = "";
         [JsonPropertyName("session_id")]
         public long SessionID { get; set; }
         [JsonPropertyName("open_id")]
-        public string OpenID { get; set; }
+        public string OpenID { get; set; } = "";
         [JsonPropertyName("server_id")]
         public long ServerID { get; set; }
     }
@@ -45,10 +45,10 @@ namespace Gateway.Message
         public long SessionID { get; set; }
 
         [JsonPropertyName("actor_type")]
-        public string ActorType { get; set; }
+        public string ActorType { get; set; } = "";
 
         [JsonPropertyName("actor_id")]
-        public string ActorID { get; set; }
+        public string ActorID { get; set; } = "";
     }
 
     public class RequestCloseSession : RpcMeta
@@ -57,7 +57,7 @@ namespace Gateway.Message
         public long SessionID { get; set; }
 
         [JsonPropertyName("actor_type")]
-        public string ActorType { get; set; }
+        public string ActorType { get; set; } = "";
     }
 
     // message携带在RPC PROTOCOL的body里面
@@ -67,13 +67,13 @@ namespace Gateway.Message
         public long SessionId { get; set; }
 
         [JsonPropertyName("actor_type")]
-        public string ActorType { get; set; }
+        public string ActorType { get; set; } = "";
 
         [JsonPropertyName("actor_id")]
-        public string ActorID { get; set; }
+        public string ActorID { get; set; } = "";
 
         [JsonPropertyName("trace")]
-        public string Trace { get; set; }
+        public string Trace { get; set; } = "";
     }
 
     // 要发送的消息携带在Body里面
@@ -83,7 +83,7 @@ namespace Gateway.Message
         public long SessionId { get; set; }
 
         [JsonPropertyName("session_ids")]
-        public long[] SessionIds { get; set; }
+        public long[]? SessionIds { get; set; }
     }
 
     public class RequestHeartBeat : RpcMeta

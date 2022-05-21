@@ -44,7 +44,7 @@ namespace Gateway.Message
                 {
                     break;
                 }
-                if (message == null) 
+                if (string.IsNullOrEmpty(typeName)) 
                 {
                     logger.LogError("Decode Fail, SessionID:{0}", context.Channel.GetSessionInfo().SessionID);
                     break;

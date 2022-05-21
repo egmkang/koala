@@ -9,7 +9,7 @@ namespace Gateway.Message
     {
         private static readonly byte[] Empty = new byte[0];
 
-        public RpcMessage(RpcMeta meta, byte[] body) 
+        public RpcMessage(RpcMeta meta, byte[]? body) 
         {
             this.Meta = meta;
             this.Body = body != null ? body : Empty;

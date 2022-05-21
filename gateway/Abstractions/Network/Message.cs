@@ -27,8 +27,6 @@ namespace Abstractions.Network
         public long MilliSeconds => this.milliSecond;
 
         public object Inner => this.innerMessage;
-
-        public static readonly InboundMessage Empty = new InboundMessage(null, "", null, 0);
     }
 
     public struct OutboundMessage
@@ -45,7 +43,5 @@ namespace Abstractions.Network
         public IChannel DestConnection => channel;
 
         public object Inner => innerMessage;
-
-        public static readonly OutboundMessage Empty = new OutboundMessage(null, null);
     }
 }

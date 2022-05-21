@@ -17,7 +17,7 @@ namespace Gateway.Network
         private long activeTime;
         private bool stop = false;
         private IPEndPoint address;
-        private readonly ConcurrentQueue<OutboundMessage> inboundMessageQueue;
+        private readonly ConcurrentQueue<Nullable<OutboundMessage>> inboundMessageQueue;
         private readonly ILogger logger;
         private readonly IMessageCodec codec;
         private readonly SendingThreads sendingThreads;
@@ -33,9 +33,11 @@ namespace Gateway.Network
             this.codec = codec;
             this.sendingThreads = sendingThreads;
 
-            this.inboundMessageQueue = new ConcurrentQueue<OutboundMessage>();
+            this.inboundMessageQueue = new ConcurrentQueue<Nullable<OutboundMessage>>();
 
             this.ActiveTime = Platform.GetMilliSeconds();
+
+            this.address = new IPEndPoint(IPAddress.Any, 0);
         }
 
         public long SessionID => sessionID;
@@ -46,8 +48,8 @@ namespace Gateway.Network
         public bool IsActive => !this.stop;
         public Dictionary<string, object> States => states;
         public IMessageCodec Codec => codec;
-        public Action<IChannel> OnClosed { get; set; }
-        public Action<OutboundMessage> OnFail { get; set; }
+        public Action<IChannel> OnClosed { get; set; } = (_) => { };
+        public Action<OutboundMessage> OnFail { get; set; } = (_) => { };
         public ConnectionType ConnectionType { get; set; }
 
         public int PutOutboundMessage(OutboundMessage msg)
@@ -61,7 +63,7 @@ namespace Gateway.Network
         public void ShutDown() 
         {
             this.stop = true;
-            this.inboundMessageQueue.Enqueue(OutboundMessage.Empty);
+            this.inboundMessageQueue.Enqueue(null);
         }
 
         struct SafeReleaseByteBuffer : IDisposable
@@ -84,16 +86,16 @@ namespace Gateway.Network
 
             var allocator = channel.Allocator;
 
-            while (this.inboundMessageQueue.TryDequeue(out var message) && message.Inner != null) 
+            while (this.inboundMessageQueue.TryDequeue(out var message) && message != null) 
             {
                 try
                 {
                     // 调试用
                     if (this.logger.IsEnabled(LogLevel.Trace)) 
                     {
-                        this.logger.LogTrace("SessionID:{0}, Encoding Msg:{1}", this.sessionID, message.Inner.GetType().Name);
+                        this.logger.LogTrace("SessionID:{0}, Encoding Msg:{1}", this.sessionID, message.Value.Inner.GetType().Name);
                     }
-                    var msg = this.codec.Encode(allocator, message.Inner);
+                    var msg = this.codec.Encode(allocator, message.Value.Inner);
                     channel.WriteAsync(msg);
                 }
                 catch (Exception e) 

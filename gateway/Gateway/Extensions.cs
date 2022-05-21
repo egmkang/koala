@@ -113,7 +113,8 @@ namespace Gateway
             var dict = new Dictionary<string, string>();
             foreach (var (k, v) in firstPacket) 
             {
-                dict[k.ToString()] = v?.ToString();
+                if (v == null) continue;
+                dict[k.ToString()] = v.ToString();
             }
             return dict;
         }

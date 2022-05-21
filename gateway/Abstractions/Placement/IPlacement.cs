@@ -41,22 +41,22 @@ namespace Abstractions.Placement
         /// 服务器的地址
         /// </summary>
         [JsonPropertyName("address")]
-        public string Address { get; set; }
+        public string? Address { get; set; }
         /// <summary>
         /// 服务器能提供的Actor对象类型, 即服务能力
         /// </summary>
         [JsonPropertyName("services")]
-        public Dictionary<string, string> Services { get; set; }
+        public Dictionary<string, string>? Services { get; set; }
         /// <summary>
         /// 服务的描述信息
         /// </summary>
         [JsonPropertyName("desc")]
-        public string Desc { get; set; }
+        public string? Desc { get; set; }
         /// <summary>
         /// 服务器的额外属性, 用来表示网关等信息
         /// </summary>
         [JsonPropertyName("labels")]
-        public Dictionary<string, string> Labels { get; set; }
+        public Dictionary<string, string>? Labels { get; set; }
     }
 
     /// <summary>
@@ -73,12 +73,12 @@ namespace Abstractions.Placement
         /// 增加的服务器ID
         /// </summary>
         [JsonPropertyName("add")]
-        public List<long> Add { get; set; }
+        public List<long>? Add { get; set; }
         /// <summary>
         /// 删除的服务器ID
         /// </summary>
         [JsonPropertyName("remove")]
-        public List<long> Remove { get; set; }
+        public List<long>? Remove { get; set; }
     }
 
     /// <summary>
@@ -90,12 +90,12 @@ namespace Abstractions.Placement
         /// 每次续约PD会将所有的服务器信息下发, 该framework所能处理的集群规模, 也就是百十来台, 所以将所有服务器下发没有问题
         /// </summary>
         [JsonPropertyName("hosts")]
-        public Dictionary<long, PlacementActorHostInfo> Hosts { get; set; }
+        public Dictionary<long, PlacementActorHostInfo>? Hosts { get; set; }
         /// <summary>
         /// 服务器最近的事件(增减和删除)
         /// </summary>
         [JsonPropertyName("events")]
-        public List<PlacementEvents> Events { get; set; }
+        public List<PlacementEvents>? Events { get; set; }
     }
 
     /// <summary>
@@ -107,12 +107,12 @@ namespace Abstractions.Placement
         /// Actor的接口类型, PD里面有实现的类型
         /// </summary>
         [JsonPropertyName("actor_type")]
-        public string ActorType { get; set; }
+        public string ActorType { get; set; } = "";
         /// <summary>
         /// Actor的ID, 在该ActorType下必须唯一
         /// </summary>
         [JsonPropertyName("actor_id")]
-        public string ActorID { get; set; }
+        public string ActorID { get; set; } = "";
         /// <summary>
         /// Actor的生命周期, 通常为0, 那么Actor的宿主挂掉之后, PD会寻求再次分配新的位置
         /// 不为0时, 那么Actor的宿主挂掉之后, PD不会再次分配新的位置. 通常用来做一次性定位, 比如一场战斗, 战斗服务器挂掉后很难恢复.
@@ -130,12 +130,12 @@ namespace Abstractions.Placement
         /// Actor的类型, 参见ActorType
         /// </summary>
         [JsonPropertyName("actor_type")]
-        public string ActorType { get; set; }
+        public string? ActorType { get; set; }
         /// <summary>
         /// ActorType类型下唯一的ID
         /// </summary>
         [JsonPropertyName("actor_id")]
-        public string ActorID { get; set; }
+        public string? ActorID { get; set; }
         /// <summary>
         /// 生存期
         /// </summary>
@@ -155,13 +155,13 @@ namespace Abstractions.Placement
         /// 宿主的地址
         /// </summary>
         [JsonPropertyName("server_address")]
-        public string ServerAddress { get; set; }
+        public string? ServerAddress { get; set; }
     }
 
     public class PlacementVersionInfo
     {
         [JsonPropertyName("version")]
-        public string Version { get; set; }
+        public string? Version { get; set; }
         [JsonPropertyName("last_heart_beat_time")]
         public long LastHeartBeatTime { get; set; }
     }
@@ -203,19 +203,19 @@ namespace Abstractions.Placement
         /// <param name="leaseID">租约ID</param>
         /// <param name="load">服务器当前的负载</param>
         /// <returns>返回PD上面最新的事件</returns>
-        ValueTask<PlacementKeepAliveResponse> KeepAliveServerAsync(long serverID, long leaseID, long load);
+        ValueTask<PlacementKeepAliveResponse?> KeepAliveServerAsync(long serverID, long leaseID, long load);
         /// <summary>
         /// 在内存中找Actor所在的服务器信息
         /// </summary>
         /// <param name="request">actor定位所需要的信息</param>
         /// <returns>Actor所在的服务器信息</returns>
-        PlacementFindActorPositionResponse FindActorPositionInCache(PlacementFindActorPositionRequest request);
+        PlacementFindActorPositionResponse? FindActorPositionInCache(PlacementFindActorPositionRequest request);
         /// <summary>
         /// 找到Actor所在的服务器信息
         /// </summary>
         /// <param name="request">actor定位所需要的信息</param>
         /// <returns>Actor所在的目标服务器信息</returns>
-        ValueTask<PlacementFindActorPositionResponse> FindActorPositonAsync(PlacementFindActorPositionRequest request);
+        ValueTask<PlacementFindActorPositionResponse?> FindActorPositonAsync(PlacementFindActorPositionRequest request);
         /// <summary>
         /// 清空Actor的位置缓存
         /// </summary>
@@ -225,7 +225,7 @@ namespace Abstractions.Placement
         /// 获取版本信息
         /// </summary>
         /// <returns>返回版本信息的字符串</returns>
-        ValueTask<PlacementVersionInfo> GetVersionAsync();
+        ValueTask<PlacementVersionInfo?> GetVersionAsync();
         /// <summary>
         /// 获取当前服务器的信息
         /// </summary>

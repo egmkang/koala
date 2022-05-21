@@ -15,8 +15,15 @@ namespace Gateway.Extersions
     public class ServiceBuilder : IServiceBuilder
     {
         private readonly ServiceCollection serviceCollection = new ServiceCollection();
-        private IServiceProvider serviceProvider;
-        public IServiceProvider ServiceProvider => this.serviceProvider;
+        private IServiceProvider? provider;
+        public IServiceProvider ServiceProvider
+        {
+            get
+            {
+                ArgumentNullException.ThrowIfNull(this.provider);
+                return this.provider;
+            }
+        }
         public IServiceCollection ServiceCollection => this.serviceCollection;
 
         public bool Running { get; set; } = true;
@@ -25,13 +32,13 @@ namespace Gateway.Extersions
 
         public IServiceBuilder Build()
         {
-            this.serviceProvider = serviceCollection.BuildServiceProvider();
+            this.provider = serviceCollection.BuildServiceProvider();
             return this;
         }
 
         public void SetPDAddress(string pdAddress) 
         {
-            var placement = this.serviceProvider.GetRequiredService<IPlacement>();
+            var placement = this.ServiceProvider.GetRequiredService<IPlacement>();
             placement.SetPlacementServerInfo(pdAddress);
         }
 
@@ -40,7 +47,7 @@ namespace Gateway.Extersions
             var connectionListener = this.ServiceProvider.GetRequiredService<IConnectionListener>();
             var messageCenter = this.ServiceProvider.GetRequiredService<IMessageCenter>();
             var clientFactory = this.ServiceProvider.GetRequiredService<IClientConnectionFactory>();
-            var clientConnectionPool = this.serviceProvider.GetRequiredService<ClientConnectionPool>();
+            var clientConnectionPool = this.ServiceProvider.GetRequiredService<ClientConnectionPool>();
             factory.Codec = codec;
 
             clientFactory.Init();
@@ -69,9 +76,9 @@ namespace Gateway.Extersions
 
             if (Interlocked.Increment(ref this.shutingDown) == 1) 
             {
-                var listener = this.serviceProvider.GetRequiredService<IConnectionListener>();
+                var listener = this.ServiceProvider.GetRequiredService<IConnectionListener>();
                 listener.ShutdDownAsync().Wait();
-                var connectionFactory = this.serviceProvider.GetRequiredService<IClientConnectionFactory>();
+                var connectionFactory = this.ServiceProvider.GetRequiredService<IClientConnectionFactory>();
                 connectionFactory.ShutdDownAsync().Wait();
             }
         }

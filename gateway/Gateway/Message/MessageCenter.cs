@@ -22,12 +22,12 @@ namespace Gateway.Message
         private readonly Dictionary<string, Action<InboundMessage>> inboudMessageProc = new Dictionary<string, Action<InboundMessage>>();
         private readonly object mutex = new object();
         private readonly AtomicInt64 pendingProcessCounter = new AtomicInt64();
-        private readonly ConcurrentQueue<InboundMessage> inboundMessages = new ConcurrentQueue<InboundMessage>();
+        private readonly ConcurrentQueue<Nullable<InboundMessage>> inboundMessages = new ConcurrentQueue<Nullable<InboundMessage>>();
         private readonly Thread messageThread;
         private volatile bool stop = false;
-        private ClientConnectionPool clientConnectionPool;
+        private ClientConnectionPool? clientConnectionPool = null;
 
-        private Action<InboundMessage> defaultInboundMessageProc;
+        private Action<InboundMessage> defaultInboundMessageProc = (_) => { }; 
 
         public MessageCenter(IServiceProvider serviceProvider,
                              ILoggerFactory loggerFactory,
@@ -62,12 +62,11 @@ namespace Gateway.Message
                     }
                 }
 
-                InboundMessage message = default;
-                while (this.inboundMessages.TryDequeue(out message) && message.Inner != null) 
+                while (this.inboundMessages.TryDequeue(out var message) && message != null) 
                 {
                     try
                     {
-                        this.ProcessInboundMessage(message);
+                        this.ProcessInboundMessage(message.Value);
                     }
                     catch (Exception e)
                     {
@@ -81,7 +80,7 @@ namespace Gateway.Message
         public void StopAsync()
         {
             this.stop = true;
-            this.inboundMessages.Enqueue(InboundMessage.Empty);
+            this.inboundMessages.Enqueue(null);
         }
 
         public void OnConnectionClosed(IChannel channel)

@@ -47,7 +47,7 @@ namespace Gateway.Message
             var readableBytes = input.ReadableBytes;
             if (readableBytes < HeaderLength) 
             {
-                return (0, null, null);
+                return (0, "", "");
             }
 
             input.MarkReaderIndex();
@@ -59,7 +59,7 @@ namespace Gateway.Message
             if (readableBytes < totalLength) 
             {
                 input.ResetReaderIndex();
-                return (0, null, null);
+                return (0, "", "");
             }
             var nameLength = input.ReadByte();
             var name = input.ReadString(nameLength, Encoding.UTF8);
@@ -82,7 +82,9 @@ namespace Gateway.Message
                     body = new byte[bodyLength];
                     input.ReadBytes(body);
                 }
-                var msg = new RpcMessage(meta as RpcMeta, body);
+                var m = meta as RpcMeta;
+                ArgumentNullException.ThrowIfNull(m, $"Message:{meta}");
+                var msg = new RpcMessage(m, body);
                 return (totalLength, meta.GetType().Name, msg);
             }
             finally 

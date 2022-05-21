@@ -4,11 +4,13 @@ namespace Gateway.Handler
 {
     public class GatewayPlayerSessionInfo
     {
-        public string AccountID;
-        public string OpenID;
-        public byte[] Token;
-        public string ActorType;
-        public string ActorID;
+        static byte[] Empty = new byte[0];
+
+        public string AccountID = "";
+        public string OpenID = "";
+        public byte[] Token = Empty;
+        public string ActorType = "";
+        public string ActorID = "";
         public long DestServerID;
     }
 
@@ -20,7 +22,9 @@ namespace Gateway.Handler
         {
             if (sessionInfo.States.TryGetValue(KeyGatewaySessionInfo, out var v))
             {
-                return v as GatewayPlayerSessionInfo;
+                var value = v as GatewayPlayerSessionInfo;
+                if (value != null)
+                    return value;
             }
             var info = new GatewayPlayerSessionInfo();
             sessionInfo.States.TryAdd(KeyGatewaySessionInfo, info);
