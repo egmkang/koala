@@ -1,5 +1,4 @@
 import asyncio
-import gc
 import time
 import weakref
 from koala import default_dict
@@ -82,8 +81,10 @@ class ActorTimer:
     pass
 
     def run(self):
-        actor = self._weak_actor()
-        if actor:
+        from koala.server.actor_base import ActorBase
+
+        actor: ActorBase | None = cast(ActorBase, self._weak_actor())
+        if actor and actor.context:
             asyncio.create_task(actor.context.push_message((None, self)))
         else:
             self.cancel()
