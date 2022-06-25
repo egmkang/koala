@@ -9,7 +9,8 @@ from koala.placement.placement import Placement
 from koala.pd.simple import SelfHostedPlacement
 from koala.server import rpc_proxy, actor_timer
 from koala.logger import logger
-from koala.hotfix import hotfix
+
+# from koala.hotfix import hotfix
 
 
 class IService1(ActorInterface):
@@ -149,7 +150,7 @@ for item in range(16):
     i = item
     koala_host.create_task(bench(i))
 
-koala_host.create_task(patch_code())
+# koala_host.create_task(patch_code())
 koala_host.create_task(run_timer(1))
 koala_host.create_task(qps())
 koala_host.run_server()

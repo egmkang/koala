@@ -16,6 +16,7 @@ from koala.koala_typing import *
 
 _entity_manager = ActorManager()
 _last_process_time = time.time()
+_placement_instance: Placement | None = None
 
 
 async def update_process_time():
@@ -26,7 +27,11 @@ async def update_process_time():
 
 
 async def process_rpc_request_slow(session: SocketSession, request: object):
-    placement = Placement.instance()
+    global _placement_instance
+    if not _placement_instance:
+        _placement_instance = Placement.instance()
+
+    placement = _placement_instance
     req, _ = cast(Tuple[RpcRequest, bytes], request)
     placement.remove_position_cache(req.service_name, req.actor_id)
     try:
@@ -51,12 +56,16 @@ async def process_rpc_request_slow(session: SocketSession, request: object):
 
 
 async def process_rpc_request(session: SocketSession, request: object):
+    global _placement_instance
+    if not _placement_instance:
+        _placement_instance = Placement.instance()
+
     request = cast(RpcMessage, request)
     req, raw_args = request.meta, request.body if request.body else b""
     req = cast(RpcRequest, req)
     req._args, req._kwargs = utils.pickle_loads(raw_args)
     try:
-        current_server_id = Placement.instance().server_id()
+        current_server_id = _placement_instance.server_id()
         node = Placement.instance().find_position_in_cache(
             req.service_name, req.actor_id
         )

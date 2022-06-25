@@ -23,6 +23,9 @@ async def _rpc_call(unique_id: int) -> object:
     return result
 
 
+PLACEMENT: Placement | None = None
+
+
 class _RpcMethodObject(object):
     def __init__(
         self,
@@ -43,9 +46,11 @@ class _RpcMethodObject(object):
 
     async def __send_request(self, *arg, **kwargs):
         # position
-        position = await Placement.instance().find_position(
-            self.actor_type, self.actor_id
-        )
+        global PLACEMENT
+        if not PLACEMENT:
+            PLACEMENT = Placement.instance()
+
+        position = await PLACEMENT.find_position(self.actor_type, self.actor_id)
         if self.server_node:
             position = self.server_node
         if position is None:

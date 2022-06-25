@@ -10,13 +10,18 @@ from koala.server.rpc_exception import RpcException
 from koala.server import actor_message_loop
 
 _entity_manager = ActorManager()
+_placement_instance: Placement | None = None
 
 
 async def _dispatch_user_message_slow(
     session: SocketSession, actor_type: str, actor_id: str, msg: object
 ):
-    node = await Placement.instance().find_position(actor_type, actor_id)
-    if node is not None and node.server_uid == Placement.instance().server_id():
+    global _placement_instance
+    if not _placement_instance:
+        _placement_instance = Placement.instance()
+
+    node = await _placement_instance.find_position(actor_type, actor_id)
+    if node is not None and node.server_uid == _placement_instance.server_id():
         actor = _entity_manager.get_or_new_by_name(actor_type, actor_id)
         if actor is None:
             raise RpcException.entity_not_found()
@@ -35,10 +40,14 @@ async def _dispatch_user_message_slow(
 async def _dispatch_user_message(
     session: SocketSession, actor_type: str, actor_id: str, msg: object
 ):
+    global _placement_instance
+    if not _placement_instance:
+        _placement_instance = Placement.instance()
+
     # 这边获取到对象的位置, 然后直接把消息Push到对象Actor的MailBox里面
     # 如果没找到位置, 那么先去定位, 如果不在当前服务器内, 那么帮忙转发到一下
-    node = Placement.instance().find_position_in_cache(actor_type, actor_id)
-    if node is not None and node.server_uid == Placement.instance().server_id():
+    node = _placement_instance.find_position_in_cache(actor_type, actor_id)
+    if node is not None and node.server_uid == _placement_instance.server_id():
         actor = _entity_manager.get_or_new_by_name(actor_type, actor_id)
         if actor is None:
             raise RpcException.entity_not_found()
