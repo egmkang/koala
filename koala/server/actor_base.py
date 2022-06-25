@@ -15,14 +15,15 @@ from koala.logger import LoggerWithPrefix
 from koala.network.socket_session import SocketSession, SocketSessionManager
 from koala.server.actor_context import ActorContext
 from koala.server import rpc_proxy
-from koala.server.actor_timer import ActorTimerManager, ActorTimer
+from koala.server import actor_timer
+from koala.server.actor import Actor
 
 
 _session_manager = SocketSessionManager()
 _membership = MembershipManager()
 
 
-class ActorBase(ActorInterface, ABC, LoggerWithPrefix):
+class ActorBase(ActorInterface, Actor, ABC, LoggerWithPrefix):
     def __init__(self):
         super(ActorBase, self).__init__()
 
@@ -30,7 +31,7 @@ class ActorBase(ActorInterface, ABC, LoggerWithPrefix):
         self.__uid = 0
         self.__context: Optional[ActorContext] = None
         self.__socket_session: Optional[weakref.ReferenceType[SocketSession]] = None
-        self.__timer_manager = ActorTimerManager(self.weak)
+        self.__timer_manager = actor_timer.ActorTimerManager(weakref.ref(self))
         pass
 
     def _init_actor(self, uid: ActorID, context: ActorContext):
@@ -155,12 +156,12 @@ class ActorBase(ActorInterface, ABC, LoggerWithPrefix):
                     )
                 elif isinstance(rpc_message.meta, NotifyActorSessionAborted):
                     await self.on_session_aborted(rpc_message.meta)
-            elif isinstance(msg, ActorTimer):
+            elif isinstance(msg, actor_timer.ActorTimer):
                 msg.tick()
             else:
                 await self.dispatch_user_message(msg)
             # 定时器不能延长Actor的生命周期
-            if not isinstance(msg, ActorTimer) and self.context:
+            if not isinstance(msg, actor_timer.ActorTimer) and self.context:
                 self.context.last_message_time = time.time()
         except Exception as e:
             self.error("dispatch_message Exception:%s" % (e))
@@ -197,8 +198,8 @@ class ActorBase(ActorInterface, ABC, LoggerWithPrefix):
         return cast(ActorInterfaceType, o)
 
     def register_timer(
-        self, interval: int, fn: Callable[[ActorTimer], None]
-    ) -> ActorTimer:
+        self, interval: int, fn: Callable[[actor_timer.ActorTimer], None]
+    ) -> actor_timer.ActorTimer:
         assert self.__timer_manager
         return self.__timer_manager.register_timer(interval, fn)
 

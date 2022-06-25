@@ -5,6 +5,7 @@ from koala import default_dict
 
 from koala.koala_typing import *
 from koala.logger import logger
+from koala.server import actor
 
 
 __TIMER_ID = 0
@@ -23,7 +24,7 @@ def _milli_seconds() -> int:
 class ActorTimer:
     def __init__(
         self,
-        weak_actor: weakref.ReferenceType,
+        weak_actor: weakref.ReferenceType[actor.Actor],
         actor_id: str,
         manager: "ActorTimerManager",
         fn: Callable[["ActorTimer"], None],
@@ -81,9 +82,7 @@ class ActorTimer:
     pass
 
     def run(self):
-        from koala.server.actor_base import ActorBase
-
-        actor: ActorBase | None = cast(ActorBase, self._weak_actor())
+        actor = self._weak_actor()
         if actor and actor.context:
             asyncio.create_task(actor.context.push_message((None, self)))
         else:
@@ -97,7 +96,7 @@ class ActorTimer:
 
 
 class ActorTimerManager:
-    def __init__(self, weak_actor: weakref.ReferenceType):
+    def __init__(self, weak_actor: weakref.ReferenceType[actor.Actor]):
         self._weak_actor = weak_actor
         self._actor_id = ""
         self._dict: default_dict.DefaultDict[
@@ -106,11 +105,10 @@ class ActorTimerManager:
 
     @property
     def actor_id(self) -> str:
-        from koala.server.actor_base import ActorBase
-
         if self._actor_id == "":
-            actor: ActorBase = cast(ActorBase, self._weak_actor())
-            self._actor_id = "%s/%s" % (actor.type_name, actor.uid)
+            actor = self._weak_actor()
+            if actor:
+                self._actor_id = "%s/%s" % (actor.type_name, actor.uid)
         return self._actor_id
 
     @classmethod
@@ -139,7 +137,7 @@ class ActorTimerManager:
             timer.cancel()
 
     def unregister_all(self):
-        remove_list = []
+        remove_list: List[int] = []
         for timer_id in self._dict:
             remove_list.append(timer_id)
         for timer_id in remove_list:

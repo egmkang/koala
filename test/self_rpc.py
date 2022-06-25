@@ -7,8 +7,7 @@ from koala.server.actor_base import ActorWithStrKey
 from koala.server.rpc_meta import *
 from koala.placement.placement import Placement
 from koala.pd.simple import SelfHostedPlacement
-from koala.server import rpc_proxy
-from koala.server.actor_timer import ActorTimer
+from koala.server import rpc_proxy, actor_timer
 from koala.logger import logger
 from koala.hotfix import hotfix
 
@@ -86,7 +85,7 @@ class BenchImpl(IBench, ActorWithStrKey):
     async def run_timer(self, count: int):
         weak_actor = self.weak
 
-        def f(timer: ActorTimer):
+        def f(timer: actor_timer.ActorTimer):
             logger.info("timer, tick:%s" % timer.tick_count)
             if timer.tick_count >= count:
                 a: BenchImpl = cast(BenchImpl, weak_actor())

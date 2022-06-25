@@ -8,7 +8,7 @@ from koala.message import RpcResponse, RpcRequest
 from koala.message.rpc_message import RpcMessage
 from koala.server import rpc_meta
 from koala.network.socket_session import SocketSession
-from koala.server.actor_base import ActorBase
+from koala.server import actor_base
 from koala.server.rpc_exception import RpcException, RPC_ERROR_UNKNOWN
 from koala.logger import logger
 
@@ -35,7 +35,7 @@ async def _send_error_resp(session: SocketSession, request_id: int, e: Exception
 
 
 async def _dispatch_actor_rpc_request(
-    actor: ActorBase, session: Optional[SocketSession], req: RpcRequest
+    actor: actor_base.ActorBase, session: Optional[SocketSession], req: RpcRequest
 ):
     try:
         method = rpc_meta.get_rpc_impl_method((req.service_name, req.method_name))
@@ -63,7 +63,7 @@ async def _dispatch_actor_rpc_request(
             await _send_error_resp(session, req.request_id, e)
 
 
-async def _dispatch_actor_message_in_loop(actor: ActorBase):
+async def _dispatch_actor_message_in_loop(actor: actor_base.ActorBase):
     loop_id = _new_loop_id()
     context = actor.context
     assert context
@@ -124,14 +124,16 @@ async def _dispatch_actor_message_in_loop(actor: ActorBase):
     logger.info("Actor:%s/%s loop:%d finished" % (actor.type_name, actor.uid, loop_id))
 
 
-def run_actor_message_loop(actor: ActorBase):
+def run_actor_message_loop(actor: actor_base.ActorBase):
     assert actor.context
     if actor.context.loop_id == 0:
         asyncio.create_task(_dispatch_actor_message_in_loop(actor))
     pass
 
 
-async def dispatch_actor_message(actor: ActorBase, session: SocketSession, msg: object):
+async def dispatch_actor_message(
+    actor: actor_base.ActorBase, session: SocketSession, msg: object
+):
     assert actor.context
     if isinstance(msg, RpcRequest):
         req = cast(RpcRequest, msg)
