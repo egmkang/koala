@@ -4,8 +4,9 @@ v0.8
 
 * [ ] build.sh升级到.net 6
 * [ ] python代码用black格式化
-* [ ] 依赖升级
+* [x] 依赖升级
   * [x] python依赖
+  * [x] pd
 * [ ] type hint继续加强
 * [ ] 杂项
   * [x] Actor logger
