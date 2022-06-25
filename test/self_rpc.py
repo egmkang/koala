@@ -123,15 +123,15 @@ async def qps():
             last = v
 
 
-async def patch_code():
-    await asyncio.sleep(3.0)
-    placement = Placement.instance()
-    servers = placement.get_all_servers()
-    for server in servers:
-        proxy = rpc_proxy.get_rpc_proxy(
-            hotfix.IHotFix, "1", server_node=server, check_postion=False
-        )
-        await proxy.patch_code("print(112233)")
+# async def patch_code():
+#     await asyncio.sleep(3.0)
+#     placement = Placement.instance()
+#     servers = placement.get_all_servers()
+#     for server in servers:
+#         proxy = rpc_proxy.get_rpc_proxy(
+#             hotfix.IHotFix, "1", server_node=server, check_postion=False
+#         )
+#         await proxy.patch_code("print(112233)")
 
 
 PORT = 15555
