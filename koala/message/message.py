@@ -3,7 +3,7 @@ from koala.message.base import JsonMessage
 from dataclasses import dataclass
 
 
-@dataclass
+@dataclass(slots=True)
 class RpcRequest(JsonMessage):
     service_name: str = ""
     method_name: str = ""
@@ -25,7 +25,7 @@ class RpcRequest(JsonMessage):
         return self._kwargs
 
 
-@dataclass
+@dataclass(slots=True)
 class RpcResponse(JsonMessage):
     request_id: int = 0
     error_code: int = 0
@@ -37,11 +37,11 @@ class RpcResponse(JsonMessage):
         return self._response
 
 
-@dataclass
+@dataclass(slots=True)
 class RequestHeartBeat(JsonMessage):
     milli_seconds: int = 0
 
 
-@dataclass
+@dataclass(slots=True)
 class ResponseHeartBeat(JsonMessage):
     milli_seconds: int = 0

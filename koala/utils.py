@@ -56,6 +56,12 @@ def get_host_ip(host: str = "", port: int = 0):
 def to_dict(obj: Any) -> Dict | List:
     if isinstance(obj, dict):
         return {k: to_dict(v) for k, v in obj.items()}
+    elif getattr(obj, "__slots__", None):
+        return {
+            name: to_dict(getattr(obj, name))
+            for name in obj.__slots__
+            if name[0] != "_"
+        }
     elif hasattr(obj, "_ast"):
         return to_dict(obj._ast())
     elif hasattr(obj, "__dict__"):

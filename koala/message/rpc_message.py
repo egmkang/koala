@@ -3,7 +3,7 @@ from koala.koala_typing import *
 from koala.message.base import JsonMessage
 
 
-@dataclasses.dataclass
+@dataclasses.dataclass(slots=True)
 class RpcMessage:
     meta: JsonMessage
     body: bytes = b""

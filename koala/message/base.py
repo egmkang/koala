@@ -26,7 +26,7 @@ class JsonMeta(type):
         return cls
 
 
-@dataclasses.dataclass
+@dataclasses.dataclass(slots=True)
 class JsonMessage(metaclass=JsonMeta):
     @classmethod
     def from_dict(cls, kwargs: dict):

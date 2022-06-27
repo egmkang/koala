@@ -3,7 +3,7 @@ from dataclasses import dataclass
 from koala.message.base import JsonMessage
 
 
-@dataclass
+@dataclass(slots=True)
 class B(JsonMessage):
     service_name: str = ""
     method_name: str = ""
@@ -15,7 +15,7 @@ class B(JsonMessage):
     _kwargs: Optional[dict] = None
 
 
-@dataclass
+@dataclass(slots=True)
 class A(JsonMessage):
     b: B
     a: str
@@ -43,6 +43,7 @@ class TestJsonMessage:
             reentrant_id=2222,
             request_id=3,
         )
+        b._args = [1111]
         a = A(b=b, a="222")
         # 只需要判断两层就行了
         d = a.to_dict()
