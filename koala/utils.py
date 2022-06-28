@@ -60,7 +60,7 @@ def to_dict(obj: Any) -> Dict | List:
         return {
             name: to_dict(getattr(obj, name))
             for name in obj.__slots__
-            if name[0] != "_"
+            if not name.startswith("_")
         }
     elif hasattr(obj, "_ast"):
         return to_dict(obj._ast())
