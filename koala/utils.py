@@ -7,6 +7,7 @@ import socket
 import json
 from typing import Any, Callable, cast, List, Tuple
 
+orjson_dumps: Callable[[Any], bytes] | None = None
 json_dumps: Callable[[Any], bytes] = cast(Callable[[Any], bytes], None)
 json_loads: Callable[[str | bytes], Any] = cast(Callable[[str | bytes], Any], None)
 _local_ip = ""
@@ -21,6 +22,7 @@ try:
 
     json_loads = orjson.loads
     json_dumps = orjson.dumps
+    orjson_dumps = orjson.dumps
 except:
 
     def _dumps(o):

@@ -5,7 +5,7 @@ from koala.message import *
 from koala.message.rpc_message import RpcMessage
 from koala.message.base import find_model, JsonMessage
 from koala.logger import logger
-from koala.utils import json_loads, json_dumps
+from koala.utils import json_loads, json_dumps, orjson_dumps
 
 
 KOLA_MAGIC = "KOLA".encode()
@@ -30,7 +30,11 @@ class CodecRpc(Codec):
         # N字节MessageName
         # M字节json
         name: str = o.__class__.__qualname__
-        json_data: bytes = cast(bytes, json_dumps(to_dict(o)))
+        json_data: bytes = (
+            cast(bytes, json_dumps(o.to_dict()))
+            if not orjson_dumps
+            else orjson_dumps(o)
+        )
         global meta_name_length_bytes
         meta_name_length_bytes[0] = len(name)
         return b"".join((meta_name_length_bytes, name.encode(), json_data))
