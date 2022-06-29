@@ -13,4 +13,7 @@ class ActorContext(object):
         return await self.mailbox.get()
 
     async def push_message(self, msg: object):
-        await self.mailbox.put(msg)
+        try:
+            self.mailbox.put_nowait(msg)
+        except:
+            await self.mailbox.put(msg)
