@@ -14,8 +14,11 @@ def register_model(cls):
 
 
 def find_model(name: str) -> Optional[Type["JsonMessage"]]:
-    if __json_mapper.contains_key(name):
+    try:
         return __json_mapper[name]
+    except:
+        if __json_mapper.contains_key(name):
+            return __json_mapper[name]
     return None
 
 
