@@ -20,6 +20,7 @@ meta_name_length_bytes = bytearray(b"0")
 
 class CodecRpc(Codec):
     HEADER_LENGTH = 12
+    CLASS_NAME_CACHE: Dict[Type[JsonMessage], bytes] = {}
 
     def __init__(self):
         super(CodecRpc, self).__init__(CODEC_RPC)
@@ -29,15 +30,22 @@ class CodecRpc(Codec):
         # 1字节长度
         # N字节MessageName
         # M字节json
-        name: str = o.__class__.__qualname__
+        _class = o.__class__
+        try:
+            name_bytes = cls.CLASS_NAME_CACHE[_class]
+        except:
+            if _class not in cls.CLASS_NAME_CACHE:
+                name: str = _class.__qualname__
+                cls.CLASS_NAME_CACHE[_class] = name.encode()
+            name_bytes = cls.CLASS_NAME_CACHE[_class]
         json_data: bytes = (
             cast(bytes, json_dumps(o.to_dict()))
             if not orjson_dumps
             else orjson_dumps(o)
         )
         global meta_name_length_bytes
-        meta_name_length_bytes[0] = len(name)
-        return b"".join((meta_name_length_bytes, name.encode(), json_data))
+        meta_name_length_bytes[0] = len(name_bytes)
+        return b"".join((meta_name_length_bytes, name_bytes, json_data))
 
     @classmethod
     def _decode_meta(cls, array: memoryview) -> Optional[JsonMessage]:
