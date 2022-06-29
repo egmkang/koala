@@ -31,9 +31,8 @@ class CodecRpc(Codec):
         # N字节MessageName
         # M字节json
         _class = o.__class__
-        try:
-            name_bytes = cls.CLASS_NAME_CACHE[_class]
-        except:
+        name_bytes = cls.CLASS_NAME_CACHE.get(_class, None)
+        if not name_bytes:
             if _class not in cls.CLASS_NAME_CACHE:
                 name: str = _class.__qualname__
                 cls.CLASS_NAME_CACHE[_class] = name.encode()
@@ -50,7 +49,7 @@ class CodecRpc(Codec):
     @classmethod
     def _decode_meta(cls, array: memoryview) -> Optional[JsonMessage]:
         name_length = array[0]
-        name = str(array[1 : name_length + 1], "utf-8")
+        name = array[1 : name_length + 1].tobytes()
         model = find_model(name)
         if model is not None:
             json = json_loads(array[name_length + 1 :])

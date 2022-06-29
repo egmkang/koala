@@ -5,20 +5,20 @@ from koala.koala_typing import *
 from koala.utils import to_dict
 
 JsonVar = TypeVar("JsonVar", bound="JsonMessage")
-__json_mapper: default_dict.DefaultDict[str, Any] = default_dict.DefaultDict()
+__json_mapper: default_dict.DefaultDict[bytes, Any] = default_dict.DefaultDict()
 
 
 def register_model(cls):
     global __json_mapper
-    __json_mapper[cls.__qualname__] = cls
+    __json_mapper[cls.__qualname__.encode()] = cls
 
 
-def find_model(name: str) -> Optional[Type["JsonMessage"]]:
-    try:
+def find_model(name: bytes) -> Optional[Type["JsonMessage"]]:
+    v = __json_mapper.get(name, None)
+    if v:
+        return v
+    if __json_mapper.contains_key(name):
         return __json_mapper[name]
-    except:
-        if __json_mapper.contains_key(name):
-            return __json_mapper[name]
     return None
 
 
