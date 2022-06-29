@@ -10,7 +10,8 @@ class CodecEcho(Codec):
 
     def decode(self, buffer: Buffer) -> Optional[object]:
         if buffer.readable_length() > 0:
-            return buffer.read(buffer.readable_length()).decode()
+            mv = buffer.read(buffer.readable_length())
+            return str(mv, "utf-8")
         return None
 
     def encode(self, msg: object) -> bytes:

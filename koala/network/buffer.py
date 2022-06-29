@@ -35,12 +35,13 @@ class Buffer:
             self._buffer.extend(data[first_space:])
         self._write += len(data)
 
-    def slice(self, count=0):
+    def slice(self, count=0) -> memoryview:
+        view = memoryview(self._buffer)
         if count <= 0:
-            return self._buffer[self._read : self._write]
-        return self._buffer[self._read : self._read + count]
+            return view[self._read : self._write]
+        return view[self._read : self._read + count]
 
-    def read(self, count):
+    def read(self, count) -> memoryview:
         if count < 0:
             raise Exception("out of bound")
 
