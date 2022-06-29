@@ -47,9 +47,9 @@ class CodecRpc(Codec):
         return b"".join((meta_name_length_bytes, name_bytes, json_data))
 
     @classmethod
-    def _decode_meta(cls, array: memoryview) -> Optional[JsonMessage]:
+    def _decode_meta(cls, array: bytearray) -> Optional[JsonMessage]:
         name_length = array[0]
-        name = array[1 : name_length + 1].tobytes()
+        name = bytes(array[1 : name_length + 1])
         model = find_model(name)
         if model is not None:
             json = json_loads(array[name_length + 1 :])
@@ -60,27 +60,21 @@ class CodecRpc(Codec):
         if buffer.readable_length() < self.HEADER_LENGTH:
             return None
         # 这边需要对包的长度进行判断
-        with buffer.slice(self.HEADER_LENGTH) as header:
-            magic = str(header[:4], "utf-8")
-            meta_length = int.from_bytes(header[4:8], "little")
-            body_length = int.from_bytes(header[8:], "little")
-            if (
-                buffer.readable_length()
-                < meta_length + body_length + self.HEADER_LENGTH
-            ):
-                return None
-            if magic != "KOLA":
-                raise Exception("header exception, magic number not correct")
-            buffer.has_read(self.HEADER_LENGTH)
-            with buffer.read(meta_length) as meta_data, buffer.read(
-                body_length
-            ) as body_data:
-                meta = self._decode_meta(meta_data)
-                if meta is not None:
-                    return RpcMessage.from_msg(
-                        meta, body_data.tobytes() if body_data else b""
-                    )
-                raise Exception("decode meta fail")
+        header = buffer.slice(self.HEADER_LENGTH)
+        magic = str(header[:4], "utf-8")
+        meta_length = int.from_bytes(header[4:8], "little")
+        body_length = int.from_bytes(header[8:], "little")
+        if buffer.readable_length() < meta_length + body_length + self.HEADER_LENGTH:
+            return None
+        if magic != "KOLA":
+            raise Exception("header exception, magic number not correct")
+        buffer.has_read(self.HEADER_LENGTH)
+        meta_data = buffer.read(meta_length)
+        body_data = buffer.read(body_length)
+        meta = self._decode_meta(meta_data)
+        if meta is not None:
+            return RpcMessage.from_msg(meta, body_data if body_data else b"")
+        raise Exception("decode meta fail")
 
     def encode(self, msg: object) -> bytes:
         if not isinstance(msg, RpcMessage):
