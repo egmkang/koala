@@ -11,7 +11,7 @@ cd gateway/Gateway
 echo $(PWD)
 
 dotnet publish -c Release -r win-x64 -p:PublishSingleFile=true --self-contained
-cd bin/Release/net5.0/win-x64/publish/
+cd bin/Release/net6.0/win-x64/publish/
 ls -al
 tar -cjf gateway.tar.bz2 Gateway.* *.dll *.config *.json
 mv gateway.tar.bz2 $ROOT/output/
