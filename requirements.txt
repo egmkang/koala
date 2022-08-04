@@ -1,4 +1,4 @@
-httpx==0.22.0
+httpx==0.23.0
 loguru==0.6.0
 motor==3.0.0
 orjson==3.6.8
