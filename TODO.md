@@ -1,5 +1,11 @@
 TODO:
 
+v0.9
+* [ ] 升级
+  * [ ] .net 7
+  * [ ] python3.11
+* [ ] 其他提升
+
 v0.8
 
 * [x] build.sh升级到.net 6
