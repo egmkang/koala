@@ -1,7 +1,7 @@
 import os
 import sys
 from fastapi import FastAPI
-from uvicorn import Server, Config
+import uvicorn
 from uvicorn.supervisors import ChangeReload
 from koala.logger import logger
 from koala.koala_typing import *
@@ -11,8 +11,8 @@ app = FastAPI()
 
 
 async def fastapi_serve(*args, **kwargs):
-    config = Config(app, **kwargs)
-    server = Server(config=config)
+    config = uvicorn.Config(app, **kwargs)
+    server = uvicorn.Server(config=config)
 
     if (config.reload or config.workers > 1) and not isinstance(app, str):
         logger.error(
