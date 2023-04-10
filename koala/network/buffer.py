@@ -7,8 +7,7 @@ class Buffer:
     @staticmethod
     def from_bytes(array: bytes):
         buffer = Buffer()
-        buffer._buffer = array
-        buffer._write = len(array)
+        buffer.append(array)
         return buffer
 
     def shrink(self):
@@ -40,10 +39,9 @@ class Buffer:
             return self._buffer[self._read : self._write]
         return self._buffer[self._read : self._read + count]
 
-    def read(self, count) -> bytearray:
-        if count < 0:
-            raise Exception("out of bound")
-
-        array = self.slice(count)
+    def read(self, count=0) -> bytearray:
+        if count < 0 or count > self.readable_length():
+            count = self.readable_length()
+        array = self.slice()
         self._read += count
         return array
