@@ -1,4 +1,3 @@
-from os import name
 from motor.motor_asyncio import AsyncIOMotorCollection, AsyncIOMotorCursor
 from koala.storage.storage import *
 from motor.motor_asyncio import AsyncIOMotorClient

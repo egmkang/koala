@@ -31,7 +31,7 @@ class ActorBase(ActorInterface, Actor, ABC, LoggerWithPrefix):
         self.__uid = 0
         self.__context: Optional[ActorContext] = None
         self.__socket_session: Optional[weakref.ReferenceType[SocketSession]] = None
-        self.__timer_manager = actor_timer.ActorTimerManager(weakref.ref(self))
+        self.__timer_manager = actor_timer.ActorTimerManager(weakref.ReferenceType[Actor](self))
         pass
 
     def _init_actor(self, uid: ActorID, context: ActorContext):
@@ -62,7 +62,7 @@ class ActorBase(ActorInterface, Actor, ABC, LoggerWithPrefix):
 
     @property
     def weak(self) -> weakref.ReferenceType["ActorBase"]:
-        return weakref.ref(self)
+        return weakref.ReferenceType[ActorBase](self)
 
     @property
     def context(self) -> Optional[ActorContext]:
