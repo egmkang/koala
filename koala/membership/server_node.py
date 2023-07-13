@@ -16,6 +16,11 @@ class ServerNode(BaseModel):
     _session: Optional[weakref.ReferenceType[SocketSession]] = PrivateAttr(default=None)
     _session_id: int = PrivateAttr(default=0)
 
+    def __init__(self, **data: Any) -> None:
+        super().__init__(**data)
+        self._session = None
+        self._session_id = 0
+
     @property
     def session_id(self):
         return self._session_id
