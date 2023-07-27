@@ -199,7 +199,7 @@ class RequestHeartBeat(BaseMode):
 
 def encode(req: BaseMode) -> bytes:
     name = req.__class__.__qualname__
-    json_data: bytes = cast(bytes, json_loads(req.dict()))
+    json_data: bytes = cast(bytes, json_loads(req.model_dump()))
     return b"".join((int.to_bytes(len(name), 1, 'little'), name.encode(), json_data))
 ```
 

@@ -43,7 +43,7 @@ class RecordStorageMongo(RecordStorage[RecordType]):
         return mongo_filter
 
     async def insert_one(self, record: RecordType) -> object:
-        content = record.to_dict()
+        content = record.model_dump()
         mongo_filter = self.__get_filter(content)
         update = {"$set": content}
         result = await self.__db.update_one(mongo_filter, update, upsert=True)
@@ -61,14 +61,14 @@ class RecordStorageMongo(RecordStorage[RecordType]):
         mongo_filter = self.__get_filter(None, key1, key2)
         cursor: AsyncIOMotorCursor = self.__db.find(mongo_filter)
         for document in await cursor.to_list(1024):
-            obj = self.__record_type.parse_obj(document)
+            obj = self.__record_type.model_validate(document)
             result.append(obj)
         return result
 
     async def find_one(self, key1: TypeID) -> Optional[RecordType]:
         document = await self.__db.find_one(self.__get_filter(None, key1))
         if document:
-            obj = self.__record_type.parse_obj(document)
+            obj = self.__record_type.model_validate(document)
             return obj
         return None
 

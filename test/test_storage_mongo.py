@@ -25,7 +25,7 @@ class RecordTestTable2(Record):
     name: str
 
 
-_connection_str = "mongodb://koala:123456@127.0.0.1:27017/koala_db"
+_connection_str = "mongodb://root:tyhall51@10.1.1.210:8015/admin"
 _db_name = "koala_db"
 
 
@@ -142,5 +142,4 @@ async def main():
 
 
 if __name__ == "__main__":
-    loop = asyncio.get_event_loop()
-    loop.run_until_complete(main())
+    asyncio.run(main())

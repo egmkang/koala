@@ -104,7 +104,7 @@ def __format_result(
     if len(body) == 0:
         body = b"{}"
     if code == 200:
-        return result_type.parse_raw(body.decode("utf-8"))
+        return result_type.model_validate(body.decode("utf-8"))
     else:
         obj = result_type()
         obj.error_code = code
@@ -183,14 +183,14 @@ async def register_server(
         services=services,
     )
 
-    code, body = await __request(PD_MEMBERSHIP_REGISTER_URL, req.dict())
+    code, body = await __request(PD_MEMBERSHIP_REGISTER_URL, req.model_dump())
     return __format_result(code, body, RegisterNewServerResponse)
 
 
 async def delete_server(server_id: int, address: str) -> DeleteServerResponse:
     req = DeleteServerRequest(server_id=server_id, address=address)
 
-    code, body = await __request(PD_MEMBERSHIP_DELETE_URL, req.dict())
+    code, body = await __request(PD_MEMBERSHIP_DELETE_URL, req.model_dump())
     return __format_result(code, body, DeleteServerResponse)
 
 
@@ -199,7 +199,7 @@ async def keep_alive(
 ) -> KeepAliveServerResponse:
     req = KeepAliveServerRequest(server_id=server_id, load=load, lease_id=lease_id)
 
-    code, body = await __request(PD_MEMBERSHIP_KEEP_ALIVE_URL, req.dict())
+    code, body = await __request(PD_MEMBERSHIP_KEEP_ALIVE_URL, req.model_dump())
     result = __format_result(code, body, KeepAliveServerResponse)
     return result
 
@@ -209,7 +209,7 @@ async def find_actor_position(
 ) -> FindActorPositionResponse:
     req = FindActorPositionRequest(actor_type=actor_type, actor_id=actor_id, ttl=ttl)
 
-    code, body = await __request(PD_PLACEMENT_FIND_POSITION_URL, req.dict())
+    code, body = await __request(PD_PLACEMENT_FIND_POSITION_URL, req.model_dump())
     return __format_result(code, body, FindActorPositionResponse)
 
 
