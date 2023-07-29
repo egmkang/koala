@@ -42,6 +42,6 @@ class Buffer:
     def read(self, count=0) -> bytearray:
         if count < 0 or count > self.readable_length():
             count = self.readable_length()
-        array = self.slice()
+        array = self.slice(count)
         self._read += count
         return array

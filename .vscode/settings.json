@@ -2,8 +2,11 @@
     "python.autoComplete.extraPaths": [],
     "python.analysis.extraPaths": [],
     "svn.ignoreMissingSvnWarning": true,
-    "python.formatting.provider": "black",
     "python.languageServer": "Pylance",
     "python.analysis.typeCheckingMode": "basic",
-    "python.analysis.diagnosticMode": "workspace"
+    "python.analysis.diagnosticMode": "workspace",
+    "[python]": {
+        "editor.defaultFormatter": "ms-python.black-formatter",
+        "editor.formatOnSave": true
+    }
 }

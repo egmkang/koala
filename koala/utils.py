@@ -29,7 +29,7 @@ except:
         return json.dumps(o).encode()  # type: ignore
 
     def _loads(b):
-        return json_loads(b.decode())  # type: ignore
+        return json.loads(b)  # type: ignore
 
     json_loads = _loads  # type: ignore
     json_dumps = _dumps  # type: ignore
@@ -82,7 +82,7 @@ def message_compute_check_sum(
     message: dict, private_key: str, escape_key: str = "check_sum"
 ) -> str:
     item: List[Tuple[str, str]] = list()
-    for (k, v) in message.items():
+    for k, v in message.items():
         if k == escape_key:
             continue
         item.append(("%s" % k, "%s" % v))
@@ -91,7 +91,7 @@ def message_compute_check_sum(
     item.append((private_key, ""))
 
     writer = io.StringIO()
-    for (k, v) in item:
+    for k, v in item:
         writer.write(k)
         writer.write(v)
     input_str = writer.getvalue()
