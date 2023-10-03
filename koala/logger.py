@@ -35,7 +35,8 @@ def hook_logging():
     logging.basicConfig(handlers=handlers, level=20)
     for _log in [
         "uvicorn",
-        "uvicorn.access" "uvicorn.error",
+        "uvicorn.access",
+        "uvicorn.error",
         "fastapi",
         "sqlalchemy",
         "databases",
