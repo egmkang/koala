@@ -2,7 +2,6 @@ from koala.message import *
 from koala.message.base import JsonMessage
 
 
-@register_model
 class B2(JsonMessage):
     service_name: str = ""
     method_name: str = ""
@@ -18,7 +17,6 @@ class B2(JsonMessage):
         pass
 
 
-@register_model
 class A2(JsonMessage):
     b: B2
     a: str

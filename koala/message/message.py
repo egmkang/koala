@@ -1,8 +1,7 @@
 from koala.koala_typing import *
-from koala.message.base import JsonMessage, register_model
+from koala.message.base import JsonMessage
 
 
-@register_model
 class RpcRequest(JsonMessage):
     service_name: str = ""
     method_name: str = ""
@@ -27,7 +26,6 @@ class RpcRequest(JsonMessage):
         return self._kwargs
 
 
-@register_model
 class RpcResponse(JsonMessage):
     request_id: int = 0
     error_code: int = 0
@@ -42,11 +40,9 @@ class RpcResponse(JsonMessage):
         return self._response
 
 
-@register_model
 class RequestHeartBeat(JsonMessage):
     milli_seconds: int = 0
 
 
-@register_model
 class ResponseHeartBeat(JsonMessage):
     milli_seconds: int = 0

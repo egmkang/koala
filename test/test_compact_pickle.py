@@ -5,7 +5,6 @@ from koala.message.base import JsonMessage
 from typing import Dict, Any
 
 
-@register_model
 class A(JsonMessage):
     a: int
     b: float
