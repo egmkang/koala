@@ -1,6 +1,7 @@
 {
     "python.autoComplete.extraPaths": [],
     "python.analysis.extraPaths": [],
+    "python.testing.pytestEnabled": true,
     "svn.ignoreMissingSvnWarning": true,
     "python.languageServer": "Pylance",
     "python.analysis.typeCheckingMode": "basic",

@@ -1,5 +1,5 @@
 import asyncio
-from koala.storage.storage_mongo import MongoStorageFactory
+from koala.storage.storage_mongo import MongoStorageFactory, MongoDBConnection
 import pytest
 import pytest_asyncio.plugin
 from koala.storage.storage import *
@@ -25,8 +25,8 @@ class RecordTestTable2(Record):
     name: str
 
 
-_connection_str = "mongodb://root:tyhall51@10.1.1.210:8015/admin"
-_db_name = "koala_db"
+_connection_str = "mongodb://root:tyhall51@172.16.40.210:8015/admin"
+_db_name = "koala"
 
 
 def test_meta_data():
@@ -131,7 +131,20 @@ async def test_storage_mongo_find():
     pass
 
 
+async def test_mongo_connection_find():
+    connection = MongoDBConnection()
+    connection.init_factory(connection_str=_connection_str, db=_db_name)
+
+    result = await connection.find(RecordTestTable, 10001)
+    print(result)
+
+    result = await connection.find_one(RecordTestTable, 10001)
+    print(result)
+
+
 async def main():
+    await test_mongo_connection_find()
+
     await test_mongo_upsert()
     await test_mongo_find()
     await test_mongo_delete()

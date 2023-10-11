@@ -54,21 +54,3 @@ def find_model(name: bytes) -> Optional[Type[JsonMessage]]:
     if _json_mapper.contains_key(name):
         return _json_mapper[name]
     return None
-
-
-if __name__ == "__main__":
-
-    class TestJsonMessage(JsonMessage):
-        value: int = 0
-        name: str = ""
-
-    a = TestJsonMessage(value=1, name="1212")
-    print(1, a.to_dict())
-
-    model = find_model(b"TestJsonMessage")
-    print(2, model)
-
-    if model:
-        print(3, model.model_validate(a.to_dict()))
-
-    print(4, _json_mapper)
