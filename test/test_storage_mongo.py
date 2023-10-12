@@ -1,5 +1,5 @@
 import asyncio
-from koala.storage.storage_mongo import MongoStorageFactory, MongoDBConnection
+from koala.storage.storage_mongo import MongoDBConnection
 import pytest
 import pytest_asyncio.plugin
 from koala.storage.storage import *
@@ -54,8 +54,8 @@ def test_meta_data():
 @pytest.mark.asyncio
 async def test_mongo_find():
     _mongo_client = AsyncIOMotorClient(_connection_str)
-    collection: AsyncIOMotorCollection = _mongo_client[_db_name]["test_table"]
-    cursor: AsyncIOMotorCursor = collection.find({"uid": {"$eq": 1}})
+    collection: AsyncIOMotorCollection = _mongo_client[_db_name]["test_table"]  # type: ignore
+    cursor: AsyncIOMotorCursor = collection.find({"uid": {"$eq": 1}})  # type: ignore
     for document in await cursor.to_list(length=1024):
         print(document)
     assert True
@@ -65,7 +65,7 @@ async def test_mongo_find():
 @pytest.mark.asyncio
 async def test_mongo_upsert():
     _mongo_client = AsyncIOMotorClient(_connection_str)
-    collection: AsyncIOMotorCollection = _mongo_client[_db_name]["test_table"]
+    collection: AsyncIOMotorCollection = _mongo_client[_db_name]["test_table"]  # type: ignore
     result = await collection.update_one(
         {"uid": 1}, {"$set": {"uid": 1, "name": "121212345678"}}, upsert=True
     )
@@ -77,7 +77,7 @@ async def test_mongo_upsert():
 @pytest.mark.asyncio
 async def test_mongo_delete():
     _mongo_client = AsyncIOMotorClient(_connection_str)
-    collection: AsyncIOMotorCollection = _mongo_client[_db_name]["test_table"]
+    collection: AsyncIOMotorCollection = _mongo_client[_db_name]["test_table"]  # type: ignore
     result = await collection.delete_many({"uid": 1})
     print(result)
     assert True
@@ -95,56 +95,47 @@ def pytest_sessionfinish(session, exitstatus):
 @pytest.mark.run(order=4)
 @pytest.mark.asyncio
 async def test_storage_mongo_update():
-    factory = MongoStorageFactory()
-    factory.init_factory(connection_str=_connection_str, db=_db_name)
+    connection = MongoDBConnection()
+    connection.init(connection_str=_connection_str, db=_db_name)
 
-    record_storage = factory.get_storage(RecordTestTable)
-
-    record = RecordTestTable(uid=10, name="1010010")
-    result = await record_storage.insert_one(record)
+    result = await connection.update(
+        [
+            RecordTestTable(uid=1, name="11111"),
+            RecordTestTable(uid=2, name="2222"),
+            RecordTestTable(uid=10001, name="22223"),
+        ]
+    )
     print(result)
-    pass
+    assert result
 
 
 @pytest.mark.run(order=6)
 @pytest.mark.asyncio
 async def test_storage_mongo_delete():
-    factory = MongoStorageFactory()
-    factory.init_factory(connection_str=_connection_str, db=_db_name)
+    connection = MongoDBConnection()
+    connection.init(connection_str=_connection_str, db=_db_name)
 
-    test_record = factory.get_storage(RecordTestTable)
-    result = await test_record.delete_one(10)
+    result = await connection.delete(RecordTestTable, [1, 2])
     print(result)
-    pass
+    assert result
 
 
 @pytest.mark.run(order=5)
 @pytest.mark.asyncio
 async def test_storage_mongo_find():
-    factory = MongoStorageFactory()
-    factory.init_factory(connection_str=_connection_str, db=_db_name)
-
-    test_record = factory.get_storage(RecordTestTable)
-    result = await test_record.find(10)
-    print(result)
-    assert len(result) > 0
-    pass
-
-
-async def test_mongo_connection_find():
     connection = MongoDBConnection()
-    connection.init_factory(connection_str=_connection_str, db=_db_name)
+    connection.init(connection_str=_connection_str, db=_db_name)
 
     result = await connection.find(RecordTestTable, 10001)
     print(result)
+    assert len(result) > 0
 
     result = await connection.find_one(RecordTestTable, 10001)
     print(result)
+    assert result
 
 
 async def main():
-    await test_mongo_connection_find()
-
     await test_mongo_upsert()
     await test_mongo_find()
     await test_mongo_delete()

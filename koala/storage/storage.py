@@ -3,46 +3,35 @@ from koala.storage.record import *
 from koala.storage.record_meta import *
 
 
-class RecordStorage(Generic[RecordType]):
-    @property
+class IStorageConnection:
     @abstractmethod
-    def table_name(self) -> str:
-        pass
-
-    @property
-    @abstractmethod
-    def unique_key(self) -> KeyInfo:
-        pass
-
-    @abstractmethod
-    async def insert_one(self, record: RecordType) -> object:
-        pass
-
-    @abstractmethod
-    async def delete_one(self, key: TypeID, key2: Optional[TypeID] = None) -> object:
+    def init(self, **kwargs):
         pass
 
     @abstractmethod
     async def find(
-        self, key1: TypeID, key2: Optional[TypeID] = None
+        self,
+        record_type: Type[RecordType],
+        key1: TypeID,
+        key2: Optional[TypeID] = None,
+        length_limit: int = 1024,
     ) -> List[RecordType]:
         pass
 
     @abstractmethod
-    async def find_one(self, key1: TypeID) -> Optional[RecordType]:
-        pass
-
-    def __repr__(self) -> str:
-        return "RecordStorage: %s" % self.table_name
-
-
-class IStorageFactory:
-    @abstractmethod
-    def init_factory(self, *args, **kwargs):
+    async def find_one(
+        self, record_type: Type[RecordType], key1: TypeID, key2: Optional[TypeID] = None
+    ) -> RecordType | None:
         pass
 
     @abstractmethod
-    def get_storage(self, record_type: Type[RecordType]) -> RecordStorage[RecordType]:
+    async def update(self, update_records: List[RecordType]) -> int:
         pass
 
-    pass
+    @abstractmethod
+    async def delete(
+        self,
+        record_type: Type[RecordType],
+        keys: List[TypeID] | List[Tuple[TypeID, TypeID]],
+    ) -> int:
+        pass
