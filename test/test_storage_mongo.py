@@ -135,6 +135,49 @@ async def test_storage_mongo_find():
     assert result
 
 
+@pytest.mark.run(order=6)
+@pytest.mark.asyncio
+async def test_storage_mongo_update_2():
+    connection = MongoDBConnection()
+    connection.init(connection_str=_connection_str, db=_db_name)
+
+    result = await connection.update(
+        [
+            RecordTestTable2(unique_id="1", pid="p1", name="11111"),
+            RecordTestTable2(unique_id="2", pid="p2", name="2222"),
+            RecordTestTable2(unique_id="10001", pid="p10001", name="22223"),
+        ]
+    )
+    print(result)
+    assert result
+
+
+@pytest.mark.run(order=7)
+@pytest.mark.asyncio
+async def test_storage_mongo_delete_2():
+    connection = MongoDBConnection()
+    connection.init(connection_str=_connection_str, db=_db_name)
+
+    result = await connection.delete(RecordTestTable2, [("1", "p1"), ("2", "p2")])
+    print(result)
+    assert result
+
+
+@pytest.mark.run(order=8)
+@pytest.mark.asyncio
+async def test_storage_mongo_find_2():
+    connection = MongoDBConnection()
+    connection.init(connection_str=_connection_str, db=_db_name)
+
+    result = await connection.find(RecordTestTable2, "10001", "p10001")
+    print(result)
+    assert len(result) > 0
+
+    result = await connection.find_one(RecordTestTable2, "10001", "p10001")
+    print(result)
+    assert result
+
+
 async def main():
     await test_mongo_upsert()
     await test_mongo_find()

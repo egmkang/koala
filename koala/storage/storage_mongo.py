@@ -3,6 +3,10 @@ from koala.storage.storage import *
 from motor.motor_asyncio import AsyncIOMotorClient
 from pymongo import DeleteOne, UpdateOne
 
+"""
+https://motor.readthedocs.io/en/stable/examples/bulk.html
+"""
+
 
 class MongoDBConnection(IStorageConnection):
     def __init__(self):
@@ -31,7 +35,7 @@ class MongoDBConnection(IStorageConnection):
         assert mongo_filter[name_1]
 
         if key_info.key_name_2:
-            name_2 = key_info.key_name
+            name_2 = key_info.key_name_2
             mongo_filter[name_2] = {"$eq": record.get(name_2) if record else key2}
             assert mongo_filter[name_2]
         return mongo_filter
@@ -89,7 +93,7 @@ class MongoDBConnection(IStorageConnection):
             mongo_filter = self.__get_filter(meta_info, content)
             requests.append(UpdateOne(mongo_filter, {"$set": content}, upsert=True))
         result = await table.bulk_write(requests)
-        return result.upserted_count
+        return result.upserted_count or result.matched_count
 
     async def delete(
         self,
