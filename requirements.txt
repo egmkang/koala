@@ -10,4 +10,4 @@ PyYAML==6.0
 uvicorn==0.17.6
 uvloop==0.16.0
 websockets==10.3
-zstd==1.5.2.5
+zstd==1.5.4.0
