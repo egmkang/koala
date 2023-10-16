@@ -4,10 +4,10 @@ v0.9
 * [ ] 升级
   * [ ] .net 8
   * [ ] python3.12
-  * [ ] pydantic
+  * [x] pydantic
     * [x] 升级到v2
     * [x] 消息部分用pydantic重新实现
-* [ ] Mongo访问部分API重新设计
+* [x] Mongo访问部分API重新设计
 * [ ] 其他提升
 
 v0.8

@@ -2,30 +2,20 @@ from pydantic import BaseModel
 from koala import default_dict
 from koala.koala_typing import *
 from pydantic._internal._model_construction import ModelMetaclass
-from pydantic._internal._generics import PydanticGenericMetadata
 
 
-JsonVar = TypeVar("JsonVar", bound="JsonMessage")
-_json_mapper: default_dict.DefaultDict[bytes, Any] = default_dict.DefaultDict()
+_json_mapper: default_dict.DefaultDict[bytes, type] = default_dict.DefaultDict()
 
 
-class JsonMeta(ModelMetaclass):
+class JsonMetaClass(ModelMetaclass):
     def __new__(
         mcs,
-        cls_name: str,
-        bases: tuple[type[Any], ...],
-        namespace: dict[str, Any],
-        __pydantic_generic_metadata__: PydanticGenericMetadata | None = None,
-        __pydantic_reset_parent_namespace__: bool = True,
-        **kwargs: Any,
+        *args,
+        **kwargs,
     ) -> type:
         _type = super().__new__(
             mcs,
-            cls_name,
-            bases,
-            namespace,
-            __pydantic_generic_metadata__,
-            __pydantic_reset_parent_namespace__,
+            *args,
             **kwargs,
         )
         global _json_mapper
@@ -34,7 +24,7 @@ class JsonMeta(ModelMetaclass):
         return _type
 
 
-class JsonMessage(BaseModel, metaclass=JsonMeta):
+class JsonMessage(BaseModel, metaclass=JsonMetaClass):
     @classmethod
     def from_dict(cls, obj):
         return cls.model_validate(obj)
