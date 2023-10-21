@@ -13,6 +13,14 @@ from koala.server.rpc_exception import RpcException, RPC_ERROR_UNKNOWN
 from koala.logger import logger
 
 
+# 正常情况下不需要开启这个标记
+# Orleans Reentrancy的实现会让问题变得非常复杂
+# Actor在同一个请求内可以交错执行没有问题
+# 但是起源于Actor的多个请求也可以交错执行, 那代码逻辑变的非常难写
+# 如果真的想要防止死锁, 可以手动调用`get_rpc_proxy`来发起请求, 这个请求会在Actor的MailBox内排队
+# https://learn.microsoft.com/zh-cn/dotnet/orleans/grains/request-scheduling#reentrancy
+ORLEANS_REENTRANCY = 0
+
 _mailbox_loop_id = 1
 
 
@@ -137,7 +145,7 @@ async def dispatch_actor_message(
     assert actor.context
     if isinstance(msg, RpcRequest):
         req = cast(RpcRequest, msg)
-        if actor.context.reentrant_id == req.reentrant_id:
+        if actor.context.reentrant_id == req.reentrant_id or ORLEANS_REENTRANCY:
             # 这边要直接派发
             asyncio.create_task(_dispatch_actor_rpc_request(actor, session, req))
             return
