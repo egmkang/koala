@@ -98,10 +98,27 @@ class RecordTestTable(Record):
     uid: int
     name: str
 
-record_storage = factory.get_storage(RecordTestTable)
 
-record = RecordTestTable(uid=10, name="1010010")
-result = await record_storage.insert_one(record)
+connection = MongoDBConnection()
+connection.init(connection_str=_connection_str, db=_db_name)
+
+# upsert
+result = await connection.update(
+    [
+      RecordTestTable(uid=1, name="11111"),
+      RecordTestTable(uid=2, name="2222"),
+      RecordTestTable(uid=10001, name="22223"),
+    ]
+)
+print(result)
+
+# query
+result = await connection.find(RecordTestTable, 10001)
+print(result)
+
+# delete
+result = await connection.delete(RecordTestTable, [1, 2])
+print(result)
 ```
 
 ### placement

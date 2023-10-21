@@ -9,6 +9,7 @@ v0.9
     * [x] 消息部分用pydantic重新实现
 * [x] Mongo访问部分API重新设计
 * [ ] 其他提升
+  * [x] Orleans风格的可重入
 
 v0.8
 
