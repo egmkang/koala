@@ -51,7 +51,7 @@ class MongoDBConnection(IStorageConnection):
             raise Exception("cannot find %s's meta data" % record_type)
         if not self.mongo:
             raise Exception("mongo db not init")
-        table = self.mongo[self.db_name][meta_info.table_name]
+        table = self.mongo[self.db_name][meta_info.table_name]  # type: ignore
 
         self.record_table_cache[record_type] = (meta_info, table)
         return meta_info, table
