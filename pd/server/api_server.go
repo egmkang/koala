@@ -1,14 +1,6 @@
 package server
 
 import (
-	lru "github.com/hashicorp/golang-lru"
-	"github.com/pingcap/log"
-	"github.com/pkg/errors"
-	"go.etcd.io/etcd/api/v3/etcdserverpb"
-	clientv3 "go.etcd.io/etcd/client/v3"
-	"go.etcd.io/etcd/client/v3/concurrency"
-	"go.etcd.io/etcd/server/v3/embed"
-	"go.uber.org/zap"
 	"net/http"
 	"net/http/httputil"
 	"net/url"
@@ -18,6 +10,15 @@ import (
 	"reflect"
 	"sync/atomic"
 	"time"
+
+	lru "github.com/hashicorp/golang-lru"
+	"github.com/pingcap/log"
+	"github.com/pkg/errors"
+	"go.etcd.io/etcd/api/v3/etcdserverpb"
+	clientv3 "go.etcd.io/etcd/client/v3"
+	"go.etcd.io/etcd/client/v3/concurrency"
+	"go.etcd.io/etcd/server/v3/embed"
+	"go.uber.org/zap"
 )
 
 const PlacementLRUSize = 1024 * 1024
@@ -106,7 +107,7 @@ func (this *APIServer) InitEtcd(path string, apiRegister func(*APIServer) http.H
 		log.Info("etcd inited")
 	}
 
-	endpoints := []string{this.etcdConfig.ACUrls[0].String()}
+	endpoints := []string{this.etcdConfig.AdvertiseClientUrls[0].String()}
 	log.Info("create etcd v3 client", zap.Strings("endpoints", endpoints))
 
 	client, err := clientv3.New(clientv3.Config{

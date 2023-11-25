@@ -1,11 +1,12 @@
 package server
 
 import (
+	"pd/server/util"
+	"time"
+
 	"github.com/pingcap/log"
 	clientv3 "go.etcd.io/etcd/client/v3"
 	"go.uber.org/zap"
-	"pd/server/util"
-	"time"
 )
 
 func (this *APIServer) tryUpdateEtcdMembers() {
@@ -20,10 +21,10 @@ func (this *APIServer) tryUpdateEtcdMembers() {
 	this.etcdMembers = resp.Members
 }
 
-//思考一下, 感觉跟etcd断链, 也不需要退出, 等啥时候连上了再重新pull
-//从etcd pull所有的服务器信息
-//构造map, 然后替换hosts
-//需要注意分配程序, 可能新的服务器会丢失一次: Add了Host, 然后pull的时候还没进etcd
+// 思考一下, 感觉跟etcd断链, 也不需要退出, 等啥时候连上了再重新pull
+// 从etcd pull所有的服务器信息
+// 构造map, 然后替换hosts
+// 需要注意分配程序, 可能新的服务器会丢失一次: Add了Host, 然后pull的时候还没进etcd
 func (this *APIServer) tryUpdateHostNodesListOnce() {
 	startTime := util.GetMilliSeconds()
 	prefix := HostNodePrefix

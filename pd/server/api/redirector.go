@@ -1,11 +1,12 @@
 package api
 
 import (
+	"net/http"
+	"pd/server"
+
 	"github.com/pingcap/log"
 	"github.com/urfave/negroni"
 	"go.uber.org/zap"
-	"net/http"
-	"pd/server"
 )
 
 type redirector struct {

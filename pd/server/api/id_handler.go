@@ -1,13 +1,14 @@
 package api
 
 import (
-	"github.com/gorilla/mux"
-	"github.com/unrolled/render"
 	"net/http"
 	"pd/server"
 	"pd/server/util"
 	"strconv"
 	"sync"
+
+	"github.com/gorilla/mux"
+	"github.com/unrolled/render"
 )
 
 const SequencePathPrefix = "/global/sequence/"

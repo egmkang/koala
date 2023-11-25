@@ -3,12 +3,13 @@ package storage
 import (
 	"context"
 	"fmt"
-	"github.com/cespare/xxhash"
-	"github.com/go-redis/redis/v8"
-	"github.com/pingcap/log"
-	"go.uber.org/zap"
 	"pd/server/util"
 	"strings"
+
+	"github.com/cespare/xxhash"
+	"github.com/pingcap/log"
+	"github.com/redis/go-redis/v9"
+	"go.uber.org/zap"
 )
 
 const EngineRedis = "redis"

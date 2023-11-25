@@ -2,11 +2,12 @@ package server
 
 import (
 	"fmt"
+	"pd/server/storage"
+	"pd/server/util"
+
 	"github.com/pingcap/log"
 	"github.com/pkg/errors"
 	"go.uber.org/zap"
-	"pd/server/storage"
-	"pd/server/util"
 )
 
 var AliveServerTime int64 = 5 * 1000 //起码要存活超过一定时间, 才会被系统分配到Actor
@@ -68,9 +69,9 @@ func (this *APIServer) savePositionToRemote(args *storage.PlacementArgs, positio
 	return err
 }
 
-//-1服务器个数不够
-//-2没有该类型的服务器
-//-3分配算法错误
+// -1服务器个数不够
+// -2没有该类型的服务器
+// -3分配算法错误
 func (this *APIServer) chooseServerByRandom(actorType string) int64 {
 	//返回-1表示服务器个数不够
 	index := this.membership.GetReadonlyIndex()

@@ -1,9 +1,10 @@
 package api
 
 import (
-	"github.com/unrolled/render"
 	"net/http"
 	"pd/server"
+
+	"github.com/unrolled/render"
 )
 
 type infoHandler struct {

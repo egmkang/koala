@@ -2,16 +2,17 @@ package api
 
 import (
 	"fmt"
-	"github.com/pingcap/log"
-	"github.com/unrolled/render"
-	"go.uber.org/zap"
 	"net/http"
 	"pd/server"
 	"pd/server/util"
 	"strings"
+
+	"github.com/pingcap/log"
+	"github.com/unrolled/render"
+	"go.uber.org/zap"
 )
 
-//默认存活时间是15秒, 5秒一个心跳
+// 默认存活时间是15秒, 5秒一个心跳
 const HostNodeDefaultTTL = 15
 
 type membershipHandler struct {

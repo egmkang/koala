@@ -3,14 +3,15 @@ package server
 import (
 	"context"
 	"fmt"
-	lru "github.com/hashicorp/golang-lru"
-	"github.com/pingcap/log"
-	"go.etcd.io/etcd/client/v3/concurrency"
-	"go.uber.org/zap"
 	"pd/server/storage"
 	"reflect"
 	"strings"
 	"time"
+
+	lru "github.com/hashicorp/golang-lru"
+	"github.com/pingcap/log"
+	"go.etcd.io/etcd/client/v3/concurrency"
+	"go.uber.org/zap"
 )
 
 const PDElectionPath = "/pd_election"
@@ -23,7 +24,7 @@ func (this *APIServer) IsLeader() bool {
 
 func (this *APIServer) NodeNameInfo() string {
 	if len(nodeName) == 0 {
-		nodeName = fmt.Sprintf("%s,%s", this.config.Name, this.etcdConfig.LCUrls[0].String())
+		nodeName = fmt.Sprintf("%s,%s", this.config.Name, this.etcdConfig.ListenClientUrls[0].String())
 	}
 	return nodeName
 }

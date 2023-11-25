@@ -1,11 +1,12 @@
 package api
 
 import (
+	"net/http"
+	"pd/server"
+
 	"github.com/gorilla/mux"
 	"github.com/unrolled/render"
 	"github.com/urfave/negroni"
-	"net/http"
-	"pd/server"
 )
 
 const Prefix = "/pd"

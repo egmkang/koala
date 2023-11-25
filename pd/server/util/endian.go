@@ -2,6 +2,7 @@ package util
 
 import (
 	"encoding/binary"
+
 	"github.com/pkg/errors"
 )
 

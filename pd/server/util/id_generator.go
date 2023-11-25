@@ -1,11 +1,12 @@
 package util
 
 import (
+	"sync"
+
 	"github.com/pingcap/errors"
 	"github.com/pingcap/log"
 	clientv3 "go.etcd.io/etcd/client/v3"
 	"go.uber.org/zap"
-	"sync"
 )
 
 const MaxRetryCount = 5
@@ -57,7 +58,7 @@ func (this *IdGenerator) GetNewID(client *clientv3.Client) (int64, error) {
 	return this.current, nil
 }
 
-//-1: need retry
+// -1: need retry
 func (this *IdGenerator) tryGenerateNewID(client *clientv3.Client) (int64, error) {
 	value, err := EtcdGetKVValue(client, this.path)
 	if err != nil {

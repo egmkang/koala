@@ -16,6 +16,13 @@ package config
 import (
 	"flag"
 	"fmt"
+	"net/url"
+	"os"
+	"path/filepath"
+	"pd/server/errs"
+	"strings"
+	"time"
+
 	"github.com/BurntSushi/toml"
 	"github.com/coreos/go-semver/semver"
 	"github.com/pingcap/errors"
@@ -23,12 +30,6 @@ import (
 	"go.etcd.io/etcd/server/v3/embed"
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
-	"net/url"
-	"os"
-	"path/filepath"
-	"pd/server/errs"
-	"strings"
-	"time"
 )
 
 type Config struct {
@@ -479,22 +480,22 @@ func (c *Config) GenEmbedEtcdConfig() (*embed.Config, error) {
 	cfg.Logger = "zap"
 	var err error
 
-	cfg.LPUrls, err = ParseUrls(c.PeerUrls)
+	cfg.ListenPeerUrls, err = ParseUrls(c.PeerUrls)
 	if err != nil {
 		return nil, err
 	}
 
-	cfg.APUrls, err = ParseUrls(c.AdvertisePeerUrls)
+	cfg.AdvertisePeerUrls, err = ParseUrls(c.AdvertisePeerUrls)
 	if err != nil {
 		return nil, err
 	}
 
-	cfg.LCUrls, err = ParseUrls(c.ClientUrls)
+	cfg.ListenClientUrls, err = ParseUrls(c.ClientUrls)
 	if err != nil {
 		return nil, err
 	}
 
-	cfg.ACUrls, err = ParseUrls(c.AdvertiseClientUrls)
+	cfg.AdvertiseClientUrls, err = ParseUrls(c.AdvertiseClientUrls)
 	if err != nil {
 		return nil, err
 	}

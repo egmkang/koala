@@ -1,12 +1,13 @@
 package main
 
 import (
-	"github.com/pingcap/log"
 	"os"
 	"pd/server"
 	"pd/server/api"
 	"pd/server/config"
 	"time"
+
+	"github.com/pingcap/log"
 )
 
 func main() {

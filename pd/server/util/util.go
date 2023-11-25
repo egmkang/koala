@@ -2,13 +2,14 @@ package util
 
 import (
 	"encoding/json"
-	"github.com/pkg/errors"
-	"github.com/unrolled/render"
 	"io"
 	"io/ioutil"
 	"math/rand"
 	"net/http"
 	"time"
+
+	"github.com/pkg/errors"
+	"github.com/unrolled/render"
 )
 
 func ReadJSONResponseError(render *render.Render, w http.ResponseWriter, body io.ReadCloser, data interface{}) error {

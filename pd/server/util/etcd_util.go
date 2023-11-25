@@ -2,12 +2,13 @@ package util
 
 import (
 	"context"
+	"time"
+
 	"github.com/pingcap/log"
 	"github.com/pkg/errors"
 	clientv3 "go.etcd.io/etcd/client/v3"
 	"go.etcd.io/etcd/client/v3/concurrency"
 	"go.uber.org/zap"
-	"time"
 )
 
 const DefaultRequestTimeout = time.Second * 5

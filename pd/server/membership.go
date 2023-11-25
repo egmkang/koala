@@ -2,19 +2,20 @@ package server
 
 import (
 	"fmt"
+	"pd/server/util"
+	"sort"
+
 	lru "github.com/hashicorp/golang-lru"
 	"github.com/pingcap/log"
 	"go.uber.org/zap"
-	"pd/server/util"
-	"sort"
 )
 
 const RecentHostNodeIDLRUSize = 1024 * 8
 const PDServerHeartBeatTime int64 = 1 * 1000
 const HostEventLifeTime = 60 * 1000
 
-//路径: /node/{server_id}
-//内容是HostInfo的JSON字符串
+// 路径: /node/{server_id}
+// 内容是HostInfo的JSON字符串
 const HostNodePrefix = "/node"
 
 func GenerateServerKey(serverID int64) string {
