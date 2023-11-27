@@ -84,7 +84,7 @@ async def hello(self, my_id: TypeID, times: int) -> str:
 
 ### persistence storage
 
-`Koala`在持久化方便面的做法和`Orleans`不太一样. Orleans的持久化状态会把所有的状态放到一个对象. 通常游戏服务的状态会比较大, 将整个对象去load/store成本会比较高. 所以`Koala`希望降低这方面的粒度.
+`Koala`在持久化方面的做法和`Orleans`不太一样. Orleans的持久化状态会把所有的状态放到一个对象. 通常游戏服务的状态会比较大, 将整个对象去load/store成本会比较高. 所以`Koala`希望降低这方面的粒度.
 
 当然这方面的尝试不一定是最佳实践, 后面会根据实际情况做出调整.
 
