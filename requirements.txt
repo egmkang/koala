@@ -2,7 +2,7 @@ httpx==0.23.0
 loguru==0.6.0
 motor==3.0.0
 orjson==3.9.15
-pydantic==1.9.1
+pydantic==1.10.13
 pylru==1.2.1
 pytest==7.1.2
 pytest_asyncio==0.18.3
